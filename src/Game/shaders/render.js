@@ -425,7 +425,7 @@ void main() {
   vec4 fromBiomes = parseTrackBiomes(fromData);
   vec4 toBiomes = parseTrackBiomes(toData);
 
-  vec3 light_dir = normalize(vec3(0.0, 1., -0.5));
+  vec3 light_dir = normalize(vec3(0.0, 1.0, 0.0));
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
