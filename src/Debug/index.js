@@ -80,7 +80,7 @@ if (process.env.NODE_ENV !== "production") {
             {Object.keys(logValues).map(k => {
               const v = logValues[k];
               return (
-                <div>
+                <div key={k}>
                   <strong style={{ margin: 5 }}>
                     {k}
                   </strong>
@@ -100,6 +100,7 @@ if (process.env.NODE_ENV !== "production") {
               };
               return (
                 <div
+                  key={k}
                   style={{
                     flexDirection: "row",
                     display: "flex"

@@ -54,7 +54,14 @@ class Game extends Component {
     const keyUpDelta =
       (keys[38] || keys[87] || keys[90]) - (keys[40] || keys[83]);
 
-    return { keys, keyRightDelta, keyUpDelta, mouseDown, mouseAt };
+    return {
+      keys,
+      keyRightDelta,
+      keyUpDelta,
+      braking: keys[32],
+      mouseDown,
+      mouseAt
+    };
   };
 
   _pos = e => {
@@ -80,6 +87,7 @@ class Game extends Component {
     this.keys[e.which] = 0;
   };
   onKeyDown = e => {
+    if (e.which === 32) e.preventDefault();
     this.keys[e.which] = 1;
   };
   componentDidMount() {

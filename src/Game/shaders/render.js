@@ -29,7 +29,7 @@ varying vec2 uv;
 uniform float time, aspect;
 uniform sampler2D perlin;
 // camera
-uniform vec3 origin;
+uniform vec3 debugOrigin;
 uniform mat3 rot;
 // game state
 uniform sampler2D track;
@@ -38,6 +38,9 @@ uniform sampler2D altTrack;
 uniform vec3 altTrackOffset;
 uniform float altTrackMode;
 uniform float switchDirection;
+uniform float braking;
+uniform float speed;
+
 ${INJECT}
 #define INF 999.0
 
@@ -92,8 +95,8 @@ float udRoundBox(vec3 p, vec3 b, float r) {
 // game logic
 
 vec2 parseTrackOffset (vec4 raw) {
-  float turn = 1.5 * (raw[0]-0.5);
-  float descent = -0.6 * (raw[1]);
+  float turn = TURN_DX * 2.0 * (raw[0]-0.5);
+  float descent = DESCENT_DY * (raw[1]);
   return vec2(turn, descent);
 }
 vec4 parseTrackBiomes (vec4 raw) {
@@ -403,9 +406,10 @@ vec3 normal(vec3 ray_hit_position, float smoothness) {
 
 void main() {
   vec3 direction = normalize(rot * vec3(uv * vec2(aspect, 1.0), 2.5));
-  vec2 result = raymarch(origin, direction);
+  vec3 o = debugOrigin + vec3(0.0, 0.05, 1.4 + min(0.0, 0.2 * braking - 0.2 * smoothstep(0.0, 6.0, speed)));
+  vec2 result = raymarch(o, direction);
   float fog = smoothstep(0.5 * TRACK_SIZE, TRACK_SIZE, result.x);
-  vec3 intersection = origin + direction * result.x;
+  vec3 intersection = o + direction * result.x;
   vec3 materialColor = sceneColor(result.y);
   vec3 nrml = normal(intersection, 0.02);
   vec3 light_dir = normalize(vec3(0.2, 1.0, 0.2));
@@ -443,7 +447,10 @@ void main() {
       altTrack: regl.prop("altTrack"),
       altTrackOffset: regl.prop("altTrackOffset"),
       altTrackMode: regl.prop("altTrackMode"),
-      switchDirection: regl.prop("switchDirection")
+      switchDirection: regl.prop("switchDirection"),
+      braking: regl.prop("braking"),
+      debugOrigin: regl.prop("debugOrigin"),
+      speed: regl.prop("speed")
     },
 
     count: 3
