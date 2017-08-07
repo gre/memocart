@@ -1,0 +1,12 @@
+.game {
+  position: relative;
+  overflow: hidden;
+}
+
+a {
+  color: #c30;
+  text-decoration: none;
+}
+a:hover {
+  color: inherit;
+}

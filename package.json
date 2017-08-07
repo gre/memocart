@@ -1,0 +1,25 @@
+{
+  "name": "gre-lowrezjam2017",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "gl-mat3": "^1.0.0",
+    "gl-vec3": "^1.0.3",
+    "raf": "^3.3.2",
+    "react": "^15.6.1",
+    "react-dom": "^15.6.1",
+    "regl": "^1.3.0",
+    "seedrandom": "^2.4.3",
+    "simplex-noise": "^2.3.0"
+  },
+  "devDependencies": {
+    "react-scripts": "1.0.10"
+  },
+  "scripts": {
+    "start": "./start.sh",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "deploy": "react-scripts build && surge -p build -d gre-lowrezjam2017.surge.sh"
+  }
+}
