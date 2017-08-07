@@ -1,7 +1,7 @@
 //@flow
 import vec3 from "gl-vec3";
 import mat3 from "gl-mat3";
-import { DEV, TRACK_SIZE, STATUS_FINISHED, STATUS_RUNNING } from "../Constants";
+import { DEV, TRACK_SIZE, STATUS_FINISHED } from "../Constants";
 import genTrack from "./genTrack";
 import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
@@ -49,8 +49,12 @@ export default (
   { time, tick }: *,
   userEvents: *
 ): GameState => {
-  if (gameState.status !== STATUS_RUNNING) return;
   const g = { ...gameState };
+
+  const freeControls = DEV && Debug.getEditable("freeControls");
+  if (freeControls) {
+    debugFreeControls(g, userEvents);
+  }
 
   if (g.stepIndex < -30) {
     g.status = STATUS_FINISHED;
@@ -104,9 +108,7 @@ export default (
     g.switchDirectionTarget = userEvents.keyRightDelta;
   }
 
-  if (DEV && Debug.getEditable("freeControls")) {
-    debugFreeControls(g, userEvents);
-  } else {
+  if (!freeControls) {
     let targetRotX, targetRotY;
     const n = Math.max(2, Math.min(3, TRACK_SIZE - 1));
     const targetP = vec3.create();

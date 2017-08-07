@@ -32,9 +32,9 @@ uniform sampler2D perlin;
 uniform vec3 debugOrigin;
 uniform mat3 rot;
 // game state
-uniform sampler2D track;
+uniform sampler2D track; // 8x1 data texture
 uniform float trackStepProgress;
-uniform sampler2D altTrack;
+uniform sampler2D altTrack; // 8x1 data texture
 uniform vec3 altTrackOffset;
 uniform float altTrackMode;
 uniform float switchDirection;
