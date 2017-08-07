@@ -1,7 +1,7 @@
 //@flow
 import vec3 from "gl-vec3";
 import mat3 from "gl-mat3";
-import { DEV, TRACK_SIZE } from "../Constants";
+import { DEV, TRACK_SIZE, STATUS_FINISHED, STATUS_RUNNING } from "../Constants";
 import genTrack from "./genTrack";
 import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
@@ -49,7 +49,14 @@ export default (
   { time, tick }: *,
   userEvents: *
 ): GameState => {
+  if (gameState.status !== STATUS_RUNNING) return;
   const g = { ...gameState };
+
+  if (g.stepIndex < -30) {
+    g.status = STATUS_FINISHED;
+    return g;
+  }
+
   if (g.time === 0) {
     g.stepTime = time;
     g.stepTick = tick;
@@ -87,9 +94,11 @@ export default (
   g.acc -= g.braking * 0.4 * dt;
   g.speed = Math.max(0, Math.min((g.speed + dt * g.acc) * speedFriction, 10));
 
+  /*
   Debug.log("descent", descent);
   Debug.log("acc", g.acc);
   Debug.log("speed", g.speed);
+  */
 
   if (userEvents.keyRightDelta) {
     g.switchDirectionTarget = userEvents.keyRightDelta;

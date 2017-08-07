@@ -19,6 +19,14 @@ Make sure altTrack diverge from track.
 After a few steps, a wrong turn needs to end badly. Figure out a special biome.
 
 
+## level ZERO needs to be a teaching level
+there is a guarantee there is a single intersection.
+
+## Name idea
+
+MEMO TRAIN
+MEMO CART
+
 ## Game
 - bootstrap GameState Logic
 - implement basic working game idea for a level: series of intersection and an end.

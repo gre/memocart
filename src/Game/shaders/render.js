@@ -46,6 +46,8 @@ ${INJECT}
 
 // utility functions
 
+#define MIX_BIOMES(fn,biomes) mix(fn(biomes[0],biomes[3]),fn(biomes[1],biomes[3]),biomes[2])
+
 float opU(float d1, float d2) {
   return min(d1,d2);
 }
@@ -110,7 +112,7 @@ vec4 parseTrackBiomes (vec4 raw) {
   f *= 16.0;
   float biomeMix = floor(f);
   f -= biomeMix;
-  biomeMix /= 16.0;
+  biomeMix /= 15.0; // NB from 0 to 1 inclusive
   f *= 16.0;
   float biomeSeed = floor(f);
   biomeSeed /= 16.0;
@@ -169,27 +171,11 @@ vec2 biomeRoomSize (float biome, float biomeSeed) {
 #define WALL_WIDTH 50.0
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);
-  float biome1 = biomes[0];
-  bool haveWalls = biomeHaveWalls(biome1);
+  bool haveWalls = biomeHaveWalls(biomes[0]);
   if (!haveWalls) return INF;
-  float biome2 = biomes[1];
-  float biomeMix = biomes[2];
-  float biomeSeed = biomes[3];
   vec4 biomesPrev = parseTrackBiomes(prev);
-  float biome1Prev = biomesPrev[0];
-  float biome2Prev = biomesPrev[1];
-  float biomeMixPrev = biomesPrev[2];
-  float biomeSeedPrev = biomesPrev[3];
-  vec2 sizeFrom = mix(
-    biomeRoomSize(biome1Prev, biomeSeedPrev),
-    biomeRoomSize(biome2Prev, biomeSeedPrev),
-    biomeMixPrev
-  );
-  vec2 sizeTo = mix(
-    biomeRoomSize(biome1, biomeSeed),
-    biomeRoomSize(biome2, biomeSeed),
-    biomeMix
-  );
+  vec2 sizeFrom = MIX_BIOMES(biomeRoomSize, biomesPrev);
+  vec2 sizeTo = MIX_BIOMES(biomeRoomSize, biomes);
   float zMix = interpStepP(p);
   vec2 size =
   vec2(mix(sizeFrom.x, sizeTo.x, zMix), sizeTo.y);
@@ -383,6 +369,24 @@ vec3 sceneColor (float m) {
   return vec3(0.0);
 }
 
+vec3 biomeAmbientColor (float b, float seed) {
+  if (b==B_DARK) {
+    return vec3(-.3);
+  }
+  return vec3(.5);
+}
+
+vec2 biomeFogRange (float b, float seed) {
+  if (b ==15.) {
+    return vec2(-0.1, 0.);
+  }
+  return vec2(0.5 * TRACK_SIZE, TRACK_SIZE);
+}
+
+vec3 biomeFogColor (float b, float seed) {
+  return vec3(step(14.5, b));
+}
+
 vec2 raymarch(vec3 position, vec3 direction) {
   float total_distance = 0.1;
   vec2 result;
@@ -408,17 +412,46 @@ void main() {
   vec3 direction = normalize(rot * vec3(uv * vec2(aspect, 1.0), 2.5));
   vec3 o = debugOrigin + vec3(0.0, 0.05, 1.4 + min(0.0, 0.2 * braking - 0.2 * smoothstep(0.0, 6.0, speed)));
   vec2 result = raymarch(o, direction);
-  float fog = smoothstep(0.5 * TRACK_SIZE, TRACK_SIZE, result.x);
   vec3 intersection = o + direction * result.x;
-  vec3 materialColor = sceneColor(result.y);
   vec3 nrml = normal(intersection, 0.02);
-  vec3 light_dir = normalize(vec3(0.2, 1.0, 0.2));
+  vec3 materialColor = sceneColor(result.y);
+
+  float z = max(0.0, min(intersection.z + trackStepProgress - 1.0, TRACK_SIZE-1.0));
+  float zIndex = floor(z);
+  float zFract = z - zIndex;
+
+  vec4 toData = texture2D(track, vec2((zIndex+0.5)/TRACK_SIZE, 0.5));
+  vec4 fromData = zIndex>0.0 ? texture2D(track, vec2((zIndex-0.5)/TRACK_SIZE, 0.5)) : toData;
+  vec4 fromBiomes = parseTrackBiomes(fromData);
+  vec4 toBiomes = parseTrackBiomes(toData);
+
+  vec3 light_dir = normalize(vec3(0.0, 1., -0.5));
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
-  vec3 light_color = vec3(1., 0.9, 0.7);
-  vec3 ambient_color = vec3(0.5);
-  diffuseLit = mix(materialColor * (diffuse * light_color + ambient_color), vec3(0.0), fog);
+  vec3 lightColor = vec3(1., 0.9, 0.7);
+
+  vec3 ambientColor = mix(
+    MIX_BIOMES(biomeAmbientColor, fromBiomes),
+    MIX_BIOMES(biomeAmbientColor, toBiomes),
+    zFract
+  );
+  vec3 fogColor = mix(
+    MIX_BIOMES(biomeFogColor, fromBiomes),
+    MIX_BIOMES(biomeFogColor, toBiomes),
+    zFract
+  );
+  vec2 fogRange = mix(
+    MIX_BIOMES(biomeFogRange, fromBiomes),
+    MIX_BIOMES(biomeFogRange, toBiomes),
+    zFract
+  );
+
+  float fog = smoothstep(fogRange[0], fogRange[1], result.x);
+
+  // FIXME specular?
+
+  diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor), fogColor, fog);
   gl_FragColor = vec4(diffuseLit, 1.0);
 }
 `,

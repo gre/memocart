@@ -14,7 +14,7 @@ function encodeTrack(track: Array<*>, data: Uint8Array) {
     data[4 * i + 1] = 255 * descent;
     data[4 * i + 2] = (biome1 << 4) | biome2;
     data[4 * i + 3] =
-      (Math.floor(biomeMix * 16) << 4) | Math.floor(biomeSeed * 16);
+      (Math.floor(biomeMix * 15) << 4) | Math.floor(biomeSeed * 15);
   }
 }
 

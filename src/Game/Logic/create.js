@@ -1,21 +1,22 @@
 //@flow
 import mat3 from "gl-mat3";
-import { TRACK_SIZE } from "../Constants";
-import genTrack from "./genTrack";
+import { STATUS_RUNNING, TRACK_SIZE } from "../Constants";
+import genTrack, { LEVEL_SAFE_MULT } from "./genTrack";
 import type { GameState } from "./types";
 
 export default (level: number, seed: number): GameState => {
   const track = [];
-  const stepIndex = 500;
+  const stepIndex = level === 0 ? 100 : LEVEL_SAFE_MULT * level;
   for (let i = 0; i < TRACK_SIZE; i++) {
     track.push(genTrack(stepIndex + i - TRACK_SIZE, seed));
   }
   return {
+    status: STATUS_RUNNING,
     time: 0,
     stepTime: 0,
     tick: 0,
     stepTick: 0,
-    stepIndex: 500,
+    stepIndex,
     trackStepProgress: 0,
     switchDirectionTarget: -1,
     switchDirection: -1,
