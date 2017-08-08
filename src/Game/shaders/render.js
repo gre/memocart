@@ -1,9 +1,7 @@
 import * as Constants from "../Constants";
 import GLSL from "./GLSL";
 
-const constantsUsingIntType = {
-  MARCH_N: 1
-};
+const constantsUsingIntType = k => k.indexOf("N_") === 0;
 
 const INJECT = Object.keys(Constants)
   .map(k => {
@@ -11,10 +9,10 @@ const INJECT = Object.keys(Constants)
     if (v === false) return "";
     if (v === true) return `#define ${k}`;
     if (typeof v !== "number") return "";
-    if (constantsUsingIntType[k]) {
+    if (constantsUsingIntType(k)) {
       return `#define ${k} ${Math.floor(v)}`;
     }
-    return `#define ${k} ${v.toFixed(6)}`;
+    return `#define ${k} ${Math.floor(v) === v ? v.toFixed(1) : v.toFixed(6)}`;
   })
   .filter(v => v)
   .join("\n");
@@ -102,21 +100,15 @@ vec2 parseTrackOffset (vec4 raw) {
   return vec2(turn, descent);
 }
 vec4 parseTrackBiomes (vec4 raw) {
-  float f = raw[2];
-  f *= 16.0;
-  float biome1 = floor(f);
-  f -= biome1;
-  f *= 16.0;
-  float biome2 = floor(f);
-  f = raw[3];
-  f *= 16.0;
-  float biomeMix = floor(f);
-  f -= biomeMix;
-  biomeMix /= 15.0; // NB from 0 to 1 inclusive
-  f *= 16.0;
-  float biomeSeed = floor(f);
-  biomeSeed /= 16.0;
-  return vec4(biome1, biome2, biomeMix, biomeSeed);
+  float f = 255.0 * raw[2];
+  float biome1 = floor(f / 16.0);
+  float biome2 = floor(f - 16.0 * biome1);
+  f = 255.0 * raw[3];
+  float biomeMix = floor(f / 16.0);
+  float trackSeed = floor(f - 16.0 * biomeMix);
+  biomeMix /= 15.0; // [0,1] range (1 is inclusive)
+  trackSeed /= 16.0; //  [0,1[ range
+  return vec4(biome1, biome2, biomeMix, trackSeed);
 }
 float interpStepP (vec3 p) {
   return max(0.0, min(p.z, 1.0));
@@ -158,21 +150,21 @@ float sdTunnelStep (vec3 p, vec4 data) {
 // instead will do that for now:
 */
 
-bool biomeHaveWalls (float biome) {
-  return biome!=0.0;
+float biomeHaveWalls (float biome, float trackSeed) {
+  return biome==B_INTERS ? 0.0 : 1.0;
 }
 
-vec2 biomeRoomSize (float biome, float biomeSeed) {
+vec2 biomeRoomSize (float biome, float trackSeed) {
   vec2 sz = vec2(2.0, 2.0);
-  sz += vec2(1.0 * biomeSeed, 2.0 * step(0.8, biomeSeed));
+  sz += vec2(1.0 * trackSeed, 2.0 * step(0.8, trackSeed));
   return sz;
 }
 
 #define WALL_WIDTH 50.0
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);
-  bool haveWalls = biomeHaveWalls(biomes[0]);
-  if (!haveWalls) return INF;
+  float haveWalls = MIX_BIOMES(biomeHaveWalls, biomes);
+  if (haveWalls==0.0) return INF;
   vec4 biomesPrev = parseTrackBiomes(prev);
   vec2 sizeFrom = MIX_BIOMES(biomeRoomSize, biomesPrev);
   vec2 sizeTo = MIX_BIOMES(biomeRoomSize, biomes);
@@ -304,7 +296,7 @@ vec2 scene(vec3 p) {
     tunnel = opU(tunnel, sdTunnelWallStep(stepP, current, prev));
   }
 
-  if (altTrackMode > 0.0) {
+  if (altTrackMode != ALTT_OFF) {
     vec4 prev = texture2D(altTrack, vec2(0.5/TRACK_SIZE, 0.5));
     vec4 current = texture2D(altTrack, vec2(1.5/TRACK_SIZE, 0.5));
     p = originStepP - altTrackOffset;
@@ -377,20 +369,26 @@ vec3 biomeAmbientColor (float b, float seed) {
 }
 
 vec2 biomeFogRange (float b, float seed) {
-  if (b ==15.) {
-    return vec2(-0.1, 0.);
+  if (b==B_FINISH) {
+    return vec2(-0.1, 0.0);
+  }
+  if (b==B_INTERS) {
+    return vec2(0.2 * TRACK_SIZE, 0.8 * TRACK_SIZE);
   }
   return vec2(0.5 * TRACK_SIZE, TRACK_SIZE);
 }
 
 vec3 biomeFogColor (float b, float seed) {
-  return vec3(step(14.5, b));
+  // nice way to "announce" some biome coming in far forward
+  if (b==B_FINISH) return vec3(1.0);
+  if (b==B_INTERS) return vec3(0.1);
+  return vec3(0.0);
 }
 
 vec2 raymarch(vec3 position, vec3 direction) {
   float total_distance = 0.1;
   vec2 result;
-  for(int i = 0; i < MARCH_N; ++i) {
+  for(int i = 0; i < N_MARCH; ++i) {
     vec3 p = position + direction * total_distance;
     result = scene(p);
     total_distance += result.x;
@@ -429,7 +427,7 @@ void main() {
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
-  vec3 lightColor = vec3(1., 0.9, 0.7);
+  vec3 lightColor = vec3(1.0, 0.9, 0.7);
 
   vec3 ambientColor = mix(
     MIX_BIOMES(biomeAmbientColor, fromBiomes),

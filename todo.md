@@ -1,8 +1,17 @@
 ## Main TODO
-- implement game logic & actual working game.
+- make the intersection working
+  - 0: generate them, the path need to looks like a normal path, kinda tricky but maybe the intersection biome needs to simply be special in term of turning etc..
+  - 1: graphically rendered correctly
+  - 2: in the logic
+  - 3: handle the case you continue on a wrong pass
+- fix the damn camera
 - iterate on biomes
-- more game logic over levels
+- iterate levels
+- add basic level 0 help, texts.. (level 0=teaching level (skippable tutorial), maybe could even pause to explain things)
+- the acceleration needs to be a bit more crazy, not breaking will make you go super fast, it's kinda cool for fast pacing play. the acceleration probably need to speed up more slowly but speed is less capped
+- quick audio bootstrap
 
+notes....
 
 sampler2D altTrack (wrong turn track data)
 vec2 altTrackOffset (how many x,y does track starts)
@@ -17,10 +26,6 @@ If followAltTrack, camera and cart is offset by altTrackOffset.
 Make sure altTrack diverge from track.
 
 After a few steps, a wrong turn needs to end badly. Figure out a special biome.
-
-
-## level ZERO needs to be a teaching level
-there is a guarantee there is a single intersection.
 
 ## Name idea
 
@@ -71,4 +76,4 @@ MEMO CART
 # perf
 
 - can we not do the tracks for loop? kinda tricky but basically can we use mod() ? mmh
-- are shadows/AO feasible? XD
+- are shadows/AO feasible? XD http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf

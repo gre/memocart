@@ -9,12 +9,12 @@ import renderShader from "./shaders/render";
 
 function encodeTrack(track: Array<*>, data: Uint8Array) {
   for (let i = 0; i < track.length; i++) {
-    const { turn, descent, biome1, biome2, biomeMix, biomeSeed } = track[i];
+    const { turn, descent, biome1, biome2, biomeMix, trackSeed } = track[i];
     data[4 * i] = 255 * (turn + 1) / 2;
     data[4 * i + 1] = 255 * descent;
-    data[4 * i + 2] = (biome1 << 4) | biome2;
+    data[4 * i + 2] = (biome1.type << 4) | biome2.type;
     data[4 * i + 3] =
-      (Math.floor(biomeMix * 15) << 4) | Math.floor(biomeSeed * 15);
+      (Math.floor(biomeMix * 15) << 4) | Math.floor(trackSeed * 15);
   }
 }
 
@@ -120,7 +120,11 @@ class Game extends Component {
     let render = renderShader(regl, renderFBO);
     if (module.hot) {
       module.hot.accept("./shaders/render", () => {
-        render = require("./shaders/render").default(regl, renderFBO);
+        try {
+          render = require("./shaders/render").default(regl, renderFBO);
+        } catch (e) {
+          // FIXME could somehow log the error somewhere to see on UI
+        }
       });
     }
 

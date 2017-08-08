@@ -1,3 +1,4 @@
+//@flow
 import React from "react";
 import ReactDOM from "react-dom";
 
@@ -7,22 +8,26 @@ const editables = {};
 const editablesHooks = {};
 const logValues = {};
 
-export const defineEditable = (name, value, onChange) => {
+export const defineEditable = (
+  name: string,
+  value: mixed,
+  onChange: (value: mixed) => void
+) => {
   editables[name] = value;
   editablesHooks[name] = [];
   if (onChange) editablesHooks[name].push(onChange);
   if (instance) instance.forceUpdate();
 };
 
-export const setEditable = (name, value) => {
+export const setEditable = (name: string, value: mixed) => {
   if (value === editables[name]) return;
   editables[name] = value;
   if (instance) instance.forceUpdate();
 };
 
-export const getEditable = name => editables[name];
+export const getEditable = (name: string) => editables[name];
 
-export const log = (name, value) => {
+export const log = (name: string, value: mixed) => {
   if (value === logValues[name]) return;
   logValues[name] = value;
   if (instance) instance.forceUpdate();
@@ -32,7 +37,7 @@ if (process.env.NODE_ENV !== "production") {
   class EditNumber extends React.Component {
     onChange = e => {
       if (isNaN(e.target.value)) return;
-      this.props.onChange(parseFloat(e.target.value, 10));
+      this.props.onChange(parseFloat(e.target.value));
     };
     render() {
       const { defaultValue } = this.props;
@@ -71,6 +76,7 @@ if (process.env.NODE_ENV !== "production") {
       return (
         <div
           style={{
+            minWidth: 300,
             fontFamily: "monospace",
             padding: 10,
             border: "1px dashed rgba(255,255,255,0.1)"
@@ -85,7 +91,9 @@ if (process.env.NODE_ENV !== "production") {
                     {k}
                   </strong>
                   <code>
-                    {typeof v === "number" ? Math.floor(v * 1000) / 1000 : v}
+                    {typeof v === "number"
+                      ? Math.floor(v * 1000) / 1000
+                      : String(v)}
                   </code>
                 </div>
               );
@@ -138,6 +146,8 @@ if (process.env.NODE_ENV !== "production") {
     }
   }
   const $debug = document.createElement("div");
-  document.body.appendChild($debug);
+  if (document.body) {
+    document.body.appendChild($debug);
+  }
   ReactDOM.render(<Debug />, $debug);
 }
