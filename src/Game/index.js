@@ -1,4 +1,5 @@
 //@flow
+import FontFaceObserver from "fontfaceobserver";
 import React, { Component } from "react";
 import "./index.css";
 let Logic = require("./Logic").default;
@@ -16,7 +17,10 @@ if (module.hot) {
 }
 
 class GameComponent extends Component {
-  gameState = Logic.create(5, Math.random());
+  state = {
+    fontLoaded: false
+  };
+  gameState = Logic.create(-1, Math.random());
   getGameState = () => this.gameState;
   action = (name: string, ...args: *) => {
     const oldState = this.gameState;
@@ -28,16 +32,31 @@ class GameComponent extends Component {
       return oldState;
     }
   };
+  componentDidMount() {
+    const font = new FontFaceObserver("MinimalPixels");
+    font
+      .load()
+      .catch(() => {
+        console.log("Font Problem");
+      })
+      .then(() => {
+        this.setState({ fontLoaded: true });
+      });
+  }
   render() {
     const width = 512;
     const height = 512;
     return (
-      <Render
-        width={width}
-        height={height}
-        getGameState={this.getGameState}
-        action={this.action}
-      />
+      <div className="game" style={{ width, height }}>
+        {!this.state.fontLoaded
+          ? <div>Loading...</div>
+          : <Render
+              width={width}
+              height={height}
+              getGameState={this.getGameState}
+              action={this.action}
+            />}
+      </div>
     );
   }
 }

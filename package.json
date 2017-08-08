@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "fontfaceobserver": "^2.0.13",
     "gl-mat3": "^1.0.0",
     "gl-vec3": "^1.0.3",
     "raf": "^3.3.2",

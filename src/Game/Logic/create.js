@@ -4,12 +4,17 @@ import { STATUS_RUNNING, TRACK_SIZE, ALTT_OFF } from "../Constants";
 import genTrack, { LEVEL_SAFE_MULT } from "./genTrack";
 import type { GameState } from "./types";
 
+const LEVEL_DEMO_SIZE = 1000;
 const LEVEL_0_SIZE = 100;
 
+// level: -1 is demo, 0 is tutorial, rest is for normal game
 export default (level: number, seed: number): GameState => {
   const track = [];
-  let speed = 0;
-  let stepIndex = level === 0 ? LEVEL_0_SIZE : LEVEL_SAFE_MULT * level;
+  const speed = level === -1 ? 3 : 0;
+  const stepIndex =
+    level === -1
+      ? LEVEL_DEMO_SIZE
+      : level === 0 ? LEVEL_0_SIZE : LEVEL_SAFE_MULT * level;
   for (let i = 0; track.length < TRACK_SIZE; i--) {
     track.push(genTrack(stepIndex + i, seed));
   }
@@ -17,6 +22,8 @@ export default (level: number, seed: number): GameState => {
   return {
     status: STATUS_RUNNING,
     time: 0,
+    startTime: 0,
+    statusChangedTime: 0,
     stepTime: 0,
     tick: 0,
     stepTick: 0,
@@ -30,7 +37,7 @@ export default (level: number, seed: number): GameState => {
     seed,
     level,
     speed, // z-unit per second
-    acc: 0.1,
+    acc: level === -1 ? 1 : 0.1,
     braking: 0, // braking factor
     switchDirectionTarget: -1,
     switchDirection: -1,

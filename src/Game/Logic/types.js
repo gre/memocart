@@ -28,6 +28,8 @@ export type GameState = {
   status: *,
   altTrack: Array<Track>,
   time: number,
+  startTime: number,
+  statusChangedTime: number,
   stepTime: number,
   tick: number,
   stepTick: number,
@@ -48,5 +50,5 @@ export type GameState = {
   altTrackMode: *,
   altTrackOffset: vec3, // how many x,y does track starts
   stateAtMouseDown: ?GameState,
-  debugOrigin: vec3
+  origin: vec3
 };

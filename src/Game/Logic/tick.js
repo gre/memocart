@@ -7,6 +7,7 @@ import {
   TRACK_SIZE,
   STATUS_FINISHED,
   STATUS_GAMEOVER,
+  STATUS_RUNNING,
   ALTT_OFF,
   ALTT_CART_ON,
   ALTT_CART_OFF,
@@ -16,6 +17,8 @@ import {
 import genTrack from "./genTrack";
 import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
+import restart from "./restart";
+import levelUp from "./levelUp";
 import * as Debug from "../../Debug";
 import type { GameState, TrackBiome } from "./types";
 
@@ -63,27 +66,17 @@ if (DEV) {
 }
 
 export default (
-  gameState: GameState,
+  previousState: GameState,
   { time, tick }: { time: number, tick: number },
   userEvents: *
 ): GameState => {
-  const g = { ...gameState };
+  let g = { ...previousState };
 
-  const freeControls = DEV && Debug.getEditable("freeControls");
-  if (freeControls) {
-    debugFreeControls(g, userEvents);
-  }
-
-  if (userEvents.keyRightDelta) {
-    g.switchDirectionTarget = userEvents.keyRightDelta;
-  }
-
-  if (g.stepIndex < 0) {
-    g.status = STATUS_FINISHED;
-    return g;
-  }
+  // sync time / step / ...
 
   if (g.time === 0) {
+    g.startTime = time;
+    g.statusChangedTime = time;
     g.stepTime = time;
     g.stepTick = tick;
     g.time = time;
@@ -92,6 +85,61 @@ export default (
   const dt = Math.min(time - g.time, 100 /* safe dt */);
   g.time = time;
   g.tick = tick;
+
+  // consume user events
+
+  const freeControls = DEV && Debug.getEditable("freeControls");
+
+  if (g.level >= 0) {
+    // User in control!
+    if (freeControls) {
+      debugFreeControls(g, userEvents);
+    }
+    if (userEvents.keyRightDelta) {
+      g.switchDirectionTarget = userEvents.keyRightDelta;
+    }
+    g.braking += (userEvents.braking - g.braking) * 0.1;
+
+    if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 3) {
+      return restart(g);
+    }
+    if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 3) {
+      return levelUp(g);
+    }
+  } else {
+    // start screen, demo in control!
+
+    if (userEvents.braking || userEvents.keyRightDelta) {
+      return levelUp(g);
+    }
+
+    if (g.status !== STATUS_RUNNING) {
+      if (g.status === STATUS_FINISHED || g.time - g.statusChangedTime > 3) {
+        return restart(g);
+      }
+    }
+
+    const firstTrack = g.track[0];
+
+    if (firstTrack && firstTrack.intersectionBiome) {
+      g.switchDirectionTarget = correctDirection(
+        g,
+        firstTrack.intersectionBiome
+      )
+        ? -g.switchDirectionTarget
+        : g.switchDirectionTarget;
+    } else {
+      g.switchDirectionTarget = g.stepIndex % 20 < 10 ? -1 : 1;
+    }
+  }
+
+  if (g.stepIndex < 0) {
+    g.status = STATUS_FINISHED;
+    return g;
+  }
+
+  // sync tracks / trackStep
+
   g.trackStepProgress += dt * g.speed;
   if (g.trackStepProgress >= 1) {
     // new step
@@ -155,8 +203,6 @@ export default (
 
   const trackCoords = trackToCoordinates(g.track);
   const altTrackCoords = trackToCoordinates(g.altTrack);
-
-  g.braking += (userEvents.braking - g.braking) * 0.1;
 
   const descent = g.track[0].descent + 0.001;
   const frictionFactor = 0.003;
@@ -231,6 +277,10 @@ export default (
           " % " +
           g.track[0].biomeMix.toFixed(2)
   );
+
+  if (previousState.status !== g.status) {
+    g.statusChangedTime = g.time;
+  }
 
   return g;
 };

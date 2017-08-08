@@ -209,7 +209,7 @@ vec2 sdRailTrackStep (vec3 p, vec4 data) {
 vec2 sdRailAltTrackStep (vec3 p, vec4 data, float i) {
   float h = 2.0;
   vec2 shape = sdRail(p - vec3(0.0, -h / 2.0, 0.0));
-  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.8)), 8.0);
+  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.9)), 8.0);
   shape = opU(shape, lastTrackShape);
   return shape;
 }

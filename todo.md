@@ -1,10 +1,11 @@
 ## Main TODO
-- fix the damn camera
 - iterate on biomes
 - iterate levels
 - more variety in the turn/descent.
 - add basic level 0 help, texts.. (level 0=teaching level (skippable tutorial), maybe could even pause to explain things)
 - quick audio bootstrap
+
+- fix the damn camera <- is it ok now?
 
 ## Name idea
 
@@ -61,3 +62,9 @@ MEMO CART
 
 - can we not do the tracks for loop? kinda tricky but basically can we use mod() ? mmh
 - are shadows/AO feasible? XD http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf
+
+
+
+# credits
+
+https://itch.io/jam/lowrezjam2016/topic/19302/minimal-pixel-font

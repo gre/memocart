@@ -99,10 +99,14 @@ export default function genTrack(trackIndex: number, seed: number): Track {
   const mixBiomes = makeBiomesMixer(biome1, biome2, biomeMix, uniqueBiome);
 
   let turn = // ] -0.5, 0.5 [
-    0.4999 *
-    (Math.cos(8 * globalRandom() + trackIndex * 0.2) +
-      Math.sin(20 * globalRandom() + trackIndex * 0.33));
-  let descent = 0.49999 + 0.5 * Math.cos(8 * globalRandom() + trackIndex * 0.5);
+    0.3 *
+      (Math.cos(8 * globalRandom() + trackIndex * 0.2) +
+        Math.sin(20 * globalRandom() + trackIndex * 0.33)) +
+    +0.2 * Math.cos(7 * globalRandom() + 0.09 * trackIndex);
+  let descent =
+    0.09 +
+    0.4 * (1 - Math.exp(Math.min(0, -trackIndex / 500))) +
+    +0.5 * (0.5 + 0.5 * Math.cos(8 * globalRandom() + trackIndex * 0.5));
 
   turn = mixBiomes((b, unique) => {
     if (b.type === B_FINISH) {

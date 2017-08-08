@@ -6,6 +6,7 @@ import SimplexNoise from "simplex-noise";
 import * as Debug from "../Debug";
 import { DEV, TRACK_SIZE } from "./Constants";
 import renderShader from "./shaders/render";
+import makeDrawUI from "./drawUI";
 
 function encodeTrack(track: Array<*>, data: Uint8Array) {
   for (let i = 0; i < track.length; i++) {
@@ -102,17 +103,40 @@ class Game extends Component {
     }
     body.addEventListener("keyup", this.onKeyUp);
     body.addEventListener("keydown", this.onKeyDown);
+
+    const uiCanvas = document.createElement("canvas");
+    const SCALE_UI = 4;
+    uiCanvas.width = uiCanvas.height = 64 * SCALE_UI;
+    const ui = uiCanvas.getContext("2d");
+    ui.scale(SCALE_UI, SCALE_UI);
+    ui.font = `7px MinimalPixels`;
+    ui.textBaseline = "top";
+
     const gl =
       canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
     const regl = createREGL(gl);
+
+    const uiTexture = regl.texture();
     const perlin = regl.texture(genPerlinTextureData(128));
     const track = regl.texture();
     const altTrack = regl.texture();
-
     const renderFBOTexture = regl.texture(64);
     const renderFBO = regl.framebuffer({
       color: renderFBOTexture
     });
+    let drawUI = makeDrawUI(ui);
+    let render = renderShader(regl, renderFBO);
+    let post = postShader(regl);
+
+    function uiSync(g) {
+      drawUI(g);
+      uiTexture({
+        data: uiCanvas,
+        min: "nearest",
+        mag: "nearest",
+        flipY: true
+      });
+    }
 
     if (DEV) {
       Debug.defineEditable("high resolution", false, hi => {
@@ -121,22 +145,39 @@ class Game extends Component {
       });
     }
 
-    let render = renderShader(regl, renderFBO);
     if (module.hot) {
-      // $FlowFixMe
+      function showError(e) {
+        console.log(e);
+        throw e;
+      }
+      //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
         try {
           render = require("./shaders/render").default(regl, renderFBO);
         } catch (e) {
-          console.log(e);
-          // FIXME could somehow log the error somewhere to see on UI
+          showError(e);
+        }
+      });
+      //$FlowFixMe
+      module.hot.accept("./drawUI", () => {
+        try {
+          drawUI = require("./drawUI").default(ui);
+        } catch (e) {
+          showError(e);
+        }
+      });
+      //$FlowFixMe
+      module.hot.accept("./shaders/post", () => {
+        try {
+          post = require("./shaders/post").default(regl);
+        } catch (e) {
+          showError(e);
         }
       });
     }
 
-    const post = postShader(regl);
-
     const initialState = getGameState();
+    uiSync(initialState);
 
     let trackData = new Uint8Array(4 * TRACK_SIZE);
     encodeTrack(initialState.track, trackData);
@@ -176,6 +217,14 @@ class Game extends Component {
         });
       }
 
+      if (
+        prevState.status !== state.status ||
+        state.level !== prevState.level ||
+        state.tick % 60 === 0
+      ) {
+        uiSync(state);
+      }
+
       regl.clear({
         framebuffer: renderFBO,
         color: [0, 0, 0, 0],
@@ -189,7 +238,9 @@ class Game extends Component {
         perlin
       });
       post({
-        t: renderFBOTexture
+        ...state,
+        game: renderFBOTexture,
+        ui: uiTexture
       });
     });
   }
