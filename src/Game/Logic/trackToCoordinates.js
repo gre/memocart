@@ -1,5 +1,5 @@
-import { TURN_DX, DESCENT_DY } from "../Constants";
 //@flow
+import { TURN_DX, DESCENT_DY } from "../Constants";
 export default (
   track: Array<*>,
   initialPosition: [number, number, number] = [0, 0, 0]

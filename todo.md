@@ -1,31 +1,10 @@
 ## Main TODO
-- make the intersection working
-  - 0: generate them, the path need to looks like a normal path, kinda tricky but maybe the intersection biome needs to simply be special in term of turning etc..
-  - 1: graphically rendered correctly
-  - 2: in the logic
-  - 3: handle the case you continue on a wrong pass
 - fix the damn camera
 - iterate on biomes
 - iterate levels
+- more variety in the turn/descent.
 - add basic level 0 help, texts.. (level 0=teaching level (skippable tutorial), maybe could even pause to explain things)
-- the acceleration needs to be a bit more crazy, not breaking will make you go super fast, it's kinda cool for fast pacing play. the acceleration probably need to speed up more slowly but speed is less capped
 - quick audio bootstrap
-
-notes....
-
-sampler2D altTrack (wrong turn track data)
-vec2 altTrackOffset (how many x,y does track starts)
-float altTrackMode (0: altTrack is disabled, 1: cart is on normal track, 2: cart is on the alt track)
-
-When intersection is in Z step future, altTrackOffset is (0., Z), altTrack is init with a full track already that don't swap. altTrackMode=1.0.
-
-Then when reached it will be (DX,0) where DX gets accumulated with track & alt track data. It swaps same way data does. altTrackMode=2.0 if play took wrong turn otherwise 1.0 until the altTrack fade away.
-
-If followAltTrack, camera and cart is offset by altTrackOffset.
-
-Make sure altTrack diverge from track.
-
-After a few steps, a wrong turn needs to end badly. Figure out a special biome.
 
 ## Name idea
 
@@ -71,6 +50,11 @@ MEMO CART
 ## Audio
 
 - bootstrap
+- can hear the train pace in background. only louder when it's slower so it's not annoying.
+- braking creates the crazy brake sound of train.
+- gameover. hitting the rocks hard need to have sound.
+- the ending. no more train pace, maybe a zen sound.
+- then needs music.
 
 
 # perf

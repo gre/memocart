@@ -1,6 +1,7 @@
+//@flow
 import GLSL from "./GLSL";
 
-export default regl =>
+export default (regl: *) =>
   regl({
     frag: GLSL`
 precision highp float;

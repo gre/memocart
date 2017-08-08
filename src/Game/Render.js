@@ -43,6 +43,7 @@ class Game extends Component {
     this.canvas = canvas;
   };
 
+  canvas: ?HTMLCanvasElement;
   mouseAt = null;
   mouseDown = null;
   keys = {};
@@ -64,7 +65,8 @@ class Game extends Component {
     };
   };
 
-  _pos = e => {
+  _pos = (e: *) => {
+    if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
     return [e.clientX - rect.left, e.clientY - rect.top];
   };
@@ -83,21 +85,23 @@ class Game extends Component {
     this.mouseDown = null;
   };
 
-  onKeyUp = e => {
+  onKeyUp = (e: *) => {
     this.keys[e.which] = 0;
   };
-  onKeyDown = e => {
+  onKeyDown = (e: *) => {
     if (e.which === 32) e.preventDefault();
     this.keys[e.which] = 1;
   };
   componentDidMount() {
+    const { body } = document;
     const { canvas } = this;
+    if (!body || !canvas) return;
     const { width, height, getGameState, action } = this.props;
     for (let k = 0; k < 500; k++) {
       this.keys[k] = 0;
     }
-    document.body.addEventListener("keyup", this.onKeyUp);
-    document.body.addEventListener("keydown", this.onKeyDown);
+    body.addEventListener("keyup", this.onKeyUp);
+    body.addEventListener("keydown", this.onKeyDown);
     const gl =
       canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
     const regl = createREGL(gl);
@@ -119,10 +123,12 @@ class Game extends Component {
 
     let render = renderShader(regl, renderFBO);
     if (module.hot) {
+      // $FlowFixMe
       module.hot.accept("./shaders/render", () => {
         try {
           render = require("./shaders/render").default(regl, renderFBO);
         } catch (e) {
+          console.log(e);
           // FIXME could somehow log the error somewhere to see on UI
         }
       });

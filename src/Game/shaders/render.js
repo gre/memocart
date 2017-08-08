@@ -1,3 +1,4 @@
+//@flow
 import * as Constants from "../Constants";
 import GLSL from "./GLSL";
 
@@ -17,7 +18,7 @@ const INJECT = Object.keys(Constants)
   .filter(v => v)
   .join("\n");
 
-export default (regl, framebuffer) =>
+export default (regl: *, framebuffer: *) =>
   regl({
     framebuffer,
     frag: GLSL`
@@ -27,17 +28,16 @@ varying vec2 uv;
 uniform float time, aspect;
 uniform sampler2D perlin;
 // camera
-uniform vec3 debugOrigin;
+uniform vec3 origin;
 uniform mat3 rot;
 // game state
 uniform sampler2D track; // 8x1 data texture
-uniform float trackStepProgress;
 uniform sampler2D altTrack; // 8x1 data texture
+uniform float trackStepProgress;
 uniform vec3 altTrackOffset;
 uniform float altTrackMode;
 uniform float switchDirection;
-uniform float braking;
-uniform float speed;
+uniform float intersectionBiomeEnd;
 
 ${INJECT}
 #define INF 999.0
@@ -160,7 +160,19 @@ vec2 biomeRoomSize (float biome, float trackSeed) {
   return sz;
 }
 
-#define WALL_WIDTH 50.0
+float sdSphere (vec3 p, float s) {
+  return length(p)-s;
+}
+
+float sdRock (vec3 p) {
+  float shape = sdSphere(p, 0.2);
+  shape = opUs(0.1, shape, sdSphere(p-vec3(0.2, -0.2, 0.1), 0.3));
+  shape = opUs(0.03, shape, sdSphere(p-vec3(0., -0.2, -0.1), 0.2));
+  shape = opUs(0.05, shape, sdSphere(p-vec3(-0.3, -0.1, 0.1), 0.25));
+  return shape;
+}
+
+#define WALL_WIDTH 100.0
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);
   float haveWalls = MIX_BIOMES(biomeHaveWalls, biomes);
@@ -189,9 +201,17 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
 }
 
 
-vec2 sdRailStep (vec3 p, vec4 data) {
+vec2 sdRailTrackStep (vec3 p, vec4 data) {
   float h = 2.0;
   return sdRail(p - vec3(0.0, -h / 2.0, 0.0));
+}
+
+vec2 sdRailAltTrackStep (vec3 p, vec4 data, float i) {
+  float h = 2.0;
+  vec2 shape = sdRail(p - vec3(0.0, -h / 2.0, 0.0));
+  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.8)), 8.0);
+  shape = opU(shape, lastTrackShape);
+  return shape;
 }
 
 vec2 sdCartSwitch (vec3 p) {
@@ -254,36 +274,53 @@ vec2 sdCart(vec3 p) {
 }
 
 vec2 scene(vec3 p) {
-  vec2 d = opU(
-    vec2(max(0.0, TRACK_SIZE - p.z), 0.0), // black wall at the end (too far to be visible)
-    vec2(max(0.0, p.z - 0.0), 0.0) // black wall before (you can't see behind anyway)
-  );
   vec4 prev = texture2D(track, vec2(0.5/TRACK_SIZE, 0.5));
   vec4 current = texture2D(track, vec2(1.5/TRACK_SIZE, 0.5));
-  vec2 m = mix(parseTrackOffset(prev), parseTrackOffset(current), trackStepProgress);
 
+  // Calculate the positions...
+
+  // The terrain is moving in interpolated step window for the first Z unit
   p.z -= 1.0;
+  vec3 terrainDelta = vec3(0.0);
+  vec4 cartTrackPrev = prev, cartTrackCurrent = current;
 
-  // Cart
-  vec3 cartP = p;
-  cartP -= vec3(0.0, -0.8, 0.3);
+  if (altTrackMode == ALTT_CART_ON) {
+    cartTrackPrev = texture2D(altTrack, vec2(0.5/TRACK_SIZE, 0.5));
+    cartTrackCurrent = texture2D(altTrack, vec2(1.5/TRACK_SIZE, 0.5));
+    terrainDelta += altTrackOffset;
+  }
+
+  terrainDelta += trackStepProgress * vec3(parseTrackOffset(cartTrackPrev), 1.0);
+
+  vec2 m = mix(parseTrackOffset(cartTrackPrev), parseTrackOffset(cartTrackCurrent), trackStepProgress);
+
+  vec3 terrainP = p + terrainDelta;
+  vec3 altTerrainP = p + terrainDelta - altTrackOffset;
+  vec3 cartP = p - vec3(0.0, -0.8, 0.3);
   rot2(cartP.yz, atan(-m.y));
   rot2(cartP.xz, atan(-m.x));
+
+  vec2 d = opU(
+    vec2(max(0.0, TRACK_SIZE - p.z), 0.0), // black wall at the end (too far to be visible)
+    vec2(max(0.0, p.z + 1.0), 0.0) // black wall before (you can't see behind anyway)
+  );
+
+
+  // Cart
   d = opU(d, sdCart(cartP));
 
   // Terrain
-  p += trackStepProgress * vec3(parseTrackOffset(prev), 1.0);
-  vec3 originStepP = p;
+  p = terrainP;
 
   // prev step
-  vec3 stepP = interpStep(p, prev, prev);
-  vec2 rails = sdRailStep(stepP, prev);
+  vec3 stepP = interpStep(terrainP, prev, prev);
+  vec2 rails = sdRailTrackStep(stepP, prev);
   float tunnel = sdTunnelWallStep(stepP, prev, prev);
 
   // current step
   p -= vec3(parseTrackOffset(prev), 1.0);
   stepP = interpStep(p, prev, current);
-  rails = opU(rails, sdRailStep(stepP, current));
+  rails = opU(rails, sdRailTrackStep(stepP, current));
   tunnel = opU(tunnel, sdTunnelWallStep(stepP, current, prev));
 
   // iterate next steps
@@ -292,23 +329,24 @@ vec2 scene(vec3 p) {
     prev = current;
     current = texture2D(track, vec2((z+0.5)/TRACK_SIZE, 0.5));
     stepP = interpStep(p, prev, current);
-    rails = opU(rails, sdRailStep(stepP, current));
+    rails = opU(rails, sdRailTrackStep(stepP, current));
     tunnel = opU(tunnel, sdTunnelWallStep(stepP, current, prev));
   }
 
   if (altTrackMode != ALTT_OFF) {
+    p = altTerrainP;
+
     vec4 prev = texture2D(altTrack, vec2(0.5/TRACK_SIZE, 0.5));
     vec4 current = texture2D(altTrack, vec2(1.5/TRACK_SIZE, 0.5));
-    p = originStepP - altTrackOffset;
 
     // prev step
     stepP = interpStep(p, prev, prev);
-    rails = opU(rails, sdRailStep(stepP, prev));
+    rails = opU(rails, sdRailAltTrackStep(stepP, prev, 0.0));
 
     // current step
     p -= vec3(parseTrackOffset(prev), 1.0);
     stepP = interpStep(p, prev, current);
-    rails = opU(rails, sdRailStep(stepP, current));
+    rails = opU(rails, sdRailAltTrackStep(stepP, current, 1.0));
 
     // iterate next steps
     for (float z=2.0; z<TRACK_SIZE; z++) {
@@ -316,7 +354,7 @@ vec2 scene(vec3 p) {
       prev = current;
       current = texture2D(altTrack, vec2((z+0.5)/TRACK_SIZE, 0.5));
       stepP = interpStep(p, prev, current);
-      rails = opU(rails, sdRailStep(stepP, current));
+      rails = opU(rails, sdRailAltTrackStep(stepP, current, z));
     }
   }
 
@@ -357,6 +395,9 @@ vec3 sceneColor (float m) {
   }
   else if (m < 8.0) { // cart switch metal
     return vec3(0.4);
+  }
+  else if (m < 9.0) { // rock
+    return vec3(0.3);
   }
   return vec3(0.0);
 }
@@ -408,9 +449,8 @@ vec3 normal(vec3 ray_hit_position, float smoothness) {
 
 void main() {
   vec3 direction = normalize(rot * vec3(uv * vec2(aspect, 1.0), 2.5));
-  vec3 o = debugOrigin + vec3(0.0, 0.05, 1.4 + min(0.0, 0.2 * braking - 0.2 * smoothstep(0.0, 6.0, speed)));
-  vec2 result = raymarch(o, direction);
-  vec3 intersection = o + direction * result.x;
+  vec2 result = raymarch(origin, direction);
+  vec3 intersection = origin + direction * result.x;
   vec3 nrml = normal(intersection, 0.02);
   vec3 materialColor = sceneColor(result.y);
 
@@ -479,9 +519,7 @@ void main() {
       altTrackOffset: regl.prop("altTrackOffset"),
       altTrackMode: regl.prop("altTrackMode"),
       switchDirection: regl.prop("switchDirection"),
-      braking: regl.prop("braking"),
-      debugOrigin: regl.prop("debugOrigin"),
-      speed: regl.prop("speed")
+      intersectionBiomeEnd: regl.prop("intersectionBiomeEnd")
     },
 
     count: 3

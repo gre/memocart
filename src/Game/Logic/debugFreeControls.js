@@ -9,7 +9,7 @@ function threshold(value, limit) {
 
 export default (
   g: GameState,
-  { mouseAt, mouseDown, keys, keyRightDelta, keyUpDelta }
+  { mouseAt, mouseDown, keys, keyRightDelta, keyUpDelta }: *
 ) => {
   let move = [0, 0, 0];
   if (mouseDown && !g.stateAtMouseDown) {
@@ -33,7 +33,7 @@ export default (
   }
 
   // mouse
-  if (mouseDown) {
+  if (mouseDown && g.stateAtMouseDown) {
     g.rotY = g.stateAtMouseDown.rotY - 0.005 * (mouseAt[0] - mouseDown[0]);
     g.rotX = g.stateAtMouseDown.rotX + 0.005 * (mouseAt[1] - mouseDown[1]);
   }
@@ -56,5 +56,5 @@ export default (
   }
   const vector = vec3.create();
   vec3.transformMat3(vector, move, g.rot);
-  vec3.add(g.debugOrigin, g.debugOrigin, vector);
+  vec3.add(g.origin, g.origin, vector);
 };

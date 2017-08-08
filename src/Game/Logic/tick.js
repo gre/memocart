@@ -1,11 +1,12 @@
 //@flow
 import vec3 from "gl-vec3";
 import mat3 from "gl-mat3";
+import smoothstep from "smoothstep";
 import {
   DEV,
   TRACK_SIZE,
   STATUS_FINISHED,
-  B_INTERS,
+  STATUS_GAMEOVER,
   ALTT_OFF,
   ALTT_CART_ON,
   ALTT_CART_OFF,
@@ -16,7 +17,7 @@ import genTrack from "./genTrack";
 import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
 import * as Debug from "../../Debug";
-import type { GameState, Biome } from "./types";
+import type { GameState, TrackBiome } from "./types";
 
 function setMatRot(rot: Array<number>, rotX: number, rotY: number) {
   const cx = Math.cos(rotX);
@@ -40,7 +41,7 @@ function setMatRot(rot: Array<number>, rotX: number, rotY: number) {
   mat3.transpose(rot, rot);
 }
 
-function correctDirection(g: GameState, biome: Biome): boolean {
+function correctDirection(g: GameState, biome: TrackBiome): boolean {
   return (
     Boolean(g.switchDirectionTarget < 0) === Boolean(biome.biomeSeed > 0.5)
   );
@@ -73,6 +74,10 @@ export default (
     debugFreeControls(g, userEvents);
   }
 
+  if (userEvents.keyRightDelta) {
+    g.switchDirectionTarget = userEvents.keyRightDelta;
+  }
+
   if (g.stepIndex < 0) {
     g.status = STATUS_FINISHED;
     return g;
@@ -87,26 +92,41 @@ export default (
   const dt = Math.min(time - g.time, 100 /* safe dt */);
   g.time = time;
   g.tick = tick;
-  let trackStepProgress = g.speed * (time - g.stepTime);
-  if (trackStepProgress >= 1) {
+  g.trackStepProgress += dt * g.speed;
+  if (g.trackStepProgress >= 1) {
     // new step
     if (DEV) {
       Debug.log("fps", Math.round((tick - g.stepTick) / (time - g.stepTime)));
     }
     g.stepTick = tick;
     g.stepTime = time;
-    trackStepProgress = 0;
+    g.trackStepProgress = 0;
     g.stepIndex--;
     const droppedTrack = g.track[0];
     g.track = g.track.slice(1);
     g.track.push(genTrack(g.stepIndex - TRACK_SIZE + 1, g.seed));
 
-    const { uniqueBiome } = g.track[0];
-    if (uniqueBiome && uniqueBiome.biome.type === B_INTERS) {
+    const { intersectionBiome } = g.track[0];
+    if (intersectionBiome) {
+      g.intersectionBiomeEnd =
+        intersectionBiome.duration - intersectionBiome.index;
+    }
+    if (
+      intersectionBiome &&
+      intersectionBiome.index >= intersectionBiome.duration - 1 &&
+      g.altTrackMode === ALTT_CART_ON
+    ) {
+      g.status = STATUS_GAMEOVER;
+    } else if (
+      intersectionBiome &&
+      intersectionBiome.index < intersectionBiome.duration
+    ) {
       const droppedAltTrack = g.altTrack[0];
       g.altTrack = g.track.map((t, i) => {
         const track = { ...t };
-        track.turn *= -1;
+        if (intersectionBiome.index + i >= 0) {
+          track.turn *= -1;
+        }
         return track;
       });
 
@@ -117,25 +137,21 @@ export default (
           DESCENT_DY * (droppedTrack.descent - droppedAltTrack.descent);
       }
 
-      const altTrackHasDiverged = g.altTrackOffset[0] !== 0;
+      const altTrackHasDiverged =
+        intersectionBiome.index > 0 && g.altTrackOffset[0] !== 0;
 
-      const directionIsCorrect = correctDirection(g, uniqueBiome.biome);
+      const directionIsCorrect = correctDirection(g, intersectionBiome);
       if (!altTrackHasDiverged || g.altTrackMode === ALTT_OFF) {
         g.altTrackMode = directionIsCorrect ? ALTT_CART_OFF : ALTT_CART_ON;
       }
     } else if (g.altTrackMode !== ALTT_OFF) {
       // there used to be altTrack but we no longer is in INTERS biome
-      if (g.altTrackMode === ALTT_CART_ON) {
-        // TODO set game over / start over the level
-      } else {
-        // Continue the game
-        g.altTrack = [];
-        g.altTrackMode = ALTT_OFF;
-        g.altTrackOffset = [0, 0, 0];
-      }
+      // Continue the game
+      g.altTrack = [];
+      g.altTrackMode = ALTT_OFF;
+      g.altTrackOffset = [0, 0, 0];
     }
   }
-  g.trackStepProgress = trackStepProgress;
 
   const trackCoords = trackToCoordinates(g.track);
   const altTrackCoords = trackToCoordinates(g.altTrack);
@@ -143,56 +159,63 @@ export default (
   g.braking += (userEvents.braking - g.braking) * 0.1;
 
   const descent = g.track[0].descent + 0.001;
-  const frictionFactor = 0.006;
+  const frictionFactor = 0.003;
   const speedFriction = Math.pow(1 - frictionFactor, 60 * dt);
   const accFriction = Math.pow(1 - 0.2 * frictionFactor, 60 * dt);
 
-  g.acc = Math.max(0, Math.min((g.acc + 0.3 * descent * dt) * accFriction, 4));
+  g.acc = Math.max(0, Math.min((g.acc + 0.2 * descent * dt) * accFriction, 4));
   g.acc -= g.braking * 0.4 * dt;
-  g.speed = Math.max(0, Math.min((g.speed + dt * g.acc) * speedFriction, 10));
+  g.speed = Math.max(0, Math.min((g.speed + dt * g.acc) * speedFriction, 20));
 
-  //g.speed = 0.5;
+  if (g.status === STATUS_GAMEOVER) {
+    g.acc = 0;
+    g.speed = Math.max(0, (0 - g.speed) * 0.01);
+    g.trackStepProgress = 0.0;
+    g.rotX += (-0.9 - g.rotX) * 0.008;
+    g.rotY += (Math.atan(trackCoords[0][0]) + 0.7 - g.rotY) * 0.008;
+    g.zoomOut += (1 - g.zoomOut) * 0.008;
+  } else {
+    Debug.log("descent", descent);
+    Debug.log("acc", g.acc);
+    Debug.log("speed", g.speed);
 
-  /*
-  Debug.log("descent", descent);
-  Debug.log("acc", g.acc);
-  Debug.log("speed", g.speed);
-  */
+    if (!freeControls) {
+      let targetRotX, targetRotY;
+      const n = Math.max(2, Math.min(3, TRACK_SIZE - 1));
+      const targetP = vec3.create();
+      const relativeFirst = vec3.create();
+      const relativeLast = vec3.create();
+      const { intersectionBiome } = g.track[0];
+      const focusOnAltTrack =
+        intersectionBiome && g.altTrackMode === ALTT_CART_ON; // FIXME something not correct after diverge
 
-  if (userEvents.keyRightDelta) {
-    g.switchDirectionTarget = userEvents.keyRightDelta;
+      const coords = focusOnAltTrack ? altTrackCoords : trackCoords;
+
+      vec3.scale(relativeFirst, coords[1], 1 - g.trackStepProgress);
+      vec3.subtract(relativeLast, coords[n + 1], coords[n]);
+      vec3.scale(relativeLast, relativeLast, g.trackStepProgress);
+      vec3.add(targetP, coords[n], relativeFirst);
+      vec3.add(targetP, targetP, relativeLast);
+      // targetP = (1-p)*c[1] + c[n] + (c[n+1]-c[c])*p
+      targetRotX = Math.atan(-0.4 + 0.5 * targetP[1] / n);
+      targetRotY = Math.atan(0.8 * targetP[0] / n);
+      g.rotX += (targetRotX - g.rotX) * 0.03;
+      g.rotY += (targetRotY - g.rotY) * 0.03;
+      // FIXME is the rotation correct? why is the camera weird like on a boat XD
+    }
+
+    g.switchDirection += (g.switchDirectionTarget - g.switchDirection) * 0.1;
   }
-
-  if (!freeControls) {
-    let targetRotX, targetRotY;
-    const n = Math.max(2, Math.min(3, TRACK_SIZE - 1));
-    const targetP = vec3.create();
-    const relativeFirst = vec3.create();
-    const relativeLast = vec3.create();
-    const { uniqueBiome } = g.track[0];
-    const focusOnAltTrack =
-      altTrackCoords.length > 0 &&
-      uniqueBiome &&
-      g.altTrackMode === ALTT_CART_ON; // FIXME something not correct after diverge
-
-    const coords = focusOnAltTrack ? altTrackCoords : trackCoords;
-
-    vec3.scale(relativeFirst, coords[1], 1 - trackStepProgress);
-    vec3.subtract(relativeLast, coords[n + 1], coords[n]);
-    vec3.scale(relativeLast, relativeLast, trackStepProgress);
-    vec3.add(targetP, coords[n], relativeFirst);
-    vec3.add(targetP, targetP, relativeLast);
-    // targetP = (1-p)*c[1] + c[n] + (c[n+1]-c[c])*p
-    targetRotX = Math.atan(-0.4 + 0.5 * targetP[1] / n);
-    targetRotY = Math.atan(0.8 * targetP[0] / n);
-    g.rotX += (targetRotX - g.rotX) * 0.03;
-    g.rotY += (targetRotY - g.rotY) * 0.03;
-    // FIXME is the rotation correct? why is the camera weird like on a boat XD
-  }
-
-  g.switchDirection += (g.switchDirectionTarget - g.switchDirection) * 0.1;
 
   setMatRot(g.rot, g.rotX, g.rotY);
+
+  g.origin = [
+    0.0 - 1 * g.zoomOut,
+    0.05 + 1.5 * g.zoomOut,
+    1.4 +
+      Math.min(0.0, 0.2 * g.braking - 0.2 * smoothstep(0.0, 6.0, g.speed)) -
+      0.2 * g.zoomOut
+  ];
 
   Debug.log("altTrackMode", g.altTrackMode);
   Debug.log("stepIndex", g.stepIndex);

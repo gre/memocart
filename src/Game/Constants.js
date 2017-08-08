@@ -7,6 +7,7 @@ export const TURN_DX = 0.7; // the range of turn (scaled on [-0.5, +0.5] interva
 
 export const STATUS_RUNNING = 0;
 export const STATUS_FINISHED = 1;
+export const STATUS_GAMEOVER = 2;
 
 // B_ constants are the biomes
 export const B_INTERS = 0; // biome used for when there is an intersection to take

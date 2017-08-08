@@ -1,3 +1,4 @@
+//@flow
 import React, { Component } from "react";
 import Game from "./Game";
 import "./App.css";

@@ -7,21 +7,21 @@ export type Biome = {
   type: number
 };
 
-export type UniqueBiome = {
-  biome: Biome,
-  index: number,
-  duration: number
+export type TrackBiome = Biome & {
+  index: number, // the index, starts in negative because fading
+  duration: number // the duration without including the fading
 };
 
 export type Track = {
   turn: number,
   descent: number,
-  biome1: Biome,
-  biome2: Biome,
+  biome1: TrackBiome,
+  biome2: TrackBiome,
   biomeMix: number,
   trackSeed: number,
   trackIndex: number,
-  uniqueBiome: ?UniqueBiome
+  uniqueBiome: ?TrackBiome,
+  intersectionBiome: ?TrackBiome
 };
 
 export type GameState = {
@@ -47,6 +47,6 @@ export type GameState = {
   altTrack: Array<Track>, // wrong turn track data
   altTrackMode: *,
   altTrackOffset: vec3, // how many x,y does track starts
-  stateAtMouseDown: null,
+  stateAtMouseDown: ?GameState,
   debugOrigin: vec3
 };

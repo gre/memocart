@@ -11,7 +11,7 @@ const logValues = {};
 export const defineEditable = (
   name: string,
   value: mixed,
-  onChange: (value: mixed) => void
+  onChange?: (value: mixed) => void
 ) => {
   editables[name] = value;
   editablesHooks[name] = [];

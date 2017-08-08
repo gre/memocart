@@ -2,8 +2,8 @@
 import seedrandom from "seedrandom";
 import smoothstep from "smoothstep";
 import mix from "./mix";
-import { TRACK_SIZE, B_EMPTY, B_DARK, B_INTERS, B_FINISH } from "../Constants";
-import type { Biome, UniqueBiome, Track } from "./types";
+import { B_EMPTY, B_DARK, B_INTERS, B_FINISH } from "../Constants";
+import type { Biome, TrackBiome, Track } from "./types";
 const BIOME_FREQ = 20;
 const BIOME_WINDOW_TRANSITION = 8;
 const BIOME_PAD = Math.floor((BIOME_FREQ - BIOME_WINDOW_TRANSITION) / 2);
@@ -29,26 +29,42 @@ function genBiome(biomeIndex: number, seed: number): Biome {
       const intersectionMinReference = Math.floor(
         biomeIndex / intersectionRoulette
       );
-      const winner = Math.floor(biomeRandom() * intersectionRoulette);
+      const intersectionMinReferenceRandom = seedrandom(
+        "biome_min_" + intersectionMinReference
+      );
+      const winner = Math.floor(
+        intersectionMinReferenceRandom() * intersectionRoulette
+      );
       if (biomeIndex % intersectionRoulette === winner) {
         type = B_INTERS;
       }
     }
   }
+
   return { biomeSeed, type };
 }
 
 const makeBiomesMixer = (
-  biome1: Biome,
-  biome2: Biome,
+  biome1: TrackBiome,
+  biome2: TrackBiome,
   biomeMix: number,
-  uniqueBiome: ?UniqueBiome
-) => (f: (b: Biome, uniqueBiome: ?UniqueBiome) => number) =>
+  uniqueBiome: ?TrackBiome
+) => (f: (b: TrackBiome, uniqueBiome: ?TrackBiome) => number) =>
   mix(
-    f(biome1, uniqueBiome && uniqueBiome.biome === biome1 ? uniqueBiome : null),
-    f(biome2, uniqueBiome && uniqueBiome.biome === biome2 ? uniqueBiome : null),
+    f(biome1, uniqueBiome && uniqueBiome === biome1 ? uniqueBiome : null),
+    f(biome2, uniqueBiome && uniqueBiome === biome2 ? uniqueBiome : null),
     biomeMix
   );
+
+const makeTrackBiome = (
+  biome: Biome,
+  index: number,
+  duration: number
+): TrackBiome => ({
+  ...biome,
+  index,
+  duration
+});
 
 export default function genTrack(trackIndex: number, seed: number): Track {
   const globalRandom = seedrandom("track_" + seed);
@@ -58,27 +74,28 @@ export default function genTrack(trackIndex: number, seed: number): Track {
   const biomePrevTrackIndex = biomeIndex * BIOME_FREQ;
   //const biomeNextTrackIndex = (biomeIndex - 1) * BIOME_FREQ;
   const biomeTrackIndexDelta = biomePrevTrackIndex - trackIndex;
-  const biome1 = genBiome(biomeIndex, seed);
-  const biome2 = genBiome(biomeIndex - 1, seed);
+  const biome1 = makeTrackBiome(
+    genBiome(biomeIndex, seed),
+    BIOME_PAD + biomeTrackIndexDelta,
+    BIOME_DUR
+  );
+  const biome2 = makeTrackBiome(
+    genBiome(biomeIndex - 1, seed),
+    biomeTrackIndexDelta - (BIOME_FREQ - BIOME_PAD),
+    BIOME_DUR
+  );
   const biomeMix = smoothstep(
     BIOME_PAD,
     BIOME_FREQ - BIOME_PAD,
     biomeTrackIndexDelta
   );
-  let uniqueBiome: ?UniqueBiome = null;
-  if (biomeMix === 0) {
-    uniqueBiome = {
-      biome: biome1,
-      index: BIOME_PAD + biomeTrackIndexDelta,
-      duration: BIOME_DUR
-    };
-  } else if (biomeMix === 1) {
-    uniqueBiome = {
-      biome: biome2,
-      index: biomeTrackIndexDelta - (BIOME_FREQ - BIOME_PAD),
-      duration: BIOME_DUR
-    };
-  }
+  let intersectionBiome: ?TrackBiome =
+    biome1.type === B_INTERS
+      ? biome1
+      : biome2.type === B_INTERS ? biome2 : null;
+  let uniqueBiome: ?TrackBiome =
+    biomeMix === 0 ? biome1 : biomeMix === 1 ? biome2 : null;
+
   const mixBiomes = makeBiomesMixer(biome1, biome2, biomeMix, uniqueBiome);
 
   let turn = // ] -0.5, 0.5 [
@@ -87,25 +104,30 @@ export default function genTrack(trackIndex: number, seed: number): Track {
       Math.sin(20 * globalRandom() + trackIndex * 0.33));
   let descent = 0.49999 + 0.5 * Math.cos(8 * globalRandom() + trackIndex * 0.5);
 
-  if (uniqueBiome && uniqueBiome.biome.type === B_INTERS) {
-    // specific turn for the whole session
-  }
-
   turn = mixBiomes((b, unique) => {
     if (b.type === B_FINISH) {
       return 0;
     }
     if (b.type === B_INTERS) {
-      if (unique) {
-        return mix(
-          0,
-          b.biomeSeed > 0.5 ? -0.8 : 0.8,
-          // FIXME kinda a hack to not start before TRACK_SIZE, to avoid a blink and you could actually see the alt track pops in
-          smoothstep(4, 6, unique.index) *
-            smoothstep(BIOME_DUR, BIOME_DUR - 4, unique.index)
-        );
-      }
-      return 0;
+      const turnSmoothing = 3;
+      const startDiverging = Math.floor(
+        b.biomeSeed * 987 % Math.ceil((BIOME_DUR - turnSmoothing) / 2)
+      );
+      const turnSpeed =
+        0.7 +
+        0.2 *
+          Math.cos(
+            7 * b.biomeSeed +
+              0.6 * trackIndex +
+              0.3 * Math.sin(9 + trackSeed + 1.2 * trackIndex)
+          );
+      return mix(
+        0,
+        (b.biomeSeed > 0.5 ? -1 : 1) * turnSpeed,
+        // FIXME kinda a hack to not start before TRACK_SIZE, to avoid a blink and you could actually see the alt track pops in
+        smoothstep(startDiverging, startDiverging + turnSmoothing, b.index) *
+          smoothstep(BIOME_DUR, BIOME_DUR - turnSmoothing, b.index)
+      );
     }
     return turn; // keep old value
   });
@@ -125,6 +147,7 @@ export default function genTrack(trackIndex: number, seed: number): Track {
     biomeMix,
     trackSeed,
     trackIndex,
-    uniqueBiome
+    uniqueBiome,
+    intersectionBiome
   };
 }

@@ -8,10 +8,12 @@ const LEVEL_0_SIZE = 100;
 
 export default (level: number, seed: number): GameState => {
   const track = [];
-  const stepIndex = level === 0 ? 0.5 * LEVEL_0_SIZE : LEVEL_SAFE_MULT * level;
+  let speed = 0;
+  let stepIndex = level === 0 ? LEVEL_0_SIZE : LEVEL_SAFE_MULT * level;
   for (let i = 0; track.length < TRACK_SIZE; i--) {
     track.push(genTrack(stepIndex + i, seed));
   }
+
   return {
     status: STATUS_RUNNING,
     time: 0,
@@ -20,17 +22,19 @@ export default (level: number, seed: number): GameState => {
     stepTick: 0,
     stepIndex,
     trackStepProgress: 0,
+    intersectionBiomeEnd: 0,
     rotX: 0,
     rotY: 0,
     rot: mat3.create(),
     track,
     seed,
     level,
-    speed: 0, // z-unit per second
+    speed, // z-unit per second
     acc: 0.1,
     braking: 0, // braking factor
     switchDirectionTarget: -1,
     switchDirection: -1,
+    zoomOut: 0,
 
     /*
 algorithm:
@@ -46,6 +50,6 @@ If followAltTrack, camera and cart is offset by altTrackOffset.
     altTrackOffset: [0, 0, 0], // how many x,y does track starts
 
     stateAtMouseDown: null,
-    debugOrigin: [0, 0, 0]
+    origin: [0, 0.05, 1.4]
   };
 };
