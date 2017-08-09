@@ -19,3 +19,5 @@ export const B_FINISH = 15; // the last tile biome
 export const ALTT_OFF = 0; // altTrack is disabled
 export const ALTT_CART_ON = 1; // cart is on normal track
 export const ALTT_CART_OFF = 2; // cart is on the alt track
+
+export const M_PI = Math.PI;

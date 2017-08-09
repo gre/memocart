@@ -64,6 +64,7 @@ for (let i = 0; i < offZ; i++) {
 
 if (DEV) {
   Debug.defineEditable("freeControls", false);
+  Debug.defineEditable("noSpeed", false);
 }
 
 export default (
@@ -94,7 +95,6 @@ export default (
   // Handle Tutorial related
   if (tutorial.condition(g, userEvents)) {
     const tut = tutorial.steps[g.tutorial];
-    Debug.log("tut", g.tutorial);
     if (tut) {
       if (g.uiState === tut.uiState) {
         // is already current tut
@@ -237,18 +237,14 @@ export default (
   if (g.status === STATUS_GAMEOVER) {
     g.acc = 0;
     g.speed = Math.max(0, (0 - g.speed) * 0.01);
-    g.trackStepProgress = 0.0;
-    g.rotX += (-0.9 - g.rotX) * 0.008;
+    g.trackStepProgress += (0.5 - g.trackStepProgress) * 0.002;
+    g.rotX += (-0.6 - g.rotX) * 0.007;
     g.rotY += (Math.atan(trackCoords[0][0]) + 0.7 - g.rotY) * 0.008;
-    g.zoomOut += (1 - g.zoomOut) * 0.008;
+    g.zoomOut += (1 - g.zoomOut) * 0.007;
   } else if (g.status === STATUS_FINISHED) {
     g.acc = 0;
     g.speed = 0;
   } else {
-    Debug.log("descent", descent);
-    Debug.log("acc", g.acc);
-    Debug.log("speed", g.speed);
-
     if (!freeControls) {
       let targetRotX, targetRotY;
       const n = Math.max(2, Math.min(3, TRACK_SIZE - 1));
@@ -279,30 +275,15 @@ export default (
 
   setMatRot(g.rot, g.rotX, g.rotY);
 
-  g.origin = [
-    0.0 - 1 * g.zoomOut,
-    0.05 + 1.5 * g.zoomOut,
-    1.4 +
-      Math.min(0.0, 0.2 * g.braking - 0.2 * smoothstep(0.0, 6.0, g.speed)) -
-      0.2 * g.zoomOut
-  ];
-
-  Debug.log("stepIndex", g.stepIndex);
-  /*
-  Debug.log("altTrackMode", g.altTrackMode);
-  Debug.log(
-    "trackBiome",
-    g.track[0].biomeMix === 0
-      ? g.track[0].biome1.type
-      : g.track[0].biomeMix === 1
-        ? g.track[0].biome2.type
-        : g.track[0].biome1.type +
-          "–>" +
-          g.track[0].biome2.type +
-          " % " +
-          g.track[0].biomeMix.toFixed(2)
-  );
-  */
+  if (!freeControls) {
+    g.origin = [
+      0.0 - 1 * g.zoomOut,
+      0.0 + 0.2 * g.zoomOut,
+      1.4 +
+        Math.min(0.0, 0.2 * g.braking - 0.2 * smoothstep(0.0, 6.0, g.speed)) -
+        0.6 * g.zoomOut
+    ];
+  }
 
   // Sync UI
   g.uiStateBlinkTick = g.tick % 120 < 60;
@@ -339,10 +320,35 @@ export default (
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;
   }
-  if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 4) {
+  if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 5) {
     g = restart(g);
   } else if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
     g = levelUp(g);
+  }
+
+  if (DEV) {
+    if (Debug.getEditable("noSpeed")) {
+      g.speed = 0;
+    }
+    /*
+      Debug.log("descent", descent);
+      Debug.log("acc", g.acc);
+      Debug.log("speed", g.speed);
+      Debug.log("stepIndex", g.stepIndex);
+      Debug.log("altTrackMode", g.altTrackMode);
+      Debug.log(
+        "trackBiome",
+        g.track[0].biomeMix === 0
+          ? g.track[0].biome1.type
+          : g.track[0].biomeMix === 1
+            ? g.track[0].biome2.type
+            : g.track[0].biome1.type +
+              "–>" +
+              g.track[0].biome2.type +
+              " % " +
+              g.track[0].biomeMix.toFixed(2)
+      );
+      */
   }
 
   return g;

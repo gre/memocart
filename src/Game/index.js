@@ -1,6 +1,8 @@
 //@flow
 import FontFaceObserver from "fontfaceobserver";
 import React, { Component } from "react";
+import { DEV } from "./Constants";
+import * as Debug from "../Debug";
 import "./index.css";
 let Logic = require("./Logic").default;
 let { default: Render } = require("./Render");
@@ -21,7 +23,7 @@ console.log("seed", globalSeed);
 
 class GameComponent extends Component {
   state = {
-    fontLoaded: false
+    fontLoaded: !DEV
   };
   gameState = Logic.create(-1, globalSeed);
   getGameState = () => this.gameState;
@@ -29,6 +31,9 @@ class GameComponent extends Component {
     const oldState = this.gameState;
     const newState = Logic[name](oldState, ...args);
     if (newState && newState !== oldState) {
+      if (DEV) {
+        Debug.setEditable("stepIndex", newState.stepIndex);
+      }
       this.gameState = newState;
       return newState;
     } else {
@@ -36,15 +41,30 @@ class GameComponent extends Component {
     }
   };
   componentDidMount() {
-    const font = new FontFaceObserver("MinimalPixels");
-    font
-      .load()
-      .catch(() => {
-        console.log("Font Problem");
-      })
-      .then(() => {
-        this.setState({ fontLoaded: true });
+    if (DEV) {
+      Debug.defineEditable("level", this.gameState.level, level => {
+        if (typeof level === "number") {
+          this.gameState = Logic.create(level, globalSeed);
+        }
       });
+      Debug.defineEditable(
+        "stepIndex",
+        this.gameState.stepIndex,
+        (stepIndex: number) => {
+          this.gameState = { ...this.gameState, stepIndex };
+        }
+      );
+    }
+    if (!this.state.fontLoaded) {
+      new FontFaceObserver("MinimalPixels")
+        .load()
+        .catch(() => {
+          console.log("Font Problem");
+        })
+        .then(() => {
+          this.setState({ fontLoaded: true });
+        });
+    }
   }
   render() {
     const width = 512;

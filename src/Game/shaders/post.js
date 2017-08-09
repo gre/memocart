@@ -7,11 +7,11 @@ export default (regl: *) =>
 precision highp float;
 varying vec2 p;
 uniform sampler2D ui, game;
-uniform float level;
+uniform float level, resolution;
 
 float levelMult = level==-1.0 ? 0.7 : 1.0;
 void main() {
-  vec2 uv = (floor(64.*p)+0.5)/64.;
+  vec2 uv = (floor(resolution*p)+0.5)/resolution;
   vec4 uiC = texture2D(ui, uv);
   vec4 gameC = texture2D(game, uv);
   vec3 c = uiC.rgb;
@@ -35,7 +35,8 @@ void main() {
     uniforms: {
       ui: regl.prop("ui"),
       game: regl.prop("game"),
-      level: regl.prop("level")
+      level: regl.prop("level"),
+      resolution: regl.prop("resolution")
     },
 
     count: 3

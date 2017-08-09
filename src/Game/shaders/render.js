@@ -87,6 +87,10 @@ float sdBox(vec3 p, vec3 b) {
   vec3 d = abs(p) - b;
   return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
 }
+float sdTorus(vec3 p, vec2 t) {
+  vec2 q = vec2(length(p.xz)-t.x,p.y);
+  return length(q)-t.y;
+}
 float udRoundBox(vec3 p, vec3 b, float r) {
   return length(max(abs(p)-b,0.0))-r;
 }
@@ -121,15 +125,15 @@ vec3 interpStep (vec3 p, vec4 prev, vec4 current) {
 // game shapes
 
 const float railw = 0.3;
-const vec3 railS = vec3(0.04, 0.08, 0.5);
-const vec3 boardS = vec3(railw, 0.02, 0.05);
+const vec3 railS = vec3(0.03, 0.08, 0.5);
+const vec3 boardS = vec3(railw + 0.15, 0.02, 0.05);
 vec2 sdRail (vec3 p) {
   float rail = opU(
     sdBox(p - vec3(railw, 0.0, 0.5), railS),
     sdBox(p - vec3(-railw, 0.0, 0.5), railS)
   );
   float board = sdBox(p, boardS);
-  for (float f=0.; f<1.0; f+=0.25) {
+  for (float f=0.; f<1.0; f+=0.3334) {
     board = opU(board, sdBox(p - vec3(0.0, 0.0, f), boardS));
   }
   float pylon = sdCappedCylinder(p - vec3(0.0, -1.03, 0.0), vec2(0.06, 1.0));
@@ -212,26 +216,56 @@ vec2 sdRailAltTrackStep (vec3 p, vec4 data, float i) {
   return shape;
 }
 
+const vec3 cartS = vec3(0.3, 0.23, 0.4);
+const float SWITCH_H = 0.3;
+const float SWITCH_SH = 0.03;
 vec2 sdCartSwitch (vec3 p) {
-  float h = 0.3;
-  float sh = 0.05;
-  p.y += h;
+  p.y += SWITCH_H;
   rot2(p.xy, -0.4 * switchDirection);
-  p.y -= h;
+  p.y -= SWITCH_H;
+  float stick = sdBox(p, vec3(0.01, SWITCH_H, 0.01));
+  p -= vec3(0., SWITCH_H - SWITCH_SH / 2., 0.);
+  float head = sdSphere(p, SWITCH_SH);
   return opU(
-    vec2(sdBox(p - vec3(0., h - sh / 2., 0.), vec3(0.02, sh, 0.02)), 6.),
-    vec2(sdBox(p, vec3(0.01, h, 0.01)), 7.)
+    vec2(head, 6.),
+    vec2(stick, 7.)
   );
 }
 
+vec2 sdCartWheel(vec3 p) {
+  float s = opU(
+    sdSphere(p - vec3(0.03, 0.0, 0.0), 0.04),
+    opS(
+      sdTorus(p.yxz, vec2(0.14, 0.04)),
+      opI(
+        sdBox(p, vec3(0.04, 0.14, 0.14)),
+        sdSphere(p, 0.14)
+      )
+    )
+  );
+  return vec2(s, 9.0);
+}
+
+const vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
 vec2 sdCart(vec3 p) {
-  p.y -= 0.2;
-  vec3 cartS = vec3(0.35, 0.25, 0.5);
-  float w = 0.03;
-  float b = 0.04;
-  float inside = opS( // FIXME how to actually make it smaller on bottom?
-    sdBox(p-vec3(0.0, w, 0.0), cartS-vec3(w, 0.0, w)),
-    sdBox(p, cartS)
+  float w = 0.02;
+  float b = 0.03;
+  vec3 conv = vec3(mix(1.0, smoothstep(0.0, 2.*cartS.y, p.y), 0.3), 1.0, 1.0);
+  p.y -= 0.18;
+  float inside = opS(
+    sdBox(p-vec3(0.0, w, 0.0), cartS*conv-vec3(w, 0.0, w)),
+    sdBox(p, cartS*conv)
+  );
+
+  vec2 wheels = opU(
+    opU(
+      sdCartWheel(p - wheelOff),
+      sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, 1.0))
+    ),
+    opU(
+      sdCartWheel(p - wheelOff * vec3(1.0, 1.0, -1.0)),
+      sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, -1.0))
+    )
   );
   p.y -= cartS.y - b;
   vec3 hs = vec3(b, b, cartS.z);
@@ -264,9 +298,10 @@ vec2 sdCart(vec3 p) {
   oxydation *= smoothstep(0.5, 0.57, s2.z);
   float o2 = smoothstep(0.3, 0.28, s2.y);
   oxydation = mix(oxydation, o2, o2);
-  return opU(opU(
+  return opU(opU(opU(
     vec2(inside, 2.1 + 0.9 * oxydation - 0.001),
     vec2(border, 2.0)),
+    wheels),
     cartSwitch
   );
 }
@@ -295,8 +330,8 @@ vec2 scene(vec3 p) {
   vec3 terrainP = p + terrainDelta;
   vec3 altTerrainP = p + terrainDelta - altTrackOffset;
   vec3 cartP = p - vec3(0.0, -0.8, 0.3);
-  rot2(cartP.yz, atan(-m.y));
   rot2(cartP.xz, atan(-m.x));
+  rot2(cartP.yz, atan(-m.y));
 
   vec2 d = opU(
     vec2(max(0.0, TRACK_SIZE - p.z), 0.0), // black wall at the end (too far to be visible)
@@ -370,12 +405,12 @@ vec3 sceneColor (float m) {
     return vec3(0.0);
   }
   else if (m < 2.0) { // terrain
-    return vec3(0.2, 0.15, 0.1);
+    return vec3(0.25, 0.2, 0.18);
   }
   else if (m < 3.0) { // cart metal
     return mix(
-      vec3(0.15, 0.12, 0.13),
-      vec3(0.5, 0.3, 0.0),
+      vec3(0.5, 0.3, 0.1),
+      vec3(0.8, 0.5, 0.2),
       fract(m)
     );
   }
@@ -383,7 +418,7 @@ vec3 sceneColor (float m) {
     return vec3(0.8);
   }
   else if (m < 5.0) { // wood
-    return vec3(0.5, 0.3, 0.0);
+    return vec3(0.5, 0.3, 0.1);
   }
   else if (m < 6.0) { // pylon
     return vec3(0.5, 0.3, 0.0);
@@ -397,6 +432,9 @@ vec3 sceneColor (float m) {
   else if (m < 9.0) { // rock
     return vec3(0.3);
   }
+  else if (m < 10.0) { // wheel
+    return vec3(0.1);
+  }
   return vec3(0.0);
 }
 
@@ -404,7 +442,7 @@ vec3 biomeAmbientColor (float b, float seed) {
   if (b==B_DARK) {
     return vec3(-.3);
   }
-  return vec3(.5);
+  return vec3(0.1);
 }
 
 vec2 biomeFogRange (float b, float seed) {
@@ -465,7 +503,7 @@ void main() {
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
-  vec3 lightColor = vec3(1.0, 0.9, 0.7);
+  vec3 lightColor = vec3(1.0, 0.95, 0.8);
 
   vec3 ambientColor = mix(
     MIX_BIOMES(biomeAmbientColor, fromBiomes),

@@ -40,14 +40,9 @@ if (process.env.NODE_ENV !== "production") {
       this.props.onChange(parseFloat(e.target.value));
     };
     render() {
-      const { defaultValue } = this.props;
+      const { value } = this.props;
       return (
-        <input
-          defaultValue={defaultValue}
-          type="number"
-          step={0.1}
-          onChange={this.onChange}
-        />
+        <input value={value} type="number" step={1} onChange={this.onChange} />
       );
     }
   }
@@ -118,9 +113,9 @@ if (process.env.NODE_ENV !== "production") {
                     {k}
                   </strong>
                   {typeof v === "number"
-                    ? <EditNumber defaultValue={v} onChange={onChange} />
+                    ? <EditNumber value={v} onChange={onChange} />
                     : typeof v === "boolean"
-                      ? <EditBool defaultValue={v} onChange={onChange} />
+                      ? <EditBool value={v} onChange={onChange} />
                       : v instanceof Array && typeof v[0] === "number"
                         ? v.map((v, i) => {
                             const onChangeItem = v => {
@@ -131,7 +126,7 @@ if (process.env.NODE_ENV !== "production") {
                             return (
                               <EditNumber
                                 key={i}
-                                defaultValue={v}
+                                value={v}
                                 onChange={onChangeItem}
                               />
                             );

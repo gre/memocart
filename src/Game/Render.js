@@ -104,9 +104,11 @@ class Game extends Component {
     body.addEventListener("keyup", this.onKeyUp);
     body.addEventListener("keydown", this.onKeyDown);
 
+    let resolution = 64;
+
     const uiCanvas = document.createElement("canvas");
     const SCALE_UI = 4;
-    uiCanvas.width = uiCanvas.height = 64 * SCALE_UI;
+    uiCanvas.width = uiCanvas.height = resolution * SCALE_UI;
     const ui = uiCanvas.getContext("2d");
     ui.scale(SCALE_UI, SCALE_UI);
 
@@ -118,7 +120,7 @@ class Game extends Component {
     const perlin = regl.texture(genPerlinTextureData(128));
     const track = regl.texture();
     const altTrack = regl.texture();
-    const renderFBOTexture = regl.texture(64);
+    const renderFBOTexture = regl.texture(resolution);
     const renderFBO = regl.framebuffer({
       color: renderFBOTexture
     });
@@ -138,7 +140,8 @@ class Game extends Component {
 
     if (DEV) {
       Debug.defineEditable("high resolution", false, hi => {
-        renderFBOTexture(hi ? 512 : 64);
+        resolution = hi ? 4 * resolution : 64;
+        renderFBOTexture(resolution);
         renderFBO({ color: renderFBOTexture });
       });
     }
@@ -146,7 +149,6 @@ class Game extends Component {
     if (module.hot) {
       function showError(e) {
         console.log(e);
-        throw e;
       }
       //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
@@ -239,7 +241,8 @@ class Game extends Component {
       post({
         ...state,
         game: renderFBOTexture,
-        ui: uiTexture
+        ui: uiTexture,
+        resolution
       });
     });
   }
