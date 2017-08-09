@@ -27,6 +27,7 @@ export default (level: number, seed: number): GameState => {
     stepIndex = 100;
   } else {
     // Game
+    speed = 2;
     stepIndex = LEVEL_SAFE_MULT * level;
     uiState = {
       levelInfoActive: true
@@ -40,6 +41,7 @@ export default (level: number, seed: number): GameState => {
 
   return {
     uiState,
+    uiStateBlinkTick: false,
     status: STATUS_RUNNING,
     tutorial: 0,
     time: 0,

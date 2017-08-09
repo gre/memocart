@@ -59,7 +59,7 @@ const tutorialLogic: TutorialLogic = {
       conditionSkip: never,
       conditionEnter: always,
       tick: tickNoop,
-      conditionLeave: g => g.time - g.startTime > 2
+      conditionLeave: g => g.time - g.startTime > 0.5
     },
     {
       uiState: {

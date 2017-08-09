@@ -14,7 +14,7 @@ import {
   TURN_DX,
   DESCENT_DY
 } from "../Constants";
-import genTrack from "./genTrack";
+import genTrack, { formatTrackIndex } from "./genTrack";
 import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
 import restart from "./restart";
@@ -324,8 +324,15 @@ export default (
         body: "You did it!",
         footer: "Try a longer run..."
       };
+    } else {
+      const topLeft = formatTrackIndex(g.stepIndex);
+      if (!g.uiState || g.uiState.topLeft !== topLeft) {
+        g.uiState = { topLeft };
+      }
     }
   }
+
+  g.uiStateBlinkTick = g.tick % 120 < 60;
 
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;

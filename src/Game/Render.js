@@ -127,7 +127,7 @@ class Game extends Component {
     let post = postShader(regl);
 
     function uiSync(g) {
-      drawUI(g);
+      drawUI(g.uiState, g.uiStateBlinkTick);
       uiTexture({
         data: uiCanvas,
         min: "nearest",
@@ -160,7 +160,8 @@ class Game extends Component {
       module.hot.accept("./drawUI", () => {
         try {
           drawUI = require("./drawUI").default(ui);
-          drawUI(getGameState());
+          const state = getGameState();
+          drawUI(state.uiState, state.uiStateBlinkTick);
         } catch (e) {
           showError(e);
         }
@@ -218,7 +219,7 @@ class Game extends Component {
 
       if (
         prevState.uiState !== state.uiState ||
-        state.level !== prevState.level ||
+        state.uiStateBlinkTick !== prevState.uiStateBlinkTick ||
         state.tick % 60 === 0
       ) {
         uiSync(state);

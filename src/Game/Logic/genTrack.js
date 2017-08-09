@@ -11,6 +11,15 @@ const BIOME_DUR = 2 * BIOME_PAD + 1;
 const BIOME_SAFE_EACH = 10;
 export const LEVEL_SAFE_MULT = BIOME_SAFE_EACH * BIOME_FREQ;
 
+export function formatTrackIndex(trackIndex: number): string {
+  const level = Math.max(0, Math.floor((trackIndex + 10) / LEVEL_SAFE_MULT));
+  const biome = Math.max(
+    0,
+    Math.floor((trackIndex - LEVEL_SAFE_MULT * level) / BIOME_FREQ)
+  );
+  return "AREA  " + level + "-" + biome;
+}
+
 function genBiome(biomeIndex: number, seed: number): Biome {
   const biomeRandom = seedrandom("biome_" + biomeIndex + "_" + seed);
   let type = B_EMPTY;

@@ -1,5 +1,5 @@
 //@flow
-import type { GameState, UIState } from "./Logic/types";
+import type { UIState } from "./Logic/types";
 export default (ui: CanvasRenderingContext2D) => {
   function uiClear() {
     ui.clearRect(0, 0, 64, 64);
@@ -37,9 +37,7 @@ export default (ui: CanvasRenderingContext2D) => {
     ui.restore();
   }
 
-  function uiSync(g: GameState) {
-    const blink = g.tick % 120 < 60;
-    const uiState: ?UIState = g.uiState;
+  function uiSync(uiState: ?UIState, blink: boolean) {
     if (!uiState) {
       uiClear();
       return;
@@ -58,9 +56,9 @@ export default (ui: CanvasRenderingContext2D) => {
       uiLogo();
     }
 
-    if (uiState.levelInfoActive) {
+    if (uiState.topLeft) {
       ui.fillStyle = "#D83";
-      uiText("LVL " + g.level, 2, 2);
+      uiText(uiState.topLeft, 2, 2);
     }
 
     if (uiState.title) {

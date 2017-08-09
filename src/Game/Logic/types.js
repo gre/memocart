@@ -38,6 +38,7 @@ export type UIState = {
   title?: string,
   footer?: string,
   body?: string,
+  topLeft?: string,
   titleCentered?: boolean,
   footerCentered?: boolean,
   footerBlink?: boolean
@@ -45,6 +46,7 @@ export type UIState = {
 
 export type GameState = {
   uiState: ?UIState,
+  uiStateBlinkTick: boolean,
   status: number,
   altTrack: Array<Track>,
   tutorial: number,
