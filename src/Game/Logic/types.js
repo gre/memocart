@@ -2,6 +2,15 @@
 
 export type vec3 = [number, number, number];
 
+export type UserEvents = {
+  keys: { [_: number]: number },
+  keyRightDelta: number,
+  keyUpDelta: number,
+  spacePressed: number,
+  mouseDown: [number, number],
+  mouseAt: [number, number]
+};
+
 export type Biome = {
   biomeSeed: number,
   type: number
@@ -24,9 +33,21 @@ export type Track = {
   intersectionBiome: ?TrackBiome
 };
 
+export type UIState = {
+  logo?: boolean,
+  title?: string,
+  footer?: string,
+  body?: string,
+  titleCentered?: boolean,
+  footerCentered?: boolean,
+  footerBlink?: boolean
+};
+
 export type GameState = {
-  status: *,
+  uiState: ?UIState,
+  status: number,
   altTrack: Array<Track>,
+  tutorial: number,
   time: number,
   startTime: number,
   statusChangedTime: number,
@@ -47,8 +68,10 @@ export type GameState = {
   switchDirectionTarget: number,
   switchDirection: number,
   altTrack: Array<Track>, // wrong turn track data
-  altTrackMode: *,
+  altTrackMode: number,
   altTrackOffset: vec3, // how many x,y does track starts
   stateAtMouseDown: ?GameState,
-  origin: vec3
+  origin: vec3,
+  intersectionBiomeEnd: number,
+  zoomOut: number
 };

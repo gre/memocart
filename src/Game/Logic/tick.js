@@ -19,8 +19,9 @@ import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
 import restart from "./restart";
 import levelUp from "./levelUp";
+import tutorialLogic from "./tutorialLogic";
 import * as Debug from "../../Debug";
-import type { GameState, TrackBiome } from "./types";
+import type { GameState, TrackBiome, UserEvents } from "./types";
 
 function setMatRot(rot: Array<number>, rotX: number, rotY: number) {
   const cx = Math.cos(rotX);
@@ -68,7 +69,7 @@ if (DEV) {
 export default (
   previousState: GameState,
   { time, tick }: { time: number, tick: number },
-  userEvents: *
+  userEvents: UserEvents
 ): GameState => {
   let g = { ...previousState };
 
@@ -87,8 +88,34 @@ export default (
   g.tick = tick;
 
   // consume user events
-
   const freeControls = DEV && Debug.getEditable("freeControls");
+  const spacePressed = userEvents.spacePressed;
+
+  // Handle Tutorial related
+  if (tutorialLogic.condition(g, userEvents)) {
+    const tut = tutorialLogic.steps[g.tutorial];
+    Debug.log("tut", g.tutorial);
+    if (tut) {
+      if (g.uiState === tut.uiState) {
+        // is already current tut
+        if (tut.conditionLeave(g, userEvents)) {
+          g.tutorial++;
+        } else {
+          g = tut.tick(g, userEvents);
+        }
+      } else if (tut.conditionSkip(g, userEvents)) {
+        // tut to be skipped
+        g.tutorial++;
+      } else if (tut.conditionEnter(g, userEvents)) {
+        // tut entered
+        g.uiState = tut.uiState;
+      } else {
+        g.uiState = null;
+      }
+    } else {
+      g.uiState = null;
+    }
+  }
 
   if (g.level >= 0) {
     // User in control!
@@ -98,18 +125,18 @@ export default (
     if (userEvents.keyRightDelta) {
       g.switchDirectionTarget = userEvents.keyRightDelta;
     }
-    g.braking += (userEvents.braking - g.braking) * 0.1;
+    g.braking += (userEvents.spacePressed - g.braking) * 0.1;
 
-    if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 3) {
+    if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 4) {
       return restart(g);
     }
-    if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 3) {
+    if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
       return levelUp(g);
     }
   } else {
     // start screen, demo in control!
 
-    if (userEvents.braking || userEvents.keyRightDelta) {
+    if (spacePressed) {
       return levelUp(g);
     }
 
@@ -263,8 +290,9 @@ export default (
       0.2 * g.zoomOut
   ];
 
-  Debug.log("altTrackMode", g.altTrackMode);
   Debug.log("stepIndex", g.stepIndex);
+  /*
+  Debug.log("altTrackMode", g.altTrackMode);
   Debug.log(
     "trackBiome",
     g.track[0].biomeMix === 0
@@ -277,6 +305,25 @@ export default (
           " % " +
           g.track[0].biomeMix.toFixed(2)
   );
+  */
+
+  // Sync UI
+  if (g.level > 0) {
+    if (g.status === STATUS_GAMEOVER) {
+      g.uiState = {
+        titleCentered: true,
+        title: "Oops!",
+        body: "Remember for\nnext run"
+      };
+    } else if (g.status === STATUS_GAMEOVER) {
+      g.uiState = {
+        titleCentered: true,
+        title: "YES!",
+        body: "You did it!",
+        footer: "Try a longer run..."
+      };
+    }
+  }
 
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;

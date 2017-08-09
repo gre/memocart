@@ -25,7 +25,7 @@ export default (regl: *, framebuffer: *) =>
 precision highp float;
 // global
 varying vec2 uv;
-uniform float time, aspect;
+uniform float time;
 uniform sampler2D perlin;
 // camera
 uniform vec3 origin;
@@ -448,7 +448,7 @@ vec3 normal(vec3 ray_hit_position, float smoothness) {
 }
 
 void main() {
-  vec3 direction = normalize(rot * vec3(uv * vec2(aspect, 1.0), 2.5));
+  vec3 direction = normalize(rot * vec3(uv, 2.5));
   vec2 result = raymarch(origin, direction);
   vec3 intersection = origin + direction * result.x;
   vec3 nrml = normal(intersection, 0.02);
@@ -510,7 +510,6 @@ void main() {
     uniforms: {
       perlin: regl.prop("perlin"),
       time: regl.prop("time"),
-      aspect: regl.prop("aspect"),
       rot: regl.prop("rot"),
       origin: regl.prop("origin"),
       track: regl.prop("track"),

@@ -60,7 +60,7 @@ class Game extends Component {
       keys,
       keyRightDelta,
       keyUpDelta,
-      braking: keys[32],
+      spacePressed: keys[32],
       mouseDown,
       mouseAt
     };
@@ -97,7 +97,7 @@ class Game extends Component {
     const { body } = document;
     const { canvas } = this;
     if (!body || !canvas) return;
-    const { width, height, getGameState, action } = this.props;
+    const { getGameState, action } = this.props;
     for (let k = 0; k < 500; k++) {
       this.keys[k] = 0;
     }
@@ -109,8 +109,6 @@ class Game extends Component {
     uiCanvas.width = uiCanvas.height = 64 * SCALE_UI;
     const ui = uiCanvas.getContext("2d");
     ui.scale(SCALE_UI, SCALE_UI);
-    ui.font = `7px MinimalPixels`;
-    ui.textBaseline = "top";
 
     const gl =
       canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
@@ -162,6 +160,7 @@ class Game extends Component {
       module.hot.accept("./drawUI", () => {
         try {
           drawUI = require("./drawUI").default(ui);
+          drawUI(getGameState());
         } catch (e) {
           showError(e);
         }
@@ -218,7 +217,7 @@ class Game extends Component {
       }
 
       if (
-        prevState.status !== state.status ||
+        prevState.uiState !== state.uiState ||
         state.level !== prevState.level ||
         state.tick % 60 === 0
       ) {
@@ -232,7 +231,6 @@ class Game extends Component {
       });
       render({
         ...state,
-        aspect: width / height,
         altTrack,
         track,
         perlin

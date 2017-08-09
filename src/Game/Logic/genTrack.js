@@ -14,7 +14,7 @@ export const LEVEL_SAFE_MULT = BIOME_SAFE_EACH * BIOME_FREQ;
 function genBiome(biomeIndex: number, seed: number): Biome {
   const biomeRandom = seedrandom("biome_" + biomeIndex + "_" + seed);
   let type = B_EMPTY;
-  const biomeSeed = biomeRandom();
+  let biomeSeed = biomeRandom();
   if (biomeIndex <= 0) {
     type = B_FINISH;
   } else {
@@ -25,6 +25,7 @@ function genBiome(biomeIndex: number, seed: number): Biome {
     const intersectionRoulette = 5;
     if (biomeIndex === 2) {
       type = B_INTERS;
+      biomeSeed = 0.5 + 0.5 * biomeSeed; // this ensure the last turn is always a left turn for the tutorial.
     } else if (biomeIndex > 6 && biomeIndex % BIOME_SAFE_EACH > 1) {
       const intersectionMinReference = Math.floor(
         biomeIndex / intersectionRoulette
