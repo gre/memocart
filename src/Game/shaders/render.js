@@ -139,16 +139,6 @@ vec2 sdRail (vec3 p) {
   ), vec2(pylon, 5.0));
 }
 
-/*
-float sdTunnelStep (vec3 p, vec4 data) {
-  float w = 2.0;
-  float h = 2.0;
-  return sdBox(p, vec3(w/2., h/2., 0.5));
-}
-// ^ this is an attempt but don't work great..
-// instead will do that for now:
-*/
-
 float biomeHaveWalls (float biome, float trackSeed) {
   return biome==B_INTERS ? 0.0 : 1.0;
 }
@@ -171,6 +161,15 @@ float sdRock (vec3 p) {
   return shape;
 }
 
+/*
+float sdTunnelStep (vec3 p, vec4 data) {
+  float w = 2.0;
+  float h = 2.0;
+  return sdBox(p, vec3(w/2., h/2., 0.5));
+}
+// ^ this is an attempt but don't work great..
+// instead will do that for now:
+*/
 #define WALL_WIDTH 100.0
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);

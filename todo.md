@@ -2,7 +2,6 @@
 - iterate on biomes
 - iterate levels
 - more variety in the turn/descent.
-- add basic level 0 help, texts.. (level 0=teaching level (skippable tutorial), maybe could even pause to explain things)
 - quick audio bootstrap
 
 - fix the damn camera <- is it ok now?
@@ -60,6 +59,7 @@ MEMO CART
 
 # perf
 
+- is it possible to calculate more things out of main()?
 - can we not do the tracks for loop? kinda tricky but basically can we use mod() ? mmh
 - are shadows/AO feasible? XD http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf
 

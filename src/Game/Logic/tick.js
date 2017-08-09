@@ -153,10 +153,12 @@ export default (
         g,
         firstTrack.intersectionBiome
       )
-        ? -g.switchDirectionTarget
-        : g.switchDirectionTarget;
+        ? g.switchDirectionTarget
+        : -g.switchDirectionTarget;
     } else {
-      g.switchDirectionTarget = g.stepIndex % 20 < 10 ? -1 : 1;
+      if (g.tick % 60 === 0) {
+        g.switchDirectionTarget = Math.random() < 0.5 ? -1 : 1;
+      }
     }
   }
 

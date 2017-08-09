@@ -16,11 +16,14 @@ if (module.hot) {
   });
 }
 
+const globalSeed = Math.random();
+console.log("seed", globalSeed);
+
 class GameComponent extends Component {
   state = {
     fontLoaded: false
   };
-  gameState = Logic.create(-1, Math.random());
+  gameState = Logic.create(-1, globalSeed);
   getGameState = () => this.gameState;
   action = (name: string, ...args: *) => {
     const oldState = this.gameState;
