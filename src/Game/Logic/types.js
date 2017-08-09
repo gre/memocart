@@ -75,5 +75,6 @@ export type GameState = {
   stateAtMouseDown: ?GameState,
   origin: vec3,
   intersectionBiomeEnd: number,
-  zoomOut: number
+  zoomOut: number,
+  worldDelta: vec3
 };

@@ -7,6 +7,7 @@ let instance;
 const editables = {};
 const editablesHooks = {};
 const logValues = {};
+let errorMessage = "";
 
 export const defineEditable = (
   name: string,
@@ -31,6 +32,45 @@ export const log = (name: string, value: mixed) => {
   if (value === logValues[name]) return;
   logValues[name] = value;
   if (instance) instance.forceUpdate();
+};
+
+// try to run a function, if it throws an exception, all console.logs will get displayed, if there is none, just the error.
+export const tryFunction = (f: Function) => {
+  let logs = [];
+  const oldConsoleLog = console.log;
+  //$FlowFixMe
+  console.log = (...args) => {
+    oldConsoleLog.apply(console, args);
+    logs.push(args[0]);
+  };
+  const oldConsoleWarn = console.warn;
+  //$FlowFixMe
+  console.warn = (...args) => {
+    oldConsoleWarn.apply(console, args);
+    logs.push(args[0]);
+  };
+  const oldConsoleError = console.error;
+  //$FlowFixMe
+  console.error = (...args) => {
+    oldConsoleError.apply(console, args);
+    logs.push(args[0]);
+  };
+  try {
+    f();
+  } catch (e) {
+    logs.push(e.toString());
+  }
+  //$FlowFixMe
+  console.log = oldConsoleLog;
+  //$FlowFixMe
+  console.warn = oldConsoleWarn;
+  //$FlowFixMe
+  console.error = oldConsoleError;
+  const newErrorMessage = logs.join("\n\n").replace(/%c/g, ""); //HACK
+  if (errorMessage !== newErrorMessage) {
+    errorMessage = newErrorMessage;
+    if (instance) instance.forceUpdate();
+  }
 };
 
 if (process.env.NODE_ENV !== "production") {
@@ -77,6 +117,20 @@ if (process.env.NODE_ENV !== "production") {
             border: "1px dashed rgba(255,255,255,0.1)"
           }}
         >
+          {errorMessage
+            ? <pre
+                style={{
+                  maxWidth: "90vw",
+                  overflow: "auto",
+                  maxHeight: 300,
+                  color: "#f33"
+                }}
+              >
+                <code>
+                  {errorMessage}
+                </code>
+              </pre>
+            : null}
           <div>
             {Object.keys(logValues).map(k => {
               const v = logValues[k];

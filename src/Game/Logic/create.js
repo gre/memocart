@@ -80,6 +80,7 @@ If followAltTrack, camera and cart is offset by altTrackOffset.
     altTrackOffset: [0, 0, 0], // how many x,y does track starts
 
     stateAtMouseDown: null,
-    origin: [0, 0.05, 1.4]
+    origin: [0, 0.05, 1.4],
+    worldDelta: [0, 0, 0]
   };
 };

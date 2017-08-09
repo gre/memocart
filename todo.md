@@ -14,7 +14,7 @@
 - HIGH all walls should have small disformation effect.
 - under the rail, there should be rocks & a bit everywhere on the ground. probably we could have diff type of rails. indep from biomes?
 - HOWTO better lighting?
-- are shadows/AO feasible? XD http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf
+- are shadows/AO feasible? XD (especially shadow are kinda cool https://www.youtube.com/watch?v=ZyJCmOOVJto) http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf
 - LOW more complex wall shape https://www.shadertoy.com/view/Xsd3Rs
 - LOW seamless perlin noise plz :D
 - MED the cart could have a light in the front, like in Indian Jones
@@ -39,6 +39,8 @@
 - MED flame/fire https://www.shadertoy.com/results?query=fire ( https://www.shadertoy.com/view/MdX3zr / https://www.shadertoy.com/view/MsSBD1 / https://www.shadertoy.com/view/4dXGR4 )
 - weird shapes https://www.shadertoy.com/view/MsfGzM , https://www.shadertoy.com/view/4ts3z2
 - really basically any object from Indian Jones
+- hardcoded track intersection. (reversed / crossed)
+- walls should have variety of materials.
 
 ## Audio
 

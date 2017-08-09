@@ -19,17 +19,32 @@ function encodeTrack(track: Array<*>, data: Uint8Array) {
   }
 }
 
+const makeSeamless = (w: number, h: number) => (
+  f: (x: number, y: number) => number
+) => (x: number, y: number) =>
+  (f(x, y) * (w - x) * (h - y) +
+    f(x - w, y) * x * (h - y) +
+    f(x - w, y - h) * x * y +
+    f(x, y - h) * (w - x) * y) /
+  (w * h);
+
 function genPerlinTextureData(n) {
   const simplex = new SimplexNoise();
   const data = new Uint8Array(n * n * 4);
+  const seamless = makeSeamless(n, n);
+  const noiseR = seamless((x, y) => simplex.noise3D(x, y, 0));
+  const noiseG = seamless((x, y) => simplex.noise3D(x, y, 1));
+  const noiseB = seamless((x, y) => simplex.noise3D(x, y, 2));
+  const noiseA = seamless((x, y) => simplex.noise3D(x, y, 3));
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
-      data[4 * (n * y + x) + 0] = 255 * (0.5 + 0.5 * simplex.noise3D(x, y, 0));
-      data[4 * (n * y + x) + 1] = 255 * (0.5 + 0.5 * simplex.noise3D(x, y, 1));
-      data[4 * (n * y + x) + 2] = 255 * (0.5 + 0.5 * simplex.noise3D(x, y, 2));
-      data[4 * (n * y + x) + 3] = 255 * (0.5 + 0.5 * simplex.noise3D(x, y, 3));
+      data[4 * (n * y + x) + 0] = 255 * (0.5 + 0.5 * noiseR(x, y));
+      data[4 * (n * y + x) + 1] = 255 * (0.5 + 0.5 * noiseG(x, y));
+      data[4 * (n * y + x) + 2] = 255 * (0.5 + 0.5 * noiseB(x, y));
+      data[4 * (n * y + x) + 3] = 255 * (0.5 + 0.5 * noiseA(x, y));
     }
   }
+
   return {
     data,
     width: n,
@@ -147,34 +162,25 @@ class Game extends Component {
     }
 
     if (module.hot) {
-      function showError(e) {
-        console.log(e);
-      }
       //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
-        try {
+        Debug.tryFunction(() => {
           render = require("./shaders/render").default(regl, renderFBO);
-        } catch (e) {
-          showError(e);
-        }
+        });
       });
       //$FlowFixMe
       module.hot.accept("./drawUI", () => {
-        try {
+        Debug.tryFunction(() => {
           drawUI = require("./drawUI").default(ui);
           const state = getGameState();
           drawUI(state.uiState, state.uiStateBlinkTick);
-        } catch (e) {
-          showError(e);
-        }
+        });
       });
       //$FlowFixMe
       module.hot.accept("./shaders/post", () => {
-        try {
+        Debug.tryFunction(() => {
           post = require("./shaders/post").default(regl);
-        } catch (e) {
-          showError(e);
-        }
+        });
       });
     }
 

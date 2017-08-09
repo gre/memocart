@@ -32,6 +32,7 @@ uniform vec3 origin; // camera position
 uniform mat3 rot; // camera rotation matrix
 // game state
 uniform sampler2D track, altTrack; // 8x1 data textures
+uniform vec3 worldDelta; // accumulated distance from the first track (to generate seamless textures on walls..)
 uniform float trackStepProgress; // move from 0.0 to 1.0 per step. used to interpolate all the things
 uniform vec3 altTrackOffset; // delta position of the altTrack
 uniform float altTrackMode; // see Constants.js
@@ -124,9 +125,11 @@ vec3 interpStep (vec3 p, vec4 prev, vec4 current) {
 
 // game shapes
 
+vec3 worldP;// simulate an absolute world position.
+
 const float railw = 0.3;
 const vec3 railS = vec3(0.03, 0.08, 0.5);
-const vec3 boardS = vec3(railw + 0.15, 0.02, 0.05);
+const vec3 boardS = vec3(railw + 0.1, 0.02, 0.05);
 vec2 sdRail (vec3 p) {
   float rail = opU(
     sdBox(p - vec3(railw, 0.0, 0.5), railS),
@@ -186,6 +189,12 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec2 size =
   vec2(mix(sizeFrom.x, sizeTo.x, zMix), sizeTo.y);
   p.y -= (size.y - 2.0) / 2.0;
+
+  p.x += 0.1 * smoothstep(0.4, 0.6, texture2D(perlin, fract(0.03*worldP.yz)).r);
+  p.y += 0.1 * smoothstep(0.4, 0.6, texture2D(perlin, fract(0.03*worldP.xz)).r);
+
+  //p.x += 0.1 * sin(M_PI*2.0*p.x) * sin(M_PI*2.0*p.y) * sin(M_PI*2.0*p.z);
+
   // TODO interp size with Z and prev
   vec3 hs = vec3(WALL_WIDTH, size.y/2. + 2. * WALL_WIDTH, 0.5);
   vec3 ws = vec3(size.x/2. + 2. * WALL_WIDTH, WALL_WIDTH, 0.5);
@@ -195,8 +204,7 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   float right = sdBox(p-vec3(dx, 0., 0.5), hs);
   float up = sdBox(p-vec3(0., dy, 0.5), ws);
   float down = sdBox(p-vec3(0., -dy, 0.5), ws);
-  return 0.8 * opUs(
-    0.1,
+  return opU(
     opU(up, down),
     opU(left, right)
   );
@@ -326,6 +334,8 @@ vec2 scene(vec3 p) {
   terrainDelta += trackStepProgress * vec3(parseTrackOffset(cartTrackPrev), 1.0);
 
   vec2 m = mix(parseTrackOffset(cartTrackPrev), parseTrackOffset(cartTrackCurrent), trackStepProgress);
+
+  worldP = p + terrainDelta + worldDelta;
 
   vec3 terrainP = p + terrainDelta;
   vec3 altTerrainP = p + terrainDelta - altTrackOffset;
@@ -548,6 +558,7 @@ void main() {
       time: regl.prop("time"),
       rot: regl.prop("rot"),
       origin: regl.prop("origin"),
+      worldDelta: regl.prop("worldDelta"),
       track: regl.prop("track"),
       trackStepProgress: regl.prop("trackStepProgress"),
       altTrack: regl.prop("altTrack"),

@@ -175,6 +175,10 @@ export default (
     g.track = g.track.slice(1);
     g.track.push(genTrack(g.stepIndex - TRACK_SIZE + 1, g.seed));
 
+    g.worldDelta[0] += TURN_DX * droppedTrack.turn;
+    g.worldDelta[1] += DESCENT_DY * droppedTrack.descent;
+    g.worldDelta[2] += 1;
+
     const { intersectionBiome } = g.track[0];
     if (intersectionBiome) {
       g.intersectionBiomeEnd =
