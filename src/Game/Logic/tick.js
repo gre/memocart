@@ -126,23 +126,16 @@ export default (
       g.switchDirectionTarget = userEvents.keyRightDelta;
     }
     g.braking += (userEvents.spacePressed - g.braking) * 0.1;
-
-    if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 4) {
-      return restart(g);
-    }
-    if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
-      return levelUp(g);
-    }
   } else {
     // start screen, demo in control!
 
     if (spacePressed) {
-      return levelUp(g);
+      g = levelUp(g);
     }
 
     if (g.status !== STATUS_RUNNING) {
       if (g.status === STATUS_FINISHED || g.time - g.statusChangedTime > 3) {
-        return restart(g);
+        g = restart(g);
       }
     }
 
@@ -164,7 +157,6 @@ export default (
 
   if (g.stepIndex < 0) {
     g.status = STATUS_FINISHED;
-    return g;
   }
 
   // sync tracks / trackStep
@@ -249,6 +241,9 @@ export default (
     g.rotX += (-0.9 - g.rotX) * 0.008;
     g.rotY += (Math.atan(trackCoords[0][0]) + 0.7 - g.rotY) * 0.008;
     g.zoomOut += (1 - g.zoomOut) * 0.008;
+  } else if (g.status === STATUS_FINISHED) {
+    g.acc = 0;
+    g.speed = 0;
   } else {
     Debug.log("descent", descent);
     Debug.log("acc", g.acc);
@@ -310,6 +305,7 @@ export default (
   */
 
   // Sync UI
+  g.uiStateBlinkTick = g.tick % 120 < 60;
   if (g.level > 0) {
     if (g.status === STATUS_GAMEOVER) {
       const uiState = {
@@ -321,6 +317,7 @@ export default (
         g.uiState = uiState;
       }
     } else if (g.status === STATUS_FINISHED) {
+      // FIXME we never gets there –/o\–
       const uiState = {
         titleCentered: true,
         title: "YES!",
@@ -338,10 +335,14 @@ export default (
     }
   }
 
-  g.uiStateBlinkTick = g.tick % 120 < 60;
-
+  // Sync game status
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;
+  }
+  if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 4) {
+    g = restart(g);
+  } else if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
+    g = levelUp(g);
   }
 
   return g;

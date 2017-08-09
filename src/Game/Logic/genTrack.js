@@ -31,7 +31,7 @@ function genBiome(biomeIndex: number, seed: number): Biome {
     if (r < 0.5) type = B_DARK;
 
     // FIXME maybe can vary that based on levels (aka the index value)?
-    const intersectionRoulette = 5;
+    const intersectionRoulette = 3;
     if (biomeIndex === 2) {
       type = B_INTERS;
       biomeSeed = 0.5 + 0.5 * biomeSeed; // this ensure the last turn is always a left turn for the tutorial.

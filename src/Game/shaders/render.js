@@ -419,7 +419,7 @@ vec2 biomeFogRange (float b, float seed) {
 
 vec3 biomeFogColor (float b, float seed) {
   // nice way to "announce" some biome coming in far forward
-  if (b==B_FINISH) return vec3(1.0);
+  if (b==B_FINISH) return vec3(0.9);
   if (b==B_INTERS) return vec3(0.1);
   return vec3(0.0);
 }

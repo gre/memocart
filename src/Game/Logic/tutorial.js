@@ -59,7 +59,7 @@ const tutorialLogic: TutorialLogic = {
       conditionSkip: never,
       conditionEnter: always,
       tick: tickNoop,
-      conditionLeave: g => g.time - g.startTime > 0.5
+      conditionLeave: g => g.time - g.startTime > 0.2
     },
     {
       uiState: {
@@ -126,7 +126,7 @@ const tutorialLogic: TutorialLogic = {
     {
       uiState: {
         title: "Good Job!",
-        body: "ProTip: you can\nhold SPACE\nto brake"
+        body: "ProTip:\nhold  SPACE\nto   brake"
       },
       conditionSkip: never,
       conditionEnter: afterStepIndex(34),
