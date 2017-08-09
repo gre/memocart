@@ -56,9 +56,10 @@ export default (ui: CanvasRenderingContext2D) => {
       uiLogo();
     }
 
-    if (uiState.topLeft) {
+    if (uiState.area) {
       ui.fillStyle = "#D83";
-      uiText(uiState.topLeft, 2, 2);
+      const w = measureText(uiState.area);
+      uiText(uiState.area, 62 - w, 2);
     }
 
     if (uiState.title) {

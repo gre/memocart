@@ -38,7 +38,7 @@ export type UIState = {
   title?: string,
   footer?: string,
   body?: string,
-  topLeft?: string,
+  area?: string,
   titleCentered?: boolean,
   footerCentered?: boolean,
   footerBlink?: boolean

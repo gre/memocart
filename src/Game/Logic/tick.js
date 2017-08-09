@@ -312,22 +312,28 @@ export default (
   // Sync UI
   if (g.level > 0) {
     if (g.status === STATUS_GAMEOVER) {
-      g.uiState = {
-        titleCentered: true,
+      const uiState = {
         title: "Oops!",
-        body: "Remember for\nnext run"
+        body: "Remember for\nnext run",
+        area: formatTrackIndex(g.stepIndex)
       };
-    } else if (g.status === STATUS_GAMEOVER) {
-      g.uiState = {
+      if (!g.uiState || g.uiState.title !== uiState.title) {
+        g.uiState = uiState;
+      }
+    } else if (g.status === STATUS_FINISHED) {
+      const uiState = {
         titleCentered: true,
         title: "YES!",
         body: "You did it!",
         footer: "Try a longer run..."
       };
+      if (!g.uiState || g.uiState.title !== uiState.title) {
+        g.uiState = uiState;
+      }
     } else {
-      const topLeft = formatTrackIndex(g.stepIndex);
-      if (!g.uiState || g.uiState.topLeft !== topLeft) {
-        g.uiState = { topLeft };
+      const area = formatTrackIndex(g.stepIndex);
+      if (!g.uiState || g.uiState.area !== area) {
+        g.uiState = { area };
       }
     }
   }
