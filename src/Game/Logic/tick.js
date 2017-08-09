@@ -19,7 +19,7 @@ import debugFreeControls from "./debugFreeControls";
 import trackToCoordinates from "./trackToCoordinates";
 import restart from "./restart";
 import levelUp from "./levelUp";
-import tutorialLogic from "./tutorialLogic";
+import tutorial from "./tutorial";
 import * as Debug from "../../Debug";
 import type { GameState, TrackBiome, UserEvents } from "./types";
 
@@ -92,8 +92,8 @@ export default (
   const spacePressed = userEvents.spacePressed;
 
   // Handle Tutorial related
-  if (tutorialLogic.condition(g, userEvents)) {
-    const tut = tutorialLogic.steps[g.tutorial];
+  if (tutorial.condition(g, userEvents)) {
+    const tut = tutorial.steps[g.tutorial];
     Debug.log("tut", g.tutorial);
     if (tut) {
       if (g.uiState === tut.uiState) {
