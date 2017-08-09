@@ -24,20 +24,19 @@ export default (regl: *, framebuffer: *) =>
     frag: GLSL`
 precision highp float;
 // global
-varying vec2 uv;
-uniform float time;
-uniform sampler2D perlin;
+varying vec2 uv; // screen coordinate
+uniform float time; // time in seconds
+uniform sampler2D perlin; // perlin noise texture
 // camera
-uniform vec3 origin;
-uniform mat3 rot;
+uniform vec3 origin; // camera position
+uniform mat3 rot; // camera rotation matrix
 // game state
-uniform sampler2D track; // 8x1 data texture
-uniform sampler2D altTrack; // 8x1 data texture
-uniform float trackStepProgress;
-uniform vec3 altTrackOffset;
-uniform float altTrackMode;
-uniform float switchDirection;
-uniform float intersectionBiomeEnd;
+uniform sampler2D track, altTrack; // 8x1 data textures
+uniform float trackStepProgress; // move from 0.0 to 1.0 per step. used to interpolate all the things
+uniform vec3 altTrackOffset; // delta position of the altTrack
+uniform float altTrackMode; // see Constants.js
+uniform float switchDirection; // position of the switch from -1.0 to 1.0
+uniform float intersectionBiomeEnd; // how many step before the end of an intersection. used to place the "Rock" object.
 
 ${INJECT}
 #define INF 999.0
