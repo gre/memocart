@@ -3,6 +3,7 @@
 - iterate on biomes
 - quick audio bootstrap
 - camera is a bit misplaced
+- WTF shader compilation
 
 ## Game
 -? gamepad support

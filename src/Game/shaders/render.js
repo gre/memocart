@@ -537,8 +537,8 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   }
   else if (m < 11.0) { // firefly
     return mix(
-      vec3(1.0, 2.0, 1.0),
-      vec3(1.0, 2.0, 3.0),
+      vec3(0.8, 2.0, 0.8),
+      vec3(0.8, 1.8, 2.0),
       fract(m)
     );
   }

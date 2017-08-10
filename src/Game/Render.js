@@ -284,7 +284,7 @@ class Game extends Component {
 
       persistence({
         framebuffer: renderFBO,
-        amount: 0.6,
+        amount: 0.5,
         back,
         front
       });

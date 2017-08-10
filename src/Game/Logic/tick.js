@@ -282,8 +282,8 @@ export default (
   if (!freeControls) {
     g.origin = [
       0.0 - 1 * g.zoomOut,
-      0.0 + 0.2 * g.zoomOut,
-      1.2 +
+      0 + 0.2 * g.zoomOut,
+      1.3 +
         Math.min(0.0, 0.2 * g.braking - 0.1 * smoothstep(0.0, 6.0, g.speed)) -
         0.6 * g.zoomOut
     ];
