@@ -18,9 +18,9 @@ const INJECT = Object.keys(Constants)
   .filter(v => v)
   .join("\n");
 
-export default (regl: *, framebuffer: *) =>
+export default (regl: *) =>
   regl({
-    framebuffer,
+    framebuffer: regl.prop("framebuffer"),
     frag: GLSL`
 precision highp float;
 // global

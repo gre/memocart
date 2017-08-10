@@ -6,6 +6,8 @@ import SimplexNoise from "simplex-noise";
 import * as Debug from "../Debug";
 import { DEV, TRACK_SIZE } from "./Constants";
 import renderShader from "./shaders/render";
+import persistenceShader from "./shaders/persistence";
+import copyShader from "./shaders/copy";
 import makeDrawUI from "./drawUI";
 
 function encodeTrack(track: Array<*>, data: Uint8Array) {
@@ -141,8 +143,20 @@ class Game extends Component {
     const renderFBO = regl.framebuffer({
       color: renderFBOTexture
     });
+    const fbo1Texture = regl.texture(resolution);
+    const fbo1 = regl.framebuffer({
+      color: fbo1Texture
+    });
+    const fbo2Texture = regl.texture(resolution);
+    const fbo2 = regl.framebuffer({
+      color: fbo2Texture
+    });
+    let swapFbos = [fbo1, fbo2];
+    let swapFboTextures = [fbo1Texture, fbo2Texture];
     let drawUI = makeDrawUI(ui);
-    let render = renderShader(regl, renderFBO);
+    let render = renderShader(regl);
+    let persistence = persistenceShader(regl);
+    let copy = copyShader(regl);
     let post = postShader(regl);
 
     function uiSync(g) {
@@ -160,6 +174,10 @@ class Game extends Component {
         resolution = hi ? 4 * resolution : 64;
         renderFBOTexture(resolution);
         renderFBO({ color: renderFBOTexture });
+        fbo1Texture(resolution);
+        fbo1({ color: fbo1Texture });
+        fbo2Texture(resolution);
+        fbo2({ color: fbo2Texture });
       });
     }
 
@@ -167,7 +185,7 @@ class Game extends Component {
       //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
         Debug.tryFunction(() => {
-          render = require("./shaders/render").default(regl, renderFBO);
+          render = require("./shaders/render").default(regl);
         });
       });
       //$FlowFixMe
@@ -182,6 +200,12 @@ class Game extends Component {
       module.hot.accept("./shaders/post", () => {
         Debug.tryFunction(() => {
           post = require("./shaders/post").default(regl);
+        });
+      });
+      //$FlowFixMe
+      module.hot.accept("./shaders/persistence", () => {
+        Debug.tryFunction(() => {
+          persistence = require("./shaders/persistence").default(regl);
         });
       });
     }
@@ -235,23 +259,56 @@ class Game extends Component {
         uiSync(state);
       }
 
+      const [backFBO, frontFBO] = swapFbos;
+      const [back, front] = swapFboTextures;
+
+      regl.clear({
+        framebuffer: frontFBO,
+        color: [0, 0, 0, 0],
+        depth: 1
+      });
+
+      render({
+        ...state,
+        framebuffer: frontFBO,
+        altTrack,
+        track,
+        perlin
+      });
+
       regl.clear({
         framebuffer: renderFBO,
         color: [0, 0, 0, 0],
         depth: 1
       });
-      render({
-        ...state,
-        altTrack,
-        track,
-        perlin
+
+      persistence({
+        framebuffer: renderFBO,
+        amount: 0.6,
+        back,
+        front
       });
+
+      regl.clear({
+        framebuffer: frontFBO,
+        color: [0, 0, 0, 0],
+        depth: 1
+      });
+
+      copy({
+        framebuffer: frontFBO,
+        t: renderFBOTexture
+      });
+
       post({
         ...state,
         game: renderFBOTexture,
         ui: uiTexture,
         resolution
       });
+
+      swapFbos = [frontFBO, backFBO];
+      swapFboTextures = [front, back];
     });
   }
 
