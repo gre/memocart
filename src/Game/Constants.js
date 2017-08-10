@@ -13,6 +13,7 @@ export const STATUS_GAMEOVER = 2;
 export const B_INTERS = 0; // biome used for when there is an intersection to take
 export const B_EMPTY = 1; // generic biome without anything special in it
 export const B_DARK = 2; // dark biome with firefly
+export const B_GOLD = 3;
 export const B_FINISH = 15; // the last tile biome
 
 // Alt Track logic

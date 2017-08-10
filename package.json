@@ -6,6 +6,7 @@
     "fontfaceobserver": "^2.0.13",
     "gl-mat3": "^1.0.0",
     "gl-vec3": "^1.0.3",
+    "lodash": "^4.17.4",
     "raf": "^3.3.2",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",

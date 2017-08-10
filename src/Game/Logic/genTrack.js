@@ -1,8 +1,9 @@
 //@flow
 import seedrandom from "seedrandom";
 import smoothstep from "smoothstep";
+import memoize from "lodash/memoize";
 import mix from "./mix";
-import { B_EMPTY, B_DARK, B_INTERS, B_FINISH } from "../Constants";
+import { B_EMPTY, B_DARK, B_GOLD, B_INTERS, B_FINISH } from "../Constants";
 import type { Biome, TrackBiome, Track } from "./types";
 const BIOME_FREQ = 20;
 const BIOME_WINDOW_TRANSITION = 8;
@@ -28,7 +29,8 @@ function genBiome(biomeIndex: number, seed: number): Biome {
     type = B_FINISH;
   } else {
     const r = biomeRandom();
-    if (r < 0.5) type = B_DARK;
+    if (r < 0.1) type = B_DARK;
+    else if (r < 0.2) type = B_GOLD;
 
     // FIXME maybe can vary that based on levels (aka the index value)?
     const intersectionRoulette = 3;
@@ -76,7 +78,7 @@ const makeTrackBiome = (
   duration
 });
 
-export default function genTrack(trackIndex: number, seed: number): Track {
+function genTrack(trackIndex: number, seed: number): Track {
   const globalRandom = seedrandom("track_" + seed);
   const trackRandom = seedrandom("track_" + trackIndex + "_" + seed);
   const trackSeed = trackRandom();
@@ -165,3 +167,5 @@ export default function genTrack(trackIndex: number, seed: number): Track {
     intersectionBiome
   };
 }
+
+export default memoize(genTrack);

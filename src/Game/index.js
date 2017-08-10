@@ -18,12 +18,14 @@ if (module.hot) {
   });
 }
 
+const delay = ms => new Promise(success => setTimeout(success, ms));
+
 const globalSeed = Math.random();
 console.log("seed", globalSeed);
 
 class GameComponent extends Component {
   state = {
-    fontLoaded: !DEV
+    loaded: false
   };
   gameState = Logic.create(-1, globalSeed);
   getGameState = () => this.gameState;
@@ -31,9 +33,6 @@ class GameComponent extends Component {
     const oldState = this.gameState;
     const newState = Logic[name](oldState, ...args);
     if (newState && newState !== oldState) {
-      if (DEV) {
-        Debug.setEditable("stepIndex", newState.stepIndex);
-      }
       this.gameState = newState;
       return newState;
     } else {
@@ -47,22 +46,20 @@ class GameComponent extends Component {
           this.gameState = Logic.create(level, globalSeed);
         }
       });
-      Debug.defineEditable(
-        "stepIndex",
-        this.gameState.stepIndex,
-        (stepIndex: number) => {
-          this.gameState = { ...this.gameState, stepIndex };
-        }
-      );
     }
-    if (!this.state.fontLoaded) {
-      new FontFaceObserver("MinimalPixels")
-        .load()
+    if (!this.state.loaded) {
+      Promise.all([
+        delay(500),
+        Promise.race([
+          new FontFaceObserver("MinimalPixels").load(),
+          delay(3000)
+        ])
+      ])
         .catch(() => {
           console.log("Font Problem");
         })
         .then(() => {
-          this.setState({ fontLoaded: true });
+          this.setState({ loaded: true });
         });
     }
   }
@@ -71,7 +68,7 @@ class GameComponent extends Component {
     const height = 512;
     return (
       <div className="game" style={{ width, height }}>
-        {!this.state.fontLoaded
+        {!this.state.loaded
           ? <div>Loading...</div>
           : <Render
               width={width}

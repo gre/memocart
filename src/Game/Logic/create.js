@@ -1,6 +1,12 @@
 //@flow
 import mat3 from "gl-mat3";
-import { STATUS_RUNNING, TRACK_SIZE, ALTT_OFF } from "../Constants";
+import {
+  STATUS_RUNNING,
+  TRACK_SIZE,
+  ALTT_OFF,
+  TURN_DX,
+  DESCENT_DY
+} from "../Constants";
 import genTrack, { LEVEL_SAFE_MULT } from "./genTrack";
 import type { GameState } from "./types";
 
@@ -37,6 +43,15 @@ export default (level: number, seed: number): GameState => {
   const track = [];
   for (let i = 0; track.length < TRACK_SIZE; i--) {
     track.push(genTrack(stepIndex + i, seed));
+  }
+
+  // worldDelta is relative to the end position
+  const worldDelta = [0, 0, 0];
+  for (let i = 0; i < stepIndex; i++) {
+    const t = genTrack(i, seed);
+    worldDelta[0] -= TURN_DX * t.turn;
+    worldDelta[1] -= DESCENT_DY * t.descent;
+    worldDelta[2] -= 1;
   }
 
   return {
@@ -81,6 +96,6 @@ If followAltTrack, camera and cart is offset by altTrackOffset.
 
     stateAtMouseDown: null,
     origin: [0, 0.05, 1.4],
-    worldDelta: [0, 0, 0]
+    worldDelta
   };
 };

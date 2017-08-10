@@ -334,25 +334,26 @@ export default (
     if (Debug.getEditable("noSpeed")) {
       g.speed = 0;
     }
+
+    Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
     /*
       Debug.log("descent", descent);
       Debug.log("acc", g.acc);
       Debug.log("speed", g.speed);
       Debug.log("stepIndex", g.stepIndex);
-      Debug.log("altTrackMode", g.altTrackMode);
-      Debug.log(
-        "trackBiome",
-        g.track[0].biomeMix === 0
-          ? g.track[0].biome1.type
-          : g.track[0].biomeMix === 1
-            ? g.track[0].biome2.type
-            : g.track[0].biome1.type +
-              "–>" +
-              g.track[0].biome2.type +
-              " % " +
-              g.track[0].biomeMix.toFixed(2)
-      );
-      */
+      Debug.log("altTrackMode", g.altTrackMode);*/
+    Debug.log(
+      "trackBiome",
+      g.track[0].biomeMix === 0
+        ? g.track[0].biome1.type
+        : g.track[0].biomeMix === 1
+          ? g.track[0].biome2.type
+          : g.track[0].biome1.type +
+            "–>" +
+            g.track[0].biome2.type +
+            " % " +
+            g.track[0].biomeMix.toFixed(2)
+    );
   }
 
   return g;
