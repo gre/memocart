@@ -197,9 +197,11 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
 
   vec3 disp = vec3(0.0);
 
-  disp.x -= 0.1 * smoothstep(0.3, 0.0, worldNoiseX2.g);
-  disp.x -= 0.01 * smoothstep(-0.4, 0.6, worldNoiseX3.g);
-  disp.x += 0.05 * smoothstep(-0.4, 0.0, worldNoiseX1.r);
+  disp.x -= 0.1 * smoothstep(0.2, 0.0, worldNoiseX3.g);
+  disp.x += 0.08 * smoothstep(0.4, 0.0, worldNoiseX2.g);
+  disp.x -= 0.02 * smoothstep(-0.2, 0.0, worldNoiseX2.r);
+  disp.x += 0.01 * smoothstep(-0.2, 0.0, worldNoiseX1.g);
+  disp.x += 0.03 * smoothstep(-0.4, -0.3, worldNoiseX1.b);
 
   disp.y += 0.1 * smoothstep(-0.4, 0.2, worldNoiseY2.r);
 
