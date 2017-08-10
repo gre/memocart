@@ -2,6 +2,7 @@
 - improve map (turn,descent => needs variety to feel more unique & less crazy) / levels / intersect position to have a nice gradual gameplay
 - iterate on biomes
 - quick audio bootstrap
+- camera is a bit misplaced
 
 ## Game
 -? gamepad support

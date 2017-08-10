@@ -50,7 +50,9 @@ function genPerlinTextureData(n) {
     width: n,
     height: n,
     mag: "linear",
-    min: "linear"
+    min: "linear",
+    wrapS: "repeat",
+    wrapT: "repeat"
   };
 }
 

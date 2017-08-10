@@ -123,9 +123,14 @@ vec3 interpStep (vec3 p, vec4 prev, vec4 current) {
   return p - vec3(d, 0.0);
 }
 
-// game shapes
+// game globals
+vec3 worldP;// simulate an absolute world position
+// perlin noise values from -1 to 1
+vec4 worldNoiseX1, worldNoiseY1, worldNoiseZ1;
+vec4 worldNoiseX2, worldNoiseY2, worldNoiseZ2;
+vec4 worldNoiseX3, worldNoiseY3, worldNoiseZ3;
 
-vec3 worldP;// simulate an absolute world position.
+// game shapes
 
 const float railw = 0.3;
 const vec3 railS = vec3(0.03, 0.08, 0.5);
@@ -190,20 +195,33 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec2(mix(sizeFrom.x, sizeTo.x, zMix), sizeTo.y);
   p.y -= (size.y - 2.0) / 2.0;
 
-  p.x += 0.1 * smoothstep(0.4, 0.6, texture2D(perlin, fract(0.03*worldP.yz)).r);
-  p.y += 0.1 * smoothstep(0.4, 0.6, texture2D(perlin, fract(0.03*worldP.xz)).r);
+  vec3 disp = vec3(0.0);
+
+  disp.x -= 0.1 * smoothstep(0.3, 0.0, worldNoiseX2.g);
+  disp.x -= 0.01 * smoothstep(-0.4, 0.6, worldNoiseX3.g);
+  disp.x += 0.05 * smoothstep(-0.4, 0.0, worldNoiseX1.r);
+
+  disp.y += 0.1 * smoothstep(-0.4, 0.2, worldNoiseY2.r);
+
+  disp.z += 0.2 * mix(
+    mix(smoothstep(0.5, 0.6, worldNoiseZ2.r), 0.0, 0.5 * smoothstep(-0.4, 0.6, worldNoiseZ3.r)),
+    0.5 * smoothstep(0.2, -0.6, worldNoiseZ1.g),
+    0.8 * smoothstep(-0.4, 0.6, worldNoiseZ3.a)
+  );
 
   //p.x += 0.1 * sin(M_PI*2.0*p.x) * sin(M_PI*2.0*p.y) * sin(M_PI*2.0*p.z);
 
   // TODO interp size with Z and prev
   vec3 hs = vec3(WALL_WIDTH, size.y/2. + 2. * WALL_WIDTH, 0.5);
   vec3 ws = vec3(size.x/2. + 2. * WALL_WIDTH, WALL_WIDTH, 0.5);
-  float dx = size.x/2. + WALL_WIDTH;
-  float dy = size.y/2. + WALL_WIDTH;
-  float left = sdBox(p-vec3(-dx, 0., 0.5), hs);
-  float right = sdBox(p-vec3(dx, 0., 0.5), hs);
-  float up = sdBox(p-vec3(0., dy, 0.5), ws);
-  float down = sdBox(p-vec3(0., -dy, 0.5), ws);
+  disp.z += 0.5;
+  vec3 wallX = disp, wallY = disp;
+  wallX.x += size.x/2. + WALL_WIDTH;
+  wallY.y += size.y/2. + WALL_WIDTH;
+  float left = sdBox(p-vec3(-1.0,1.0,1.0)*wallX, hs);
+  float right = sdBox(p-wallX, hs);
+  float up = sdBox(p-wallY, ws);
+  float down = sdBox(p-vec3(0.0,-1.0,1.0)*wallY, ws);
   return opU(
     opU(up, down),
     opU(left, right)
@@ -336,6 +354,16 @@ vec2 scene(vec3 p) {
   vec2 m = mix(parseTrackOffset(cartTrackPrev), parseTrackOffset(cartTrackCurrent), trackStepProgress);
 
   worldP = p + terrainDelta + worldDelta;
+  float n1=0.07, n2=0.03, n3=0.005;
+  worldNoiseX1 = 2.0 * (texture2D(perlin, fract(n1 * worldP.yz))-0.5);
+  worldNoiseY1 = 2.0 * (texture2D(perlin, fract(n1 * worldP.xz))-0.5);
+  worldNoiseZ1 = 2.0 * (texture2D(perlin, fract(n1 * worldP.xy))-0.5);
+  worldNoiseX2 = 2.0 * (texture2D(perlin, fract(n2 * worldP.yz))-0.5);
+  worldNoiseY2 = 2.0 * (texture2D(perlin, fract(n2 * worldP.xz))-0.5);
+  worldNoiseZ2 = 2.0 * (texture2D(perlin, fract(n2 * worldP.xy))-0.5);
+  worldNoiseX3 = 2.0 * (texture2D(perlin, fract(n3 * worldP.yz))-0.5);
+  worldNoiseY3 = 2.0 * (texture2D(perlin, fract(n3 * worldP.xz))-0.5);
+  worldNoiseZ3 = 2.0 * (texture2D(perlin, fract(n3 * worldP.xy))-0.5);
 
   vec3 terrainP = p + terrainDelta;
   vec3 altTerrainP = p + terrainDelta - altTrackOffset;

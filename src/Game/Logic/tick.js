@@ -267,7 +267,7 @@ export default (
       vec3.add(targetP, coords[n], relativeFirst);
       vec3.add(targetP, targetP, relativeLast);
       // targetP = (1-p)*c[1] + c[n] + (c[n+1]-c[c])*p
-      targetRotX = Math.atan(-0.4 + 0.5 * targetP[1] / n);
+      targetRotX = Math.atan(-0.2 + 0.5 * targetP[1] / n);
       targetRotY = Math.atan(0.8 * targetP[0] / n);
       g.rotX += (targetRotX - g.rotX) * 0.03;
       g.rotY += (targetRotY - g.rotY) * 0.03;
@@ -283,8 +283,8 @@ export default (
     g.origin = [
       0.0 - 1 * g.zoomOut,
       0.0 + 0.2 * g.zoomOut,
-      1.4 +
-        Math.min(0.0, 0.2 * g.braking - 0.2 * smoothstep(0.0, 6.0, g.speed)) -
+      1.2 +
+        Math.min(0.0, 0.2 * g.braking - 0.1 * smoothstep(0.0, 6.0, g.speed)) -
         0.6 * g.zoomOut
     ];
   }
