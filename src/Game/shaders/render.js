@@ -197,8 +197,10 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
 
   vec3 disp = vec3(0.0);
 
-  disp.x -= 0.1 * smoothstep(0.2, 0.0, worldNoiseX3.g);
-  disp.x += 0.08 * smoothstep(0.4, 0.0, worldNoiseX2.g);
+  // FIXME vary these based on biome factor...
+
+  disp.x += 0.14 * smoothstep(0.0, 0.2, worldNoiseX3.g);
+  disp.x -= 0.08 * smoothstep(0.0, 0.4, worldNoiseX2.g);
   disp.x -= 0.02 * smoothstep(-0.2, 0.0, worldNoiseX2.r);
   disp.x += 0.01 * smoothstep(-0.2, 0.0, worldNoiseX1.g);
   disp.x += 0.03 * smoothstep(-0.4, -0.3, worldNoiseX1.b);
@@ -539,7 +541,7 @@ void main() {
   vec4 fromBiomes = parseTrackBiomes(fromData);
   vec4 toBiomes = parseTrackBiomes(toData);
 
-  vec3 light_dir = normalize(vec3(0.0, 1.0, 0.0));
+  vec3 light_dir = normalize(vec3(0.0, 0.5, -1.0));
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
