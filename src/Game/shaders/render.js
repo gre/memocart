@@ -266,13 +266,9 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
 }
 
 float biomeFireflyCount (float biome, float seed) {
-  if (biome == B_DARK) {
-    return seed + 3.0 * seed * seed;
-  }
-  else if (biome == B_INTERS) {
-    return 1.3 * fract(2.0 * seed);
-  }
-  return step(seed, 0.01);
+  return step(B_DARK, biome) * step(biome, B_DARK) * (seed + 3.0 * seed * seed) +
+  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.3 * fract(2.0 * seed) +
+  step(seed, 0.01);
 }
 
 vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
@@ -546,10 +542,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 }
 
 vec3 biomeAmbientColor (float b, float seed) {
-  if (b==B_DARK) {
-    return vec3(-.3);
-  }
-  return vec3(0.1);
+  return vec3(0.2) + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.5);
 }
 
 vec2 biomeFogRange (float b, float seed) {
@@ -564,9 +557,10 @@ vec2 biomeFogRange (float b, float seed) {
 
 vec3 biomeFogColor (float b, float seed) {
   // nice way to "announce" some biome coming in far forward
-  if (b==B_FINISH) return vec3(0.9);
-  if (b==B_INTERS) return vec3(0.1);
-  return vec3(0.0);
+  return vec3(
+    step(B_FINISH, b) * step(b, B_FINISH) * 0.9 +
+    step(B_INTERS, b) * step(b, B_INTERS) * 0.1
+  );
 }
 
 vec2 raymarch(vec3 position, vec3 direction) {
