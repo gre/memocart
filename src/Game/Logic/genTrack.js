@@ -45,7 +45,7 @@ function genBiome(biomeIndex: number, seed: number): Biome {
         "biome_min_" + intersectionMinReference
       );
       const winner = Math.floor(
-        intersectionMinReferenceRandom() * intersectionRoulette
+        intersectionMinReferenceRandom() * (intersectionRoulette - 1) // we need one safe track to avoid 2 following intersection
       );
       if (biomeIndex % intersectionRoulette === winner) {
         type = B_INTERS;

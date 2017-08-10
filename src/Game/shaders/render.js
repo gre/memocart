@@ -94,9 +94,6 @@ float sdTorus(vec3 p, vec2 t) {
   vec2 q = vec2(length(p.xz)-t.x,p.y);
   return length(q)-t.y;
 }
-float udRoundBox(vec3 p, vec3 b, float r) {
-  return length(max(abs(p)-b,0.0))-r;
-}
 
 // game logic
 
@@ -170,9 +167,9 @@ vec2 sdRail (vec3 p) {
     sdBox(p - vec3(-railw, 0.0, 0.5), railS)
   );
   float board = sdBox(p, boardS);
-  for (float f=0.; f<1.0; f+=0.3334) {
-    board = opU(board, sdBox(p - vec3(0.0, 0.0, f), boardS));
-  }
+  board = opU(board, sdBox(p, boardS));
+  board = opU(board, sdBox(p - vec3(0.0, 0.0, 0.33), boardS));
+  board = opU(board, sdBox(p - vec3(0.0, 0.0, 0.66), boardS));
   float pylon = sdCappedCylinder(p - vec3(0.0, -1.03, 0.0), vec2(0.06, 1.0));
   return opU(opU(
     vec2(rail, 3.0),
@@ -181,7 +178,7 @@ vec2 sdRail (vec3 p) {
 }
 
 float biomeHaveWalls (float biome, float trackSeed) {
-  return biome==B_INTERS ? 0.0 : 1.0;
+  return 1.0 - step(biome, B_INTERS) * step(B_INTERS, biome);
 }
 
 vec2 biomeRoomSize (float biome, float trackSeed) {
@@ -206,15 +203,6 @@ float sdRock (vec3 p) {
   return shape;
 }
 
-/*
-float sdTunnelStep (vec3 p, vec4 data) {
-  float w = 2.0;
-  float h = 2.0;
-  return sdBox(p, vec3(w/2., h/2., 0.5));
-}
-// ^ this is an attempt but don't work great..
-// instead will do that for now:
-*/
 #define WALL_WIDTH 100.0
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);
@@ -246,8 +234,6 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
     0.8 * smoothstep(-0.4, 0.6, worldNoiseL[2].z)
   );
 
-  //p.x += 0.1 * sin(M_PI*2.0*p.x) * sin(M_PI*2.0*p.y) * sin(M_PI*2.0*p.z);
-
   // TODO interp size with Z and prev
   vec3 hs = vec3(WALL_WIDTH, size.y/2. + 2. * WALL_WIDTH, 0.5);
   vec3 ws = vec3(size.x/2. + 2. * WALL_WIDTH, WALL_WIDTH, 0.5);
@@ -278,9 +264,9 @@ vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
   float firefly = MIX_BIOMES(biomes, biomeFireflyCount);
   if (firefly >= 1.0) {
     vec3 offset = vec3(
-      1.0 * cos((0.8) * time + 10. * absZ),
-      1.2 + sin(0.02 * (mod(absZ, 10.0)) * time + 43. * absZ),
-      0.2 * cos(5.0 * time + 345. * absZ)
+      1.0 * cos(0.8 * time + absZ),
+      1.2 + sin(0.02 * (mod(absZ, 10.0)) * time + absZ),
+      0.2 * cos(5.0 * time + absZ)
     );
     o = opU(o, vec2(sdSphere(p - offset, 0.04), 10.0 + 0.99 * pow(biomes[3], 2.0)));
   }
@@ -477,15 +463,11 @@ vec2 scene(vec3 p) {
   d = opU(d, vec2(tunnel, 1.0));
   d = opU(d, rails);
   d = opU(d, objects);
-
   return d;
 }
 
 vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
-  if (m < 0.0) {
-    return vec3(0.0);
-  }
-  else if (m < 1.0) {
+  if (m < 1.0) {
     return vec3(0.0);
   }
   else if (m < 2.0) { // terrain
@@ -542,7 +524,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 }
 
 vec3 biomeAmbientColor (float b, float seed) {
-  return vec3(0.2) + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.5);
+  return vec3(0.1) + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.4);
 }
 
 vec2 biomeFogRange (float b, float seed) {
@@ -621,7 +603,6 @@ void main() {
     MIX_BIOMES_2args(toBiomes, sceneColor, result.y, nrml),
     zFract
   );
-
   vec3 ambientColor = mix(
     MIX_BIOMES(fromBiomes, biomeAmbientColor),
     MIX_BIOMES(toBiomes, biomeAmbientColor),
@@ -643,15 +624,8 @@ void main() {
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
   vec3 lightColor = vec3(1.0);
-
   float fog = smoothstep(fogRange[0], fogRange[1], result.x);
-
-  //fog=0.0;
-  //diffuse += (1.0-diffuse)*0.5;
-
-  // FIXME specular?
   diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor), fogColor, fog);
-
   gl_FragColor = vec4(diffuseLit, 1.0);
 }
 `,
