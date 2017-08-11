@@ -1,5 +1,6 @@
 //@flow
 import React, { Component } from "react";
+import smoothstep from "smoothstep";
 import createREGL from "regl";
 import postShader from "./shaders/post";
 import SimplexNoise from "simplex-noise";
@@ -154,7 +155,7 @@ class Game extends Component {
     let swapFbos = [fbo1, fbo2];
     let swapFboTextures = [fbo1Texture, fbo2Texture];
     let drawUI = makeDrawUI(ui);
-    let render = renderShader(regl, this.props.lowQuality);
+    let render = renderShader(regl, this.props.quality);
     let persistence = persistenceShader(regl);
     let copy = copyShader(regl);
     let post = postShader(regl);
@@ -187,7 +188,7 @@ class Game extends Component {
         Debug.tryFunction(() => {
           render = require("./shaders/render").default(
             regl,
-            this.props.lowQuality
+            this.props.quality
           );
         });
       });
@@ -272,7 +273,6 @@ class Game extends Component {
         color: [0, 0, 0, 0],
         depth: 1
       });
-
       render({
         ...state,
         framebuffer: renderFBO,
@@ -281,6 +281,11 @@ class Game extends Component {
         perlin
       });
 
+      regl.clear({
+        framebuffer: frontFBO,
+        color: [0, 0, 0, 0],
+        depth: 1
+      });
       copy({
         framebuffer: frontFBO,
         t: renderFBOTexture
@@ -291,10 +296,9 @@ class Game extends Component {
         color: [0, 0, 0, 0],
         depth: 1
       });
-
       persistence({
         framebuffer: frontFBO,
-        amount: 0.5,
+        amount: 0.1 + 0.6 * smoothstep(4.0, 20.0, state.speed),
         back,
         front: renderFBOTexture
       });

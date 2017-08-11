@@ -23,9 +23,13 @@ const delay = ms => new Promise(success => setTimeout(success, ms));
 const globalSeed = Math.random();
 console.log("seed", globalSeed);
 
+const fontLoad = new FontFaceObserver("MinimalPixels").load().catch(() => {
+  console.error("Font Loading Problem");
+});
+
 class GameComponent extends Component {
   state = {
-    loaded: false
+    wait: this.props.quality ? -1 : 30
   };
   gameState = Logic.create(-1, globalSeed);
   getGameState = () => this.gameState;
@@ -47,41 +51,57 @@ class GameComponent extends Component {
         }
       });
     }
-    if (!this.state.loaded) {
-      Promise.all([
-        delay(500),
-        Promise.race([
-          new FontFaceObserver("MinimalPixels").load(),
-          delay(3000)
-        ])
-      ])
-        .catch(() => {
-          console.log("Font Problem");
-        })
-        .then(() => {
-          this.setState({ loaded: true });
-        });
+    const loop = () => {
+      let { wait } = this.state;
+      if (wait <= 0) return;
+      setTimeout(loop, 1000);
+      wait--;
+      this.setState({ wait });
+    };
+    if (this.state.wait === -1) {
+      // wait a bit so we actually render the "Loading..." as main thread might block (webgl)
+      setTimeout(() => {
+        this.setState({ wait: 0 });
+      }, 500);
+    } else {
+      // otherwise we countdown
+      setTimeout(loop, 1000);
     }
   }
   render() {
-    const { lowQuality } = this.props;
+    const { wait } = this.state;
+    const { quality } = this.props;
     const width = 512;
     const height = 512;
     return (
       <div className="game" style={{ width, height }}>
-        {!this.state.loaded
-          ? <div>
-              Loading...
-              <footer>
-                if it never loads, try <a href="/?lowQuality">/?lowQuality</a>
-              </footer>
-            </div>
+        {wait
+          ? wait > 0
+            ? <div>
+                quality?
+                <div className="qualities">
+                  <a href="?quality=high">HIGH</a>
+                  <a href="?quality=medium">MEDIUM</a>
+                  <a href="?quality=low">LOW</a>
+                </div>
+                <div>autostart in {wait}...</div>
+                <footer>
+                  (Unfortunately, shader compilation might takes forever on some
+                  computers. If it never loads in HIGH, try a lower quality 😭)
+                </footer>
+              </div>
+            : <div>
+                Loading...
+                <footer>
+                  if it never loads, try <a href="?quality=low">low</a> quality
+                </footer>
+              </div>
           : <Render
               width={width}
               height={height}
               getGameState={this.getGameState}
               action={this.action}
-              lowQuality={lowQuality}
+              quality={quality}
             />}
       </div>
     );

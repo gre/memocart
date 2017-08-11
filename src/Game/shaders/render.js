@@ -23,8 +23,8 @@ const INJECT = Object.keys(Constants)
   .filter(v => v)
   .join("\n");
 
-const normalFunction = (lowQuality: boolean) =>
-  lowQuality
+const normalFunction = (quality: string) =>
+  quality === "low"
     ? GLSL`\
 vec3 normal(vec3 ray_hit_position, float smoothness) {
   return vec3(0.0, 1.0, 0.0);
@@ -40,7 +40,7 @@ vec3 normal(vec3 ray_hit_position, float smoothness) {
   return normalize(n);
 }`;
 
-export default (regl: *, lowQuality: boolean) =>
+export default (regl: *, quality: string) =>
   regl({
     framebuffer: regl.prop("framebuffer"),
     frag: GLSL`
@@ -220,10 +220,8 @@ float sdRock (vec3 p) {
 }
 
 #define WALL_WIDTH 100.0
-float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
-  vec4 biomes = parseTrackBiomes(data);
+float sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
-  vec4 biomesPrev = parseTrackBiomes(prev);
   vec2 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec2 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
   float zMix = interpStepP(p);
@@ -231,7 +229,12 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   p.y -= (size.y - 2.0) / 2.0;
 
   // FIXME vary these based on biome factor...
-  vec3 disp = vec3(
+  vec3 disp = vec3(0.);
+
+  ${quality === "low"
+    ? ""
+    : GLSL`
+  disp += vec3(
     0.14 * smoothstep(0.0, 0.2, worldNoiseL[1].x)
     - 0.08 * smoothstep(0.0, 0.4, worldNoiseM[1].x)
     - 0.02 * smoothstep(-0.2, 0.0, worldNoiseM[0].x)
@@ -244,6 +247,7 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
       0.8 * smoothstep(-0.4, 0.6, worldNoiseL[2].z)
     )
   );
+`}
 
   // TODO interp size with Z and prev
   vec3 hs = vec3(WALL_WIDTH, size.y/2. + 2. * WALL_WIDTH, 0.5);
@@ -262,14 +266,13 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   ), haveWalls);
 }
 
-vec2 sdRailTrackStep (vec3 p, vec4 data) {
+vec2 sdRailTrackStep (vec3 p) {
   float h = 2.0;
   return sdRail(p - vec3(0.0, -h / 2.0, 0.0));
 }
 
-vec2 sdRailAltTrackStep (vec3 p, vec4 data, float i) {
-  float h = 2.0;
-  vec2 shape = sdRail(p - vec3(0.0, -h / 2.0, 0.0));
+vec2 sdRailAltTrackStep (vec3 p, float i) {
+  vec2 shape = sdRailTrackStep(p);
   vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.9)), 0.6);
   shape = opU(shape, lastTrackShape);
   return shape;
@@ -290,7 +293,9 @@ vec2 sdCartSwitch (vec3 p) {
     vec2(stick, 0.6)
   );
 }
-
+${quality !== "high"
+      ? ""
+      : GLSL`
 float sdCartWheel(vec3 p) {
   return opU(
     sdSphere(p - vec3(0.03, 0.0, 0.0), 0.04),
@@ -303,6 +308,7 @@ float sdCartWheel(vec3 p) {
     )
   );
 }
+`}
 
 const vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
 vec2 sdCart(vec3 p) {
@@ -314,7 +320,10 @@ vec2 sdCart(vec3 p) {
     sdBox(p-vec3(0.0, w, 0.0), cartS*conv-vec3(w, 0.0, w)),
     sdBox(p, cartS * conv)
   );
-  float wheels = opU(
+  ${quality !== "high"
+    ? ""
+    : GLSL`
+  float wheels=opU(
     opU(
       sdCartWheel(p - wheelOff),
       sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, 1.0))
@@ -324,6 +333,7 @@ vec2 sdCart(vec3 p) {
       sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, -1.0))
     )
   );
+  `}
   p.y -= cartS.y - b;
   vec3 hs = vec3(b, b, cartS.z);
   vec3 ws = vec3(b + cartS.x, b, b);
@@ -339,28 +349,31 @@ vec2 sdCart(vec3 p) {
   );
   border = opS(sdBox(p-vec3(0., b, dz), vec3(0.6 * cartS.x, 2.0 * b, 0.5 * b)), border);
   p.z -= cartS.z;
-  vec2 cartSwitch = sdCartSwitch(p);
+  vec2 s = sdCartSwitch(p);
 
-  p += 0.5;
-  vec4 s1 = texture2D(perlin, vec2(
-    .5 * fract(p.x) + .5 * fract(p.z),
-    .5 * fract(p.y) + .5 * fract(p.z)
-  ));
-  p *= 0.1;
-  vec4 s2 = texture2D(perlin, vec2(
-    .5 * fract(p.x) + .5 * fract(p.z),
-    .5 * fract(p.y) + .5 * fract(p.z)
-  ));
-  float oxydation = smoothstep(0.45, 0.7, s1.x);
-  oxydation *= smoothstep(0.5, 0.57, s2.z);
-  float o2 = smoothstep(0.3, 0.28, s2.y);
-  oxydation = mix(oxydation, o2, o2);
-  return opU(opU(opU(
-    vec2(inside, 2.099 + 0.9 * oxydation),
-    vec2(border, 2.0)),
-    vec2(wheels, 0.1)),
-    cartSwitch
-  );
+  float cartMaterial = 2.099;
+${quality !== "high"
+      ? ""
+      : GLSL`
+p += 0.5;
+vec4 s1 = texture2D(perlin, vec2(
+  .5 * fract(p.x) + .5 * fract(p.z),
+  .5 * fract(p.y) + .5 * fract(p.z)
+));
+p *= 0.1;
+vec4 s2 = texture2D(perlin, vec2(
+  .5 * fract(p.x) + .5 * fract(p.z),
+  .5 * fract(p.y) + .5 * fract(p.z)
+));
+float oxydation = smoothstep(0.45, 0.7, s1.x);
+oxydation *= smoothstep(0.5, 0.57, s2.z);
+float o2 = smoothstep(0.3, 0.28, s2.y);
+oxydation = mix(oxydation, o2, o2);
+cartMaterial += 0.9 * oxydation;
+s = opU(s, vec2(wheels, 0.1));
+`}
+  s = opU(s, vec2(opU(inside, border), cartMaterial));
+  return s;
 }
 
 float biomeFirefly (float biome, float seed) {
@@ -369,10 +382,9 @@ float biomeFirefly (float biome, float seed) {
   step(seed, 0.01);
 }
 
-vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
+vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
   vec2 o = vec2(INF, 0.0);
-  vec4 biomes = parseTrackBiomes(data);
   float firefly = MIX_BIOMES(biomes, biomeFirefly);
   vec3 offset = vec3(
     1.0 * cos(0.8 * time + absZ),
@@ -388,21 +400,22 @@ vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
 }
 
 vec2 sdStep (vec3 p, vec4 current, vec4 prev, float z) {
+  vec4 biomes = parseTrackBiomes(current);
+  vec4 biomesPrev = parseTrackBiomes(prev);
   vec3 stepP = interpStep(p, prev, current);
-  return opU(opU(
-    sdRailTrackStep(stepP, current),
-    vec2(sdTunnelWallStep(stepP, current, prev), 1.0)),
-    sdObjectsStep(stepP, current, prev, z)
-  );
+  vec2 s = sdRailTrackStep(stepP);
+  s = opU(s, vec2(sdTunnelWallStep(stepP, biomes, biomesPrev), 1.0));
+  s = opU(s, sdObjectsStep(stepP, biomes, z));
+  return s;
 }
 
 vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
+  vec4 biomes = parseTrackBiomes(current);
   vec3 stepP = interpStep(p, prev, current);
-  return opU(opU(
-    sdRailAltTrackStep(stepP, current, z),
-    vec2(sdTunnelWallStep(stepP, current, prev), 1.0)),
-    sdObjectsStep(stepP, current, prev, z)
-  );
+  vec2 s = sdRailTrackStep(stepP);
+  s = opU(s, sdRailAltTrackStep(stepP, z));
+  s = opU(s, sdObjectsStep(stepP, biomes, z));
+  return s;
 }
 
 vec2 scene(vec3 p) {
@@ -552,7 +565,7 @@ vec2 raymarch(vec3 position, vec3 direction) {
   return vec2(total_distance, result.y);
 }
 
-${normalFunction(lowQuality)}
+${normalFunction(quality)}
 
 void main() {
   // Set some Global Vars..

@@ -4,16 +4,17 @@ import React, { Component } from "react";
 import Game from "./Game";
 import "./App.css";
 
+const acceptQuality = q =>
+  q === "high" || q === "medium" || q === "low" ? q : null;
+
 class App extends Component {
   render() {
     const { search } = window.location;
     const query = querystring.parse(search && search.slice(1));
-    const lowQuality = Object.keys(query).some(
-      k => k.slice(0, 3).toLowerCase() === "low"
-    );
+
     return (
       <div className="app">
-        <Game lowQuality={lowQuality} />
+        <Game quality={acceptQuality(query.quality)} />
       </div>
     );
   }

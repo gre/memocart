@@ -2,7 +2,6 @@
 - improve map (turn,descent => needs variety to feel more unique & less crazy) / levels / intersect position to have a nice gradual gameplay
 - iterate on biomes
 - quick audio bootstrap
-- camera is a bit misplaced
 - topleft light on the cart like in indianajones
 
 ## Game
@@ -29,7 +28,7 @@
 - ambients colors
 - LOW walls could be "painted". we could have a specific texture that we re-set each chunk gen time that is just drawn on walls? Cube Mapping.
 - various visual effect on colors. I'm thinking there could be very dark rooms vs very light. (also imagine crazy room where weird glitch happen, what does it mean for the story tho xD) (we need lighter biome when we reach the end)
-- MED insects? https://www.shadertoy.com/view/Mss3zM
+- LOW insects? https://www.shadertoy.com/view/Mss3zM
 - HI rocks & various objects
 - HI soom wood holding the roof.
 - LOW some clothes https://www.shadertoy.com/view/ldlcRf

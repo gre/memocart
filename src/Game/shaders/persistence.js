@@ -9,7 +9,11 @@ varying vec2 p;
 uniform sampler2D back, front;
 uniform float amount;
 void main() {
-  gl_FragColor = mix(texture2D(front,p), texture2D(back,p), amount);
+  gl_FragColor = mix(
+    texture2D(front, p),
+    texture2D(back, p) * 1.06, // light goes lighter creates kinda cool effect
+    amount
+  );
 }
 `,
 
