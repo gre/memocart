@@ -3,6 +3,7 @@ import * as Constants from "../Constants";
 import GLSL from "./GLSL";
 
 const constantsUsingIntType = k => k.indexOf("N_") === 0;
+const constantsProvideIntVersion = k => k === "TRACK_SIZE";
 
 const INJECT = Object.keys(Constants)
   .map(k => {
@@ -13,7 +14,11 @@ const INJECT = Object.keys(Constants)
     if (constantsUsingIntType(k)) {
       return `#define ${k} ${Math.floor(v)}`;
     }
-    return `#define ${k} ${Math.floor(v) === v ? v.toFixed(1) : v.toFixed(6)}`;
+    let s = `#define ${k} ${Math.floor(v) === v ? v.toFixed(1) : v.toFixed(6)}`;
+    if (constantsProvideIntVersion(k)) {
+      s += `\n#define ${k}_INT ${Math.floor(v)}`;
+    }
+    return s;
   })
   .filter(v => v)
   .join("\n");
@@ -32,6 +37,7 @@ uniform vec3 origin; // camera position
 uniform mat3 rot; // camera rotation matrix
 // game state
 uniform sampler2D track, altTrack; // 8x1 data textures
+uniform vec3 terrainOffset;
 uniform vec3 worldDelta; // accumulated distance from the first track (to generate seamless textures on walls..)
 uniform float trackStepProgress; // move from 0.0 to 1.0 per step. used to interpolate all the things
 uniform vec3 altTrackOffset; // delta position of the altTrack
@@ -118,8 +124,8 @@ vec3 interpStep (vec3 p, vec4 prev, vec4 current) {
 
 // game globals, precompute more things from main() for perf.
 vec4 cartTrackPrev, cartTrackCurrent;
-vec3 terrainDelta;
-
+vec4 trackData[TRACK_SIZE_INT];
+vec4 altTrackData[TRACK_SIZE_INT];
 mat3 worldNoiseS, worldNoiseM, worldNoiseL; // various size of 3D noises. each have 3 row of perlin noise (from -1.0 to 1.0) that can be multiplied by a normal vector to produce nice 3D noise.
 
 
@@ -133,8 +139,7 @@ vec3 perlin3 (vec2 uv) { // pick 3 perlin noise value of a given position
   return 2.*(texture2D(perlin, fract(uv)).rgb-.5);
 }
 
-void syncNoise (vec3 p) {
-  vec3 worldP = p + terrainDelta + worldDelta;
+void syncNoise (vec3 worldP) {
   float nS=0.07, nM=0.03, nL=0.005;
   worldNoiseS = transpose(mat3(
     perlin3(nS * worldP.yz),
@@ -205,26 +210,22 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec2 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec2 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
   float zMix = interpStepP(p);
-  vec2 size =
-  vec2(mix(sizeFrom.x, sizeTo.x, zMix), sizeTo.y);
+  vec2 size = vec2(mix(sizeFrom.x, sizeTo.x, zMix), sizeTo.y);
   p.y -= (size.y - 2.0) / 2.0;
 
-  vec3 disp = vec3(0.0);
-
   // FIXME vary these based on biome factor...
-
-  disp.x += 0.14 * smoothstep(0.0, 0.2, worldNoiseL[1].x);
-  disp.x -= 0.08 * smoothstep(0.0, 0.4, worldNoiseM[1].x);
-  disp.x -= 0.02 * smoothstep(-0.2, 0.0, worldNoiseM[0].x);
-  disp.x += 0.01 * smoothstep(-0.2, 0.0, worldNoiseS[1].x);
-  disp.x += 0.03 * smoothstep(-0.4, -0.3, worldNoiseS[2].x);
-
-  disp.y += 0.1 * smoothstep(-0.4, 0.2, worldNoiseM[0].y);
-
-  disp.z += 0.2 * mix(
-    mix(smoothstep(0.5, 0.6, worldNoiseM[0].z), 0.0, 0.5 * smoothstep(-0.4, 0.6, worldNoiseL[0].z)),
-    0.5 * smoothstep(0.2, -0.6, worldNoiseS[0].z),
-    0.8 * smoothstep(-0.4, 0.6, worldNoiseL[2].z)
+  vec3 disp = vec3(
+    0.14 * smoothstep(0.0, 0.2, worldNoiseL[1].x)
+    - 0.08 * smoothstep(0.0, 0.4, worldNoiseM[1].x)
+    - 0.02 * smoothstep(-0.2, 0.0, worldNoiseM[0].x)
+    + 0.01 * smoothstep(-0.2, 0.0, worldNoiseS[1].x)
+    + 0.03 * smoothstep(-0.4, -0.3, worldNoiseS[2].x),
+    0.1 * smoothstep(-0.4, 0.2, worldNoiseM[0].y),
+    0.2 * mix(
+      mix(smoothstep(0.5, 0.6, worldNoiseM[0].z), 0.0, 0.5 * smoothstep(-0.4, 0.6, worldNoiseL[0].z)),
+      0.5 * smoothstep(0.2, -0.6, worldNoiseS[0].z),
+      0.8 * smoothstep(-0.4, 0.6, worldNoiseL[2].z)
+    )
   );
 
   // TODO interp size with Z and prev
@@ -294,9 +295,8 @@ vec2 sdCart(vec3 p) {
   p.y -= 0.18;
   float inside = opS(
     sdBox(p-vec3(0.0, w, 0.0), cartS*conv-vec3(w, 0.0, w)),
-    sdBox(p, cartS*conv)
+    sdBox(p, cartS * conv)
   );
-
   float wheels = opU(
     opU(
       sdCartWheel(p - wheelOff),
@@ -339,7 +339,7 @@ vec2 sdCart(vec3 p) {
   float o2 = smoothstep(0.3, 0.28, s2.y);
   oxydation = mix(oxydation, o2, o2);
   return opU(opU(opU(
-    vec2(inside, 2.1 + 0.9 * oxydation - 0.001),
+    vec2(inside, 2.099 + 0.9 * oxydation),
     vec2(border, 2.0)),
     vec2(wheels, 0.1)),
     cartSwitch
@@ -370,28 +370,47 @@ vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
   return o;
 }
 
+vec2 sdStep (vec3 p, vec4 current, vec4 prev, float z) {
+  vec3 stepP = interpStep(p, prev, current);
+  return opU(opU(
+    sdRailTrackStep(stepP, current),
+    vec2(sdTunnelWallStep(stepP, current, prev), 1.0)),
+    sdObjectsStep(stepP, current, prev, z)
+  );
+}
+
+vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
+  vec3 stepP = interpStep(p, prev, current);
+  return opU(opU(
+    sdRailAltTrackStep(stepP, current, z),
+    vec2(sdTunnelWallStep(stepP, current, prev), 1.0)),
+    sdObjectsStep(stepP, current, prev, z)
+  );
+}
+
 vec2 scene(vec3 p) {
   p.z -= 1.0;
-  vec4 prev = texture2D(track, vec2(0.5/TRACK_SIZE, 0.5));
-  vec4 current = texture2D(track, vec2(1.5/TRACK_SIZE, 0.5));
+  vec4 prev = trackData[0];
+  vec4 current = trackData[1];
 
   vec2 m = mix(
     parseTrackOffset(cartTrackPrev),
     parseTrackOffset(cartTrackCurrent),
     trackStepProgress);
 
-  syncNoise(p);
-
+  vec3 terrainDelta = terrainOffset + trackStepProgress * vec3(parseTrackOffset(cartTrackPrev), 1.0);
   vec3 terrainP = p + terrainDelta;
   vec3 altTerrainP = p + terrainDelta - altTrackOffset;
   vec3 cartP = p - vec3(0.0, -0.8, 0.3);
   rot2(cartP.xz, atan(-m.x));
   rot2(cartP.yz, atan(-m.y));
 
-  vec2 d = opU(
-    vec2(max(0.0, TRACK_SIZE - p.z), 0.0), // black wall at the end (too far to be visible)
-    vec2(max(0.0, p.z + 1.0), 0.0) // black wall before (you can't see behind anyway)
-  );
+  syncNoise(p + terrainDelta + worldDelta);
+
+  vec2 d = vec2(opU(
+    max(0.0, TRACK_SIZE - p.z), // black wall at the end (too far to be visible)
+    max(0.0, p.z + 1.0) // black wall before (you can't see behind anyway)
+  ), 0.0);
 
   // Cart
   d = opU(d, sdCart(cartP));
@@ -400,60 +419,41 @@ vec2 scene(vec3 p) {
   p = terrainP;
 
   // prev step
-  vec3 stepP = interpStep(terrainP, prev, prev);
-  vec2 rails = sdRailTrackStep(stepP, prev);
-  float tunnel = sdTunnelWallStep(stepP, prev, prev);
-  vec2 objects = sdObjectsStep(stepP, prev, prev, 0.0);
+  d = opU(d, sdStep(p, trackData[0], trackData[0], 0.0));
 
   // current step
-  p -= vec3(parseTrackOffset(prev), 1.0);
-  stepP = interpStep(p, prev, current);
-  rails = opU(rails, sdRailTrackStep(stepP, current));
-  tunnel = opU(tunnel, sdTunnelWallStep(stepP, current, prev));
-  objects = opU(objects, sdObjectsStep(stepP, current, prev, 1.0));
+  p -= vec3(parseTrackOffset(trackData[0]), 1.0);
+  d = opU(d, sdStep(p, trackData[1], trackData[0], 1.0));
 
   // iterate next steps
-  for (float z=2.0; z<TRACK_SIZE; z++) {
+  for (int z=2; z<TRACK_SIZE_INT; z++) {
     p -= vec3(parseTrackOffset(current), 1.0);
     prev = current;
-    current = texture2D(track, vec2((z+0.5)/TRACK_SIZE, 0.5));
-    stepP = interpStep(p, prev, current);
-    rails = opU(rails, sdRailTrackStep(stepP, current));
-    tunnel = opU(tunnel, sdTunnelWallStep(stepP, current, prev));
-    objects = opU(objects, sdObjectsStep(stepP, current, prev, z));
+    current = trackData[z];
+    d = opU(d, sdStep(p, current, prev, float(z)));
   }
 
   if (altTrackMode != ALTT_OFF) {
     p = altTerrainP;
-
-    vec4 prev = texture2D(altTrack, vec2(0.5/TRACK_SIZE, 0.5));
-    vec4 current = texture2D(altTrack, vec2(1.5/TRACK_SIZE, 0.5));
+    vec4 prev = altTrackData[0];
+    vec4 current = altTrackData[1];
 
     // prev step
-    stepP = interpStep(p, prev, prev);
-    rails = opU(rails, sdRailAltTrackStep(stepP, prev, 0.0));
-    objects = opU(objects, sdObjectsStep(stepP, prev, prev, 0.0));
+    d = opU(d, sdStepAlt(p, prev, prev, 0.0));
 
     // current step
     p -= vec3(parseTrackOffset(prev), 1.0);
-    stepP = interpStep(p, prev, current);
-    rails = opU(rails, sdRailAltTrackStep(stepP, current, 1.0));
-    objects = opU(objects, sdObjectsStep(stepP, current, prev, 1.0));
+    d = opU(d, sdStepAlt(p, current, prev, 1.0));
 
     // iterate next steps
-    for (float z=2.0; z<TRACK_SIZE; z++) {
+    for (int z=2; z<TRACK_SIZE_INT; z++) {
       p -= vec3(parseTrackOffset(current), 1.0);
       prev = current;
-      current = texture2D(altTrack, vec2((z+0.5)/TRACK_SIZE, 0.5));
-      stepP = interpStep(p, prev, current);
-      rails = opU(rails, sdRailAltTrackStep(stepP, current, z));
-      objects = opU(objects, sdObjectsStep(stepP, current, prev, z));
+      current = altTrackData[z];
+      d = opU(d, sdStepAlt(p, current, prev, float(z)));
     }
   }
 
-  d = opU(d, vec2(tunnel, 1.0));
-  d = opU(d, rails);
-  d = opU(d, objects);
   return d;
 }
 
@@ -546,20 +546,21 @@ vec3 normal(vec3 ray_hit_position, float smoothness) {
 
 void main() {
   // Set some Global Vars..
-  vec4 prev = texture2D(track, vec2(0.5/TRACK_SIZE, 0.5));
-  vec4 current = texture2D(track, vec2(1.5/TRACK_SIZE, 0.5));
-  terrainDelta = vec3(0.0);
+  for (int i=0; i<TRACK_SIZE_INT; i++) {
+    trackData[i] = texture2D(track, vec2((0.5+float(i))/TRACK_SIZE, 0.5));
+  }
   if (altTrackMode == ALTT_CART_ON) {
-    cartTrackPrev = texture2D(altTrack, vec2(0.5/TRACK_SIZE, 0.5));
-    cartTrackCurrent = texture2D(altTrack, vec2(1.5/TRACK_SIZE, 0.5));
-    terrainDelta += altTrackOffset;
+    cartTrackPrev = altTrackData[0];
+    cartTrackCurrent = altTrackData[1];
+  } else {
+    cartTrackPrev = trackData[0];
+    cartTrackCurrent = trackData[1];
   }
-  else {
-    cartTrackPrev = prev;
-    cartTrackCurrent = current;
+  if (altTrackMode != ALTT_OFF) {
+    for (int i=0; i<TRACK_SIZE_INT; i++) {
+      altTrackData[i] = texture2D(altTrack, vec2((0.5+float(i))/TRACK_SIZE, 0.5));
+    }
   }
-  terrainDelta += trackStepProgress * vec3(parseTrackOffset(cartTrackPrev), 1.0);
-
 
   // Start the scene rendering
   vec3 direction = normalize(rot * vec3(uv, 2.5));
@@ -572,7 +573,7 @@ void main() {
   float zFract = z - zIndex;
 
   vec4 toData = texture2D(track, vec2((zIndex+0.5)/TRACK_SIZE, 0.5));
-  vec4 fromData = texture2D(track, vec2((max(1.0,zIndex)-0.5)/TRACK_SIZE, 0.5));
+  vec4 fromData = texture2D(track, vec2((max(1.0, zIndex)-0.5)/TRACK_SIZE, 0.5));
   vec4 fromBiomes = parseTrackBiomes(fromData);
   vec4 toBiomes = parseTrackBiomes(toData);
 
@@ -629,6 +630,7 @@ void main() {
       worldDelta: regl.prop("worldDelta"),
       track: regl.prop("track"),
       trackStepProgress: regl.prop("trackStepProgress"),
+      terrainOffset: regl.prop("terrainOffset"),
       altTrack: regl.prop("altTrack"),
       altTrackOffset: regl.prop("altTrackOffset"),
       altTrackMode: regl.prop("altTrackMode"),

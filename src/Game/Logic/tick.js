@@ -321,6 +321,9 @@ export default (
     }
   }
 
+  g.terrainOffset =
+    g.altTrackMode === ALTT_CART_ON ? g.altTrackOffset : [0, 0, 0];
+
   // Sync game status
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;

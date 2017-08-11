@@ -153,8 +153,6 @@ class Game extends Component {
     });
     let swapFbos = [fbo1, fbo2];
     let swapFboTextures = [fbo1Texture, fbo2Texture];
-    let freshCompileTime = performance.now(),
-      freshCompile = true;
     let drawUI = makeDrawUI(ui);
     let render = renderShader(regl);
     let persistence = persistenceShader(regl);
@@ -187,8 +185,6 @@ class Game extends Component {
       //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
         Debug.tryFunction(() => {
-          //freshCompileTime = performance.now();
-          //freshCompile = true;
           render = require("./shaders/render").default(regl);
         });
       });
@@ -232,6 +228,8 @@ class Game extends Component {
       height: 1,
       data: altTrackData
     });
+
+    let lastTime;
 
     regl.frame(e => {
       const prevState = getGameState();
@@ -314,13 +312,11 @@ class Game extends Component {
       swapFbos = [frontFBO, backFBO];
       swapFboTextures = [front, back];
 
-      if (freshCompile) {
-        setTimeout(() => {
-          freshCompile = false;
-          regl._gl.finish();
-          const diff = performance.now() - freshCompileTime;
-          console.log("render glsl compiled in " + diff.toFixed(0) + "ms");
-        }, 0);
+      if (!lastTime) lastTime = e.time;
+      const diff = e.time - lastTime;
+      lastTime = e.time;
+      if (diff > 0.3) {
+        console.log("⚠️ slow frame#" + e.tick + ": " + diff.toFixed(3) + "s");
       }
     });
   }

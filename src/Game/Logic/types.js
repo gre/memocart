@@ -76,5 +76,6 @@ export type GameState = {
   origin: vec3,
   intersectionBiomeEnd: number,
   zoomOut: number,
-  worldDelta: vec3
+  worldDelta: vec3,
+  terrainOffset: vec3
 };

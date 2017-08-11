@@ -68,6 +68,7 @@ export default (level: number, seed: number): GameState => {
     stepIndex,
     trackStepProgress: 0,
     intersectionBiomeEnd: 0,
+    terrainOffset: [0, 0, 0],
     rotX: 0,
     rotY: 0,
     rot: mat3.create(),
