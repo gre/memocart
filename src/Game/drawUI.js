@@ -1,5 +1,8 @@
 //@flow
 import type { UIState } from "./Logic/types";
+import { DEV } from "./Constants";
+import * as Debug from "../Debug";
+if (DEV) Debug.defineEditable("noUI", false);
 export default (ui: CanvasRenderingContext2D) => {
   function uiClear() {
     ui.clearRect(0, 0, 64, 64);
@@ -38,7 +41,7 @@ export default (ui: CanvasRenderingContext2D) => {
   }
 
   function uiSync(uiState: ?UIState, blink: boolean) {
-    if (!uiState) {
+    if (!uiState || (DEV && Debug.getEditable("noUI"))) {
       uiClear();
       return;
     }
