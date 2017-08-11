@@ -308,7 +308,7 @@ export default (
         titleCentered: true,
         title: "YES!",
         body: "You did it!",
-        footer: "Try a longer run..."
+        footer: "Try  longer  run..."
       };
       if (!g.uiState || g.uiState.title !== uiState.title) {
         g.uiState = uiState;

@@ -268,36 +268,17 @@ class Game extends Component {
       const [back, front] = swapFboTextures;
 
       regl.clear({
-        framebuffer: frontFBO,
+        framebuffer: renderFBO,
         color: [0, 0, 0, 0],
         depth: 1
       });
 
       render({
         ...state,
-        framebuffer: frontFBO,
+        framebuffer: renderFBO,
         altTrack,
         track,
         perlin
-      });
-
-      regl.clear({
-        framebuffer: renderFBO,
-        color: [0, 0, 0, 0],
-        depth: 1
-      });
-
-      persistence({
-        framebuffer: renderFBO,
-        amount: 0.5,
-        back,
-        front
-      });
-
-      regl.clear({
-        framebuffer: frontFBO,
-        color: [0, 0, 0, 0],
-        depth: 1
       });
 
       copy({
@@ -305,9 +286,22 @@ class Game extends Component {
         t: renderFBOTexture
       });
 
+      regl.clear({
+        framebuffer: frontFBO,
+        color: [0, 0, 0, 0],
+        depth: 1
+      });
+
+      persistence({
+        framebuffer: frontFBO,
+        amount: 0.5,
+        back,
+        front: renderFBOTexture
+      });
+
       post({
         ...state,
-        game: renderFBOTexture,
+        game: front,
         ui: uiTexture,
         resolution
       });

@@ -1,10 +1,8 @@
 ## Main TODO
-- DAMN SHADER COMPILATION XD
 - improve map (turn,descent => needs variety to feel more unique & less crazy) / levels / intersect position to have a nice gradual gameplay
 - iterate on biomes
 - quick audio bootstrap
 - camera is a bit misplaced
-- WTF shader compilation
 - topleft light on the cart like in indianajones
 
 ## Game
