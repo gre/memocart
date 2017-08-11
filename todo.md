@@ -1,46 +1,40 @@
-## Main TODO
-- improve map (turn,descent => needs variety to feel more unique & less crazy) / levels / intersect position to have a nice gradual gameplay
-- iterate on biomes
+## high pri
+
+- AUDIO
+- make that turn are more unique and that you could potentially memorize them..
+- same for descent, also descent needs to be nicely balanced with speed so there are crazy descents too but not too much...
+- play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
+- more biomes, more objects that are uniquely positioned.
+  - B_WIRED isnt finished: place a (rare) sdCart itself in some rotation/pos. lights on wall. sdTrack? (if not hard to interp). scale (possible to mod()?)
+  - B_WATER
+  - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
+  - B_COAL: ground needs to be fill with coal & wall have dark thing. more unique shape.
+- wood structure: randomness in the width of them.
+- more insects specifically in dark. (to remember "oh, this is the insect place" XD) <- maybe it's a dedicated biome
 - quick audio bootstrap
-- topleft light on the cart like in indianajones
+- gamepad support YES PLEASE
+- double check persistence config
+- some glitch in persistence
+- various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
+- GAME OVER rendering is bugged now. maybe reconsider the rocks thing. maybe consider the wood structure.
 
-## Game
--? gamepad support
--? mobile support
-- check windows / IE
+# medium
 
-## Graphics
-- LOW iterate on the end "story". thinking maybe it becomes blueish and you enter in a nice landscape...
-- for intersection biome, at extremity, we need to have some wood holding the walls. it's ok if the dead end have it to, kinda adds to the scene..
-- HIGH all walls should have small disformation effect.
+- ROTATING BALL/ANIMAL IN A BIOME like simple cos/sin on x/y . XD i just think it would be neat. also it should have a unique color as help to remember. WE NEED BIOME RANDOM, maybe as bit-part of track random idk. remember it's a game about a weird mine too.
+- is Bat possible? could hack something quick and they would render black. if we have them in high position, we can not branch on biome and just always have them. just need variety tho. maybe it's part of the rotating thing, and maybe it's just enabled with another uniform (if it can avoid crazy more glsl)
+- more variety in the texturing pattern per biome
+- end story? might be important, but not too crazy (there is no room for perf...). thinking maybe it becomes blueish and you enter in a nice landscape...
+- less continuity in the rail wood. maybe that just means adding rocks.
 - under the rail, there should be rocks & a bit everywhere on the ground. probably we could have diff type of rails. indep from biomes?
-- HOWTO better lighting?
-- are shadows/AO feasible? XD (especially shadow are kinda cool https://www.youtube.com/watch?v=ZyJCmOOVJto) http://advances.realtimerendering.com/s2015/DynamicOcclusionWithSignedDistanceFields.pdf
-- LOW more complex wall shape https://www.shadertoy.com/view/Xsd3Rs
-- LOW seamless perlin noise plz :D
-- MED the cart could have a light in the front, like in Indian Jones
-- MED blur / persistence in after effect. might probably add to the gfx.
 
-## Biome/variety ideas
+# low
 
-- more some descent again. I like to see the wood structure. (see indiana jones)
-- rocky biome, rails on a rocky terrain (no wall) more foggy
-- ambients colors
-- LOW walls could be "painted". we could have a specific texture that we re-set each chunk gen time that is just drawn on walls? Cube Mapping.
-- various visual effect on colors. I'm thinking there could be very dark rooms vs very light. (also imagine crazy room where weird glitch happen, what does it mean for the story tho xD) (we need lighter biome when we reach the end)
-- LOW insects? https://www.shadertoy.com/view/Mss3zM
-- HI rocks & various objects
-- HI soom wood holding the roof.
-- LOW some clothes https://www.shadertoy.com/view/ldlcRf
-- HI stalac(t/m)ite.
-- HI plants / ivy
-- HI mushrooms
-- MED water/lava? https://www.shadertoy.com/view/llK3Dy
-- MED flame/fire https://www.shadertoy.com/results?query=fire ( https://www.shadertoy.com/view/MdX3zr / https://www.shadertoy.com/view/MsSBD1 / https://www.shadertoy.com/view/4dXGR4 )
-- weird shapes https://www.shadertoy.com/view/MsfGzM , https://www.shadertoy.com/view/4ts3z2
-- really basically any object from Indian Jones
-- hardcoded track intersection. (reversed / crossed)
-- walls should have variety of materials.
+- stalac(t/m)ite biome IF it's not too crazy code.
+- plants biome. if it's not too crazy too. i mean, it's just some green thing, maybe just painted on wall. MUSHROOM shape could be cool.
+- light object on the front left section of the cart
+-? mobile support (damn i can't even make it compile-optimized. maybe in post-version.)
+- (polish wall shape) it's damn too late to think that but the walls should have be just based on a circle XD
+
 
 ## Audio
 

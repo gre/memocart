@@ -112,6 +112,8 @@ if (process.env.NODE_ENV !== "production") {
       return (
         <div
           style={{
+            overflow: "auto",
+            height: 100,
             minWidth: 300,
             fontFamily: "monospace",
             padding: 10,
