@@ -64,6 +64,7 @@ class GameComponent extends Component {
     }
   }
   render() {
+    const { lowQuality } = this.props;
     const width = 512;
     const height = 512;
     return (
@@ -75,6 +76,7 @@ class GameComponent extends Component {
               height={height}
               getGameState={this.getGameState}
               action={this.action}
+              lowQuality={lowQuality}
             />}
       </div>
     );

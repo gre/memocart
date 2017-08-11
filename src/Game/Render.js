@@ -154,7 +154,7 @@ class Game extends Component {
     let swapFbos = [fbo1, fbo2];
     let swapFboTextures = [fbo1Texture, fbo2Texture];
     let drawUI = makeDrawUI(ui);
-    let render = renderShader(regl);
+    let render = renderShader(regl, this.props.lowQuality);
     let persistence = persistenceShader(regl);
     let copy = copyShader(regl);
     let post = postShader(regl);
@@ -185,7 +185,10 @@ class Game extends Component {
       //$FlowFixMe
       module.hot.accept("./shaders/render", () => {
         Debug.tryFunction(() => {
-          render = require("./shaders/render").default(regl);
+          render = require("./shaders/render").default(
+            regl,
+            this.props.lowQuality
+          );
         });
       });
       //$FlowFixMe

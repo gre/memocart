@@ -23,7 +23,24 @@ const INJECT = Object.keys(Constants)
   .filter(v => v)
   .join("\n");
 
-export default (regl: *) =>
+const normalFunction = (lowQuality: boolean) =>
+  lowQuality
+    ? GLSL`\
+vec3 normal(vec3 ray_hit_position, float smoothness) {
+  return vec3(0.0, 1.0, 0.0);
+}
+`
+    : GLSL`\
+vec3 normal(vec3 ray_hit_position, float smoothness) {
+  vec3 n;
+  vec2 dn = vec2(smoothness, 0.0);
+  n.x  = scene(ray_hit_position + dn.xyy).x - scene(ray_hit_position - dn.xyy).x;
+  n.y  = scene(ray_hit_position + dn.yxy).x - scene(ray_hit_position - dn.yxy).x;
+  n.z  = scene(ray_hit_position + dn.yyx).x - scene(ray_hit_position - dn.yyx).x;
+  return normalize(n);
+}`;
+
+export default (regl: *, lowQuality: boolean) =>
   regl({
     framebuffer: regl.prop("framebuffer"),
     frag: GLSL`
@@ -535,14 +552,7 @@ vec2 raymarch(vec3 position, vec3 direction) {
   return vec2(total_distance, result.y);
 }
 
-vec3 normal(vec3 ray_hit_position, float smoothness) {
-  vec3 n;
-  vec2 dn = vec2(smoothness, 0.0);
-  n.x  = scene(ray_hit_position + dn.xyy).x - scene(ray_hit_position - dn.xyy).x;
-  n.y  = scene(ray_hit_position + dn.yxy).x - scene(ray_hit_position - dn.yxy).x;
-  n.z  = scene(ray_hit_position + dn.yyx).x - scene(ray_hit_position - dn.yyx).x;
-  return normalize(n);
-}
+${normalFunction(lowQuality)}
 
 void main() {
   // Set some Global Vars..
