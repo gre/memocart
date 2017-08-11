@@ -117,11 +117,12 @@ export default (
     }
   }
 
+  if (freeControls) {
+    debugFreeControls(g, userEvents);
+  }
+
   if (g.level >= 0) {
     // User in control!
-    if (freeControls) {
-      debugFreeControls(g, userEvents);
-    }
     if (userEvents.keyRightDelta) {
       g.switchDirectionTarget = userEvents.keyRightDelta;
     }

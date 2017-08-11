@@ -4,6 +4,7 @@
 - quick audio bootstrap
 - camera is a bit misplaced
 - WTF shader compilation
+- topleft light on the cart like in indianajones
 
 ## Game
 -? gamepad support
@@ -30,7 +31,6 @@
 - LOW walls could be "painted". we could have a specific texture that we re-set each chunk gen time that is just drawn on walls? Cube Mapping.
 - various visual effect on colors. I'm thinking there could be very dark rooms vs very light. (also imagine crazy room where weird glitch happen, what does it mean for the story tho xD) (we need lighter biome when we reach the end)
 - MED insects? https://www.shadertoy.com/view/Mss3zM
-- HI firefly is interesting (what about lighting? :o)
 - HI rocks & various objects
 - HI soom wood holding the roof.
 - LOW some clothes https://www.shadertoy.com/view/ldlcRf

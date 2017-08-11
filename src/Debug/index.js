@@ -14,6 +14,7 @@ export const defineEditable = (
   value: mixed,
   onChange?: (value: mixed) => void
 ) => {
+  if (name in editables) return;
   editables[name] = value;
   editablesHooks[name] = [];
   if (onChange) editablesHooks[name].push(onChange);

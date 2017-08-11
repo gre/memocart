@@ -251,28 +251,6 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   );
 }
 
-float biomeFireflyCount (float biome, float seed) {
-  return step(B_DARK, biome) * step(biome, B_DARK) * (seed + 3.0 * seed * seed) +
-  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.3 * fract(2.0 * seed) +
-  step(seed, 0.01);
-}
-
-vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
-  float absZ = stepIndex - z;
-  vec2 o = vec2(INF, 0.0);
-  vec4 biomes = parseTrackBiomes(data);
-  float firefly = MIX_BIOMES(biomes, biomeFireflyCount);
-  if (firefly >= 1.0) {
-    vec3 offset = vec3(
-      1.0 * cos(0.8 * time + absZ),
-      1.2 + sin(0.02 * (mod(absZ, 10.0)) * time + absZ),
-      0.2 * cos(5.0 * time + absZ)
-    );
-    o = opU(o, vec2(sdSphere(p - offset, 0.04), 10.0 + 0.99 * pow(biomes[3], 2.0)));
-  }
-  return o;
-}
-
 vec2 sdRailTrackStep (vec3 p, vec4 data) {
   float h = 2.0;
   return sdRail(p - vec3(0.0, -h / 2.0, 0.0));
@@ -376,12 +354,32 @@ vec2 sdCart(vec3 p) {
   );
 }
 
+float biomeFireflyCount (float biome, float seed) {
+  return step(B_DARK, biome) * step(biome, B_DARK) * (seed + 3.0 * seed * seed) +
+  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.3 * fract(2.0 * seed) +
+  step(seed, 0.01);
+}
+
+vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
+  float absZ = stepIndex - z;
+  vec2 o = vec2(INF, 0.0);
+  vec4 biomes = parseTrackBiomes(data);
+  float firefly = MIX_BIOMES(biomes, biomeFireflyCount);
+  if (firefly >= 1.0) {
+    vec3 offset = vec3(
+      1.0 * cos(0.8 * time + absZ),
+      1.2 + sin(0.02 * (mod(absZ, 10.0)) * time + absZ),
+      0.2 * cos(5.0 * time + absZ)
+    );
+    o = opU(o, vec2(sdSphere(p - offset, 0.04), 10.0 + 0.99 * pow(biomes[3], 2.0)));
+  }
+  return o;
+}
+
 vec2 scene(vec3 p) {
+  p.z -= 1.0;
   vec4 prev = texture2D(track, vec2(0.5/TRACK_SIZE, 0.5));
   vec4 current = texture2D(track, vec2(1.5/TRACK_SIZE, 0.5));
-
-  // The terrain is moving in interpolated step window for the first Z unit
-  p.z -= 1.0;
 
   vec2 m = mix(
     parseTrackOffset(cartTrackPrev),
@@ -400,7 +398,6 @@ vec2 scene(vec3 p) {
     vec2(max(0.0, TRACK_SIZE - p.z), 0.0), // black wall at the end (too far to be visible)
     vec2(max(0.0, p.z + 1.0), 0.0) // black wall before (you can't see behind anyway)
   );
-
 
   // Cart
   d = opU(d, sdCart(cartP));
@@ -532,9 +529,9 @@ vec2 biomeFogRange (float b, float seed) {
     return vec2(-0.1, 0.0);
   }
   if (b==B_INTERS) {
-    return vec2(0.2 * TRACK_SIZE, 0.8 * TRACK_SIZE);
+    return vec2(0.3 * TRACK_SIZE, TRACK_SIZE);
   }
-  return vec2(0.5 * TRACK_SIZE, TRACK_SIZE);
+  return vec2(0.6 * TRACK_SIZE, TRACK_SIZE);
 }
 
 vec3 biomeFogColor (float b, float seed) {
@@ -548,7 +545,7 @@ vec3 biomeFogColor (float b, float seed) {
 vec2 raymarch(vec3 position, vec3 direction) {
   float total_distance = 0.1;
   vec2 result;
-  for(int i = 0; i < N_MARCH; ++i) {
+  for (int i = 0; i < N_MARCH; ++i) {
     vec3 p = position + direction * total_distance;
     result = scene(p);
     total_distance += result.x;
@@ -619,11 +616,11 @@ void main() {
     zFract
   );
 
-  vec3 light_dir = normalize(vec3(0.0, 0.5, -1.0));
+  vec3 light_dir = normalize(vec3(0.4, 0.5, -1.0));
   float diffuse = dot(light_dir, nrml);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
   vec3 diffuseLit;
-  vec3 lightColor = vec3(1.0);
+  vec3 lightColor = vec3(1.0, 0.9, 0.8);
   float fog = smoothstep(fogRange[0], fogRange[1], result.x);
   diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor), fogColor, fog);
   gl_FragColor = vec4(diffuseLit, 1.0);
