@@ -24,8 +24,8 @@ export function formatTrackIndex(trackIndex: number): string {
 
 const biomeFrequency = {
   B_SAPPHIRE: 1,
-  B_FIRE: 2,
-  B_GOLD: 4,
+  B_FIRE: 1,
+  B_GOLD: 3,
   B_WIRED: 5,
   B_DANG: 8,
   B_DARK: 8,
