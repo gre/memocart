@@ -70,7 +70,12 @@ class GameComponent extends Component {
     return (
       <div className="game" style={{ width, height }}>
         {!this.state.loaded
-          ? <div>Loading...</div>
+          ? <div>
+              Loading...
+              <footer>
+                if it never loads, try <a href="/?lowQuality">/?lowQuality</a>
+              </footer>
+            </div>
           : <Render
               width={width}
               height={height}
