@@ -49,13 +49,10 @@ ${INJECT}
 #define MIX_BIOMES_2args(biomes,fn,arg1,arg2) mix(fn(arg1,arg2,biomes[0],biomes[3]),fn(arg1,arg2,biomes[1],biomes[3]),biomes[2])
 
 float opU(float d1, float d2) {
-  return min(d1,d2);
+  return min(d1, d2);
 }
 vec2 opU(vec2 d1, vec2 d2) {
-  if (d1.x < d2.x) {
-    return d1;
-  }
-  return d2;
+  return mix(d1, d2, step(d2.x, d1.x));
 }
 float opUs(float k, float a, float b) {
   float h = clamp( 0.5+0.5*(b-a)/k, 0.0, 1.0 );
@@ -63,10 +60,7 @@ float opUs(float k, float a, float b) {
 }
 vec2 opUs(float k, vec2 d1, vec2 d2) {
   float v = opUs(k, d1.x, d2.x);
-  if (d1.x < d2.x) {
-    return vec2(v, d1.y);
-  }
-    return vec2(v, d2.y);
+  return vec2(v, mix(d1.y, d2.y, step(d2.x, d1.x)));
 }
 float opS(float d1, float d2) {
   return max(-d1,d2);
@@ -171,10 +165,10 @@ vec2 sdRail (vec3 p) {
   board = opU(board, sdBox(p - vec3(0.0, 0.0, 0.33), boardS));
   board = opU(board, sdBox(p - vec3(0.0, 0.0, 0.66), boardS));
   float pylon = sdCappedCylinder(p - vec3(0.0, -1.03, 0.0), vec2(0.06, 1.0));
-  return opU(opU(
-    vec2(rail, 3.0),
-    vec2(board, 4.0)
-  ), vec2(pylon, 5.0));
+  return opU(
+    vec2(rail, 0.7),
+    vec2(opU(board, pylon), 4.0)
+  );
 }
 
 float biomeHaveWalls (float biome, float trackSeed) {
@@ -182,13 +176,13 @@ float biomeHaveWalls (float biome, float trackSeed) {
 }
 
 vec2 biomeRoomSize (float biome, float trackSeed) {
-  vec2 sz = vec2(2.0, 2.0);
-  sz += vec2(1.0 * trackSeed, 2.0 * step(0.8, trackSeed));
-  if (biome == B_DARK) {
-    sz += 1.0;
-    sz *= vec2(1.4, 2.0);
-  }
-  return sz;
+  return vec2(
+    2.0 + trackSeed,
+    2.0 + 2.0 * step(0.8, trackSeed)
+  ) * (
+   1.0 +
+   step(B_DARK, biome) * step(biome, B_DARK)
+  );
 }
 
 float sdSphere (vec3 p, float s) {
@@ -207,7 +201,6 @@ float sdRock (vec3 p) {
 float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   vec4 biomes = parseTrackBiomes(data);
   float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
-  if (haveWalls==0.0) return INF;
   vec4 biomesPrev = parseTrackBiomes(prev);
   vec2 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec2 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
@@ -245,10 +238,10 @@ float sdTunnelWallStep (vec3 p, vec4 data, vec4 prev) {
   float right = sdBox(p-wallX, hs);
   float up = sdBox(p-wallY, ws);
   float down = sdBox(p-vec3(0.0,-1.0,1.0)*wallY, ws);
-  return opU(
+  return mix(INF, opU(
     opU(up, down),
     opU(left, right)
-  );
+  ), haveWalls);
 }
 
 vec2 sdRailTrackStep (vec3 p, vec4 data) {
@@ -259,7 +252,7 @@ vec2 sdRailTrackStep (vec3 p, vec4 data) {
 vec2 sdRailAltTrackStep (vec3 p, vec4 data, float i) {
   float h = 2.0;
   vec2 shape = sdRail(p - vec3(0.0, -h / 2.0, 0.0));
-  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.9)), 8.0);
+  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.9)), 0.6);
   shape = opU(shape, lastTrackShape);
   return shape;
 }
@@ -275,13 +268,13 @@ vec2 sdCartSwitch (vec3 p) {
   p -= vec3(0., SWITCH_H - SWITCH_SH / 2., 0.);
   float head = sdSphere(p, SWITCH_SH);
   return opU(
-    vec2(head, 6.),
-    vec2(stick, 7.)
+    vec2(head, 3.),
+    vec2(stick, 0.6)
   );
 }
 
-vec2 sdCartWheel(vec3 p) {
-  float s = opU(
+float sdCartWheel(vec3 p) {
+  return opU(
     sdSphere(p - vec3(0.03, 0.0, 0.0), 0.04),
     opS(
       sdTorus(p.yxz, vec2(0.14, 0.04)),
@@ -291,7 +284,6 @@ vec2 sdCartWheel(vec3 p) {
       )
     )
   );
-  return vec2(s, 9.0);
 }
 
 const vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
@@ -305,7 +297,7 @@ vec2 sdCart(vec3 p) {
     sdBox(p, cartS*conv)
   );
 
-  vec2 wheels = opU(
+  float wheels = opU(
     opU(
       sdCartWheel(p - wheelOff),
       sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, 1.0))
@@ -349,14 +341,14 @@ vec2 sdCart(vec3 p) {
   return opU(opU(opU(
     vec2(inside, 2.1 + 0.9 * oxydation - 0.001),
     vec2(border, 2.0)),
-    wheels),
+    vec2(wheels, 0.1)),
     cartSwitch
   );
 }
 
-float biomeFireflyCount (float biome, float seed) {
-  return step(B_DARK, biome) * step(biome, B_DARK) * (seed + 3.0 * seed * seed) +
-  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.3 * fract(2.0 * seed) +
+float biomeFirefly (float biome, float seed) {
+  return step(B_DARK, biome) * step(biome, B_DARK) * (0.6 + seed) +
+  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.2 * fract(2.0 * seed) +
   step(seed, 0.01);
 }
 
@@ -364,15 +356,17 @@ vec2 sdObjectsStep (vec3 p, vec4 data, vec4 prev, float z) {
   float absZ = stepIndex - z;
   vec2 o = vec2(INF, 0.0);
   vec4 biomes = parseTrackBiomes(data);
-  float firefly = MIX_BIOMES(biomes, biomeFireflyCount);
-  if (firefly >= 1.0) {
-    vec3 offset = vec3(
-      1.0 * cos(0.8 * time + absZ),
-      1.2 + sin(0.02 * (mod(absZ, 10.0)) * time + absZ),
-      0.2 * cos(5.0 * time + absZ)
-    );
-    o = opU(o, vec2(sdSphere(p - offset, 0.04), 10.0 + 0.99 * pow(biomes[3], 2.0)));
-  }
+  float firefly = MIX_BIOMES(biomes, biomeFirefly);
+  vec3 offset = vec3(
+    1.0 * cos(0.8 * time + absZ),
+    1.1 + 0.8 * sin(0.02 * (mod(absZ, 10.0)) * time + 99.0 * biomes[3]),
+    0.2 * cos(5.0 * time + absZ)
+  );
+  o = opU(o, vec2(mix(
+    INF,
+    sdSphere(p - offset, 0.04),
+    step(1.0, firefly)
+  ), 5.0 + 0.99 * pow(biomes[3], 2.0)));
   return o;
 }
 
@@ -464,60 +458,48 @@ vec2 scene(vec3 p) {
 }
 
 vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
-  if (m < 1.0) {
-    return vec3(0.0);
-  }
-  else if (m < 2.0) { // terrain
-    vec3 c = vec3(0.22, 0.2, 0.18);
+  vec3 c = vec3(0.0);
 
-    // GOLD!
-    float goldRarity = biome==B_GOLD ? 0.3 : 0.8; // 0.0: common, 1.0: very rare
-    // TODO BIOME
+  // 0.0 to 1.0 are generic metal where m value is the color
+  c += step(m, 0.99) * m;
 
-    c += vec3(1.1, 0.7, 0.2) * mix(
+  // 1.+ : terrain
+  m--;
+  float goldRarity = step(B_GOLD,biome) * step(biome,B_GOLD) * 0.5 + 0.3;
+  c += step(0.0, m) * step(m, 0.999) * (
+    vec3(0.22, 0.2, 0.18) +
+    vec3(1.1, 0.7, 0.2) * mix(
       0.0,
       smoothstep(0.2, 0.3, dot(worldNoiseM[0], normal)),
       smoothstep(0.8*goldRarity-0.25, 0.8*goldRarity, dot(worldNoiseL[1], normal))
-    );
+    )
+  );
 
-    return c;
-  }
-  else if (m < 3.0) { // cart metal
-    return mix(
-      vec3(0.5, 0.3, 0.1),
-      vec3(0.8, 0.5, 0.2),
-      fract(m)
-    );
-  }
-  else if (m < 4.0) { // rail
-    return vec3(0.7);
-  }
-  else if (m < 5.0) { // wood
-    return vec3(0.5, 0.3, 0.1);
-  }
-  else if (m < 6.0) { // pylon
-    return vec3(0.5, 0.3, 0.0);
-  }
-  else if (m < 7.0) { // cart switch
-    return vec3(0.6, 0., 0.);
-  }
-  else if (m < 8.0) { // cart switch metal
-    return vec3(0.6);
-  }
-  else if (m < 9.0) { // rock
-    return vec3(0.3);
-  }
-  else if (m < 10.0) { // wheel
-    return vec3(0.1);
-  }
-  else if (m < 11.0) { // firefly
-    return mix(
-      vec3(0.8, 2.0, 0.8),
-      vec3(0.8, 1.8, 2.0),
-      fract(m)
-    );
-  }
-  return vec3(0.0);
+  // 2.+ : cart
+  m--;
+  c += step(0.0, m) * step(m, 0.999) * mix(
+    vec3(0.5, 0.3, 0.1),
+    vec3(0.8, 0.5, 0.2),
+    m
+  );
+
+  // 3.+ : switch handle
+  m--;
+  c += step(0.0, m) * step(m, 0.9) * vec3(0.6, 0., 0.);
+
+  // 4.+ : wood
+  m--;
+  c += step(0.0, m) * step(m, 0.9) * vec3(0.5, 0.3, 0.1);
+
+  // 5.+ : firefly
+  m--;
+  c += step(0.0, m) * step(m, 0.999) * mix(
+    vec3(0.8, 2.0, 0.8),
+    vec3(0.8, 1.8, 2.0),
+    m
+  );
+
+  return c;
 }
 
 vec3 biomeAmbientColor (float b, float seed) {
@@ -525,13 +507,12 @@ vec3 biomeAmbientColor (float b, float seed) {
 }
 
 vec2 biomeFogRange (float b, float seed) {
-  if (b==B_FINISH) {
-    return vec2(-0.1, 0.0);
-  }
-  if (b==B_INTERS) {
-    return vec2(0.3 * TRACK_SIZE, TRACK_SIZE);
-  }
-  return vec2(0.6 * TRACK_SIZE, TRACK_SIZE);
+  return vec2(
+    0.6
+      - 0.3 * step(B_INTERS, b) * step(b,B_INTERS)
+      - 0.61 * step(B_FINISH, b) * step(b, B_FINISH),
+    1.0 - step(B_FINISH, b) * step(b, B_FINISH)
+  ) * TRACK_SIZE;
 }
 
 vec3 biomeFogColor (float b, float seed) {
@@ -591,7 +572,7 @@ void main() {
   float zFract = z - zIndex;
 
   vec4 toData = texture2D(track, vec2((zIndex+0.5)/TRACK_SIZE, 0.5));
-  vec4 fromData = zIndex>0.0 ? texture2D(track, vec2((zIndex-0.5)/TRACK_SIZE, 0.5)) : toData;
+  vec4 fromData = texture2D(track, vec2((max(1.0,zIndex)-0.5)/TRACK_SIZE, 0.5));
   vec4 fromBiomes = parseTrackBiomes(fromData);
   vec4 toBiomes = parseTrackBiomes(toData);
 
