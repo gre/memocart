@@ -3,7 +3,7 @@ import seedrandom from "seedrandom";
 import smoothstep from "smoothstep";
 import memoize from "lodash/memoize";
 import mix from "./mix";
-import { B_EMPTY, B_DARK, B_GOLD, B_INTERS, B_FINISH } from "../Constants";
+import * as Constants from "../Constants";
 import type { Biome, TrackBiome, Track } from "./types";
 const BIOME_FREQ = 20;
 const BIOME_WINDOW_TRANSITION = 8;
@@ -11,6 +11,7 @@ const BIOME_PAD = Math.floor((BIOME_FREQ - BIOME_WINDOW_TRANSITION) / 2);
 const BIOME_DUR = 2 * BIOME_PAD + 1;
 const BIOME_SAFE_EACH = 10;
 export const LEVEL_SAFE_MULT = BIOME_SAFE_EACH * BIOME_FREQ;
+const { B_INTERS, B_FINISH, B_FIRE, B_DANG } = Constants;
 
 export function formatTrackIndex(trackIndex: number): string {
   const level = Math.max(0, Math.floor((trackIndex + 10) / LEVEL_SAFE_MULT));
@@ -21,16 +22,40 @@ export function formatTrackIndex(trackIndex: number): string {
   return "AREA  " + level + "-" + biome;
 }
 
+const biomeFrequency = {
+  B_SAPPHIRE: 1,
+  B_FIRE: 2,
+  B_GOLD: 4,
+  B_WIRED: 5,
+  B_DANG: 8,
+  B_DARK: 8,
+  B_EMPTY: 10
+};
+const biomeFrequencyKeys = Object.keys(biomeFrequency);
+const biomeFrequencySum = biomeFrequencyKeys.reduce(
+  (sum, k) => sum + biomeFrequency[k],
+  0
+);
+const biomeFrequencyProbability = biomeFrequencyKeys.map(
+  k => biomeFrequency[k] / biomeFrequencySum
+);
+function getBiome(r) {
+  let i = 0;
+  while (
+    (r -= biomeFrequencyProbability[i]) > 0 &&
+    ++i < biomeFrequencyKeys.length
+  );
+  return Constants[biomeFrequencyKeys[i]];
+}
+
 function genBiome(biomeIndex: number, seed: number): Biome {
   const biomeRandom = seedrandom("biome_" + biomeIndex + "_" + seed);
-  let type = B_EMPTY;
+  let type;
   let biomeSeed = biomeRandom();
   if (biomeIndex <= 0) {
     type = B_FINISH;
   } else {
-    const r = biomeRandom();
-    if (r < 0.1) type = B_DARK;
-    else if (r < 0.2) type = B_GOLD;
+    type = getBiome(biomeRandom());
 
     // FIXME maybe can vary that based on levels (aka the index value)?
     const intersectionRoulette = 3;
@@ -110,11 +135,17 @@ function genTrack(trackIndex: number, seed: number): Track {
 
   const mixBiomes = makeBiomesMixer(biome1, biome2, biomeMix, uniqueBiome);
 
+  const turnGlobalAmp = mixBiomes(b => {
+    return 0.5 + b.biomeSeed * 66 % 0.5;
+  });
+
   let turn = // ] -0.5, 0.5 [
-    0.3 *
+    (0.3 *
       (Math.cos(8 * globalRandom() + trackIndex * 0.2) +
         Math.sin(20 * globalRandom() + trackIndex * 0.33)) +
-    +0.2 * Math.cos(7 * globalRandom() + 0.09 * trackIndex);
+      +0.2 * Math.cos(7 * globalRandom() + 0.09 * trackIndex)) *
+    turnGlobalAmp;
+
   let descent =
     0.09 +
     0.4 * (1 - Math.exp(Math.min(0, -trackIndex / 500))) +
@@ -151,6 +182,12 @@ function genTrack(trackIndex: number, seed: number): Track {
   descent = mixBiomes(b => {
     if (b.type === B_FINISH) {
       return 0.1;
+    }
+    if (b.type === B_FIRE) {
+      return mix(descent, 0.999, 0.8);
+    }
+    if (b.type === B_DANG) {
+      return mix(descent, 0.1, 0.8);
     }
     return descent; // keep old value
   });

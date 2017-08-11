@@ -14,6 +14,10 @@ export const B_INTERS = 0; // biome used for when there is an intersection to ta
 export const B_EMPTY = 1; // generic biome without anything special in it
 export const B_DARK = 2; // dark biome with firefly
 export const B_GOLD = 3;
+export const B_WIRED = 4; // some past human activity visible. wires, lamps,...
+export const B_DANG = 5; // dangerous section. put some wood stick, walls are smaller on top
+export const B_SAPPHIRE = 6;
+export const B_FIRE = 7;
 export const B_FINISH = 15; // the last tile biome
 
 // Alt Track logic

@@ -231,9 +231,9 @@ export default (
   const altTrackCoords = trackToCoordinates(g.altTrack);
 
   const descent = g.track[0].descent + 0.001;
-  const frictionFactor = 0.003;
+  const frictionFactor = 0.004;
   const speedFriction = Math.pow(1 - frictionFactor, 60 * dt);
-  const accFriction = Math.pow(1 - 0.2 * frictionFactor, 60 * dt);
+  const accFriction = Math.pow(1 - 0.3 * frictionFactor, 60 * dt);
 
   g.acc = Math.max(0, Math.min((g.acc + 0.2 * descent * dt) * accFriction, 4));
   g.acc -= g.braking * 0.4 * dt;
@@ -340,12 +340,12 @@ export default (
     }
 
     Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
-    /*
-      Debug.log("descent", descent);
-      Debug.log("acc", g.acc);
-      Debug.log("speed", g.speed);
-      Debug.log("stepIndex", g.stepIndex);
-      Debug.log("altTrackMode", g.altTrackMode);*/
+
+    Debug.log("descent", descent);
+    Debug.log("acc", g.acc);
+    Debug.log("speed", g.speed);
+    Debug.log("stepIndex", g.stepIndex);
+    Debug.log("altTrackMode", g.altTrackMode);
     Debug.log(
       "trackBiome",
       g.track[0].biomeMix === 0
