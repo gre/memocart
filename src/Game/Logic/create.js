@@ -7,21 +7,20 @@ import {
   TURN_DX,
   DESCENT_DY
 } from "../Constants";
-import genTrack, { LEVEL_SAFE_MULT } from "./genTrack";
-import type { GameState } from "./types";
+import genTrack from "./genTrack";
+import genLevelStepIndex from "./genLevelStepIndex";
+import type { GameState, Quality } from "./types";
 
 // level: -1 is demo, 0 is tutorial, rest is for normal game
-export default (level: number, seed: number): GameState => {
+export default (level: number, seed: number, quality: Quality): GameState => {
   let speed = 0,
     acc = 0.1,
-    stepIndex,
     uiState = null;
 
   if (level === -1) {
     // Menu Screen / DEMO
     acc = 1;
     speed = 3;
-    stepIndex = 1000;
     uiState = {
       logo: true,
       footerBlink: true,
@@ -30,18 +29,18 @@ export default (level: number, seed: number): GameState => {
     };
   } else if (level === 0) {
     // Tutorial
-    stepIndex = 100;
   } else {
     // Game
     speed = 2;
-    stepIndex = LEVEL_SAFE_MULT * level;
     uiState = {
       levelInfoActive: true
     };
   }
 
+  const stepIndex = genLevelStepIndex(level);
+
   const track = [];
-  for (let i = 0; track.length < TRACK_SIZE; i--) {
+  for (let i = 0; track.length < TRACK_SIZE(quality); i--) {
     track.push(genTrack(stepIndex + i, seed));
   }
 
@@ -55,6 +54,7 @@ export default (level: number, seed: number): GameState => {
   }
 
   return {
+    quality,
     uiState,
     uiStateBlinkTick: false,
     status: STATUS_RUNNING,

@@ -217,18 +217,20 @@ class Game extends Component {
     const initialState = getGameState();
     uiSync(initialState);
 
-    let trackData = new Uint8Array(4 * TRACK_SIZE);
+    const trackSize = TRACK_SIZE(initialState.quality);
+
+    let trackData = new Uint8Array(4 * trackSize);
     encodeTrack(initialState.track, trackData);
     track({
-      width: TRACK_SIZE,
+      width: trackSize,
       height: 1,
       data: trackData
     });
 
-    let altTrackData = new Uint8Array(4 * TRACK_SIZE);
+    let altTrackData = new Uint8Array(4 * trackSize);
     encodeTrack(initialState.altTrack, altTrackData);
     altTrack({
-      width: TRACK_SIZE,
+      width: trackSize,
       height: 1,
       data: altTrackData
     });
@@ -242,7 +244,7 @@ class Game extends Component {
       if (prevState.track !== state.track) {
         encodeTrack(state.track, trackData);
         track({
-          width: TRACK_SIZE,
+          width: trackSize,
           height: 1,
           data: trackData
         });
@@ -251,7 +253,7 @@ class Game extends Component {
       if (prevState.altTrack !== state.altTrack) {
         encodeTrack(state.altTrack, altTrackData);
         altTrack({
-          width: TRACK_SIZE,
+          width: trackSize,
           height: 1,
           data: altTrackData
         });
@@ -298,7 +300,7 @@ class Game extends Component {
       });
       persistence({
         framebuffer: frontFBO,
-        amount: 0.4 + 0.5 * smoothstep(4.0, 20.0, state.speed),
+        amount: 0.3 + 0.6 * smoothstep(4.0, 20.0, state.speed),
         back,
         front: renderFBOTexture
       });
@@ -317,6 +319,7 @@ class Game extends Component {
       const diff = e.time - lastTime;
       lastTime = e.time;
       if (diff > 0.3) {
+        Debug.log("slow frame", "#" + e.tick + ": " + diff.toFixed(3) + "s");
         console.log("⚠️ slow frame#" + e.tick + ": " + diff.toFixed(3) + "s");
       }
     });

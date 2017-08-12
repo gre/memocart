@@ -1,7 +1,19 @@
 //@flow
+import qualityResolver from "./qualityResolver";
+
 export const DEV = process.env.NODE_ENV === "development";
-export const N_MARCH = 40; // number of raymarch step
-export const TRACK_SIZE = 8; // number of tracks. we can reduce to 6 to gain some FPS..?
+export const N_MARCH = qualityResolver({
+  // number of raymarch step
+  high: 44,
+  medium: 36,
+  low: 32
+});
+export const TRACK_SIZE = qualityResolver({
+  // number of tracks.
+  high: 12,
+  medium: 10,
+  low: 8
+});
 export const DESCENT_DY = -1; // the maximum possible descent
 export const TURN_DX = 0.7; // the range of turn (scaled on [-0.5, +0.5] interval)
 
@@ -18,6 +30,9 @@ export const B_WIRED = 4; // some past human activity visible. wires, lamps,...
 export const B_DANG = 5; // dangerous section. put some wood stick, walls are smaller on top
 export const B_SAPPHIRE = 6;
 export const B_FIRE = 7;
+export const B_COAL = 8;
+export const B_PLANT = 9;
+export const B_UFO = 10;
 export const B_FINISH = 15; // the last tile biome
 
 // Alt Track logic

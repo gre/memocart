@@ -1,14 +1,10 @@
 ## high pri
 
 - AUDIO (THIS AFTERNOON!!!)
-- make that turn are more unique and that you could potentially memorize them..
-- same for descent, also descent needs to be nicely balanced with speed so there are crazy descents too but not too much...
 - play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
 - more biomes, more objects that are uniquely positioned.
-  - B_WIRED isnt finished: place a (rare) sdCart itself in some rotation/pos. lights on wall. sdTrack? (if not hard to interp). scale (possible to mod()?)
   - B_WATER
   - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
-  - B_COAL: ground needs to be fill with coal & wall have dark thing. more unique shape.
 - wood structure: randomness in the width of them.
 - more insects specifically in dark. (to remember "oh, this is the insect place" XD) <- maybe it's a dedicated biome
 - quick audio bootstrap

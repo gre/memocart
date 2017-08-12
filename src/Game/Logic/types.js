@@ -2,6 +2,8 @@
 
 export type vec3 = [number, number, number];
 
+export type Quality = "high" | "medium" | "low";
+
 export type UserEvents = {
   keys: { [_: number]: number },
   keyRightDelta: number,
@@ -45,6 +47,7 @@ export type UIState = {
 };
 
 export type GameState = {
+  quality: Quality,
   uiState: ?UIState,
   uiStateBlinkTick: boolean,
   status: number,

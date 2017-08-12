@@ -1,8 +1,6 @@
 //@flow
 import FontFaceObserver from "fontfaceobserver";
 import React, { Component } from "react";
-import { DEV } from "./Constants";
-import * as Debug from "../Debug";
 import "./index.css";
 let Logic = require("./Logic").default;
 let { default: Render } = require("./Render");
@@ -18,12 +16,10 @@ if (module.hot) {
   });
 }
 
-const delay = ms => new Promise(success => setTimeout(success, ms));
-
 const globalSeed = Math.random();
 console.log("seed", globalSeed);
 
-const fontLoad = new FontFaceObserver("MinimalPixels").load().catch(() => {
+new FontFaceObserver("MinimalPixels").load().catch(() => {
   console.error("Font Loading Problem");
 });
 
@@ -31,10 +27,12 @@ class GameComponent extends Component {
   state = {
     wait: this.props.quality ? -1 : 30
   };
-  gameState = Logic.create(-1, globalSeed);
+  gameState = null;
   getGameState = () => this.gameState;
   action = (name: string, ...args: *) => {
-    const oldState = this.gameState;
+    const { gameState } = this;
+    if (!gameState) return;
+    const oldState = gameState;
     const newState = Logic[name](oldState, ...args);
     if (newState && newState !== oldState) {
       this.gameState = newState;
@@ -44,18 +42,17 @@ class GameComponent extends Component {
     }
   };
   componentDidMount() {
-    if (DEV) {
-      Debug.defineEditable("level", this.gameState.level, level => {
-        if (typeof level === "number") {
-          this.gameState = Logic.create(level, globalSeed);
-        }
-      });
+    if (this.props.quality) {
+      this.gameState = Logic.create(-1, globalSeed, this.props.quality);
     }
     const loop = () => {
       let { wait } = this.state;
       if (wait <= 0) return;
       setTimeout(loop, 1000);
       wait--;
+      if (wait === 0) {
+        this.gameState = Logic.create(-1, globalSeed, "high");
+      }
       this.setState({ wait });
     };
     if (this.state.wait === -1) {
@@ -86,14 +83,14 @@ class GameComponent extends Component {
                 </div>
                 <div>autostart in {wait}...</div>
                 <footer>
-                  (Unfortunately, shader compilation might takes forever on some
-                  computers. If it never loads in HIGH, try a lower quality 😭)
+                  (shader compilation holds on some computers. If so, try lower
+                  quality)
                 </footer>
               </div>
             : <div>
                 Loading...
                 <footer>
-                  if it never loads, try <a href="?quality=low">low</a> quality
+                  if it never loads, try <a href="?quality=low">quality=low</a>
                 </footer>
               </div>
           : <Render

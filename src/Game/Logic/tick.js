@@ -174,7 +174,7 @@ export default (
     g.stepIndex--;
     const droppedTrack = g.track[0];
     g.track = g.track.slice(1);
-    g.track.push(genTrack(g.stepIndex - TRACK_SIZE + 1, g.seed));
+    g.track.push(genTrack(g.stepIndex - TRACK_SIZE(g.quality) + 1, g.seed));
 
     g.worldDelta[0] += TURN_DX * droppedTrack.turn;
     g.worldDelta[1] += DESCENT_DY * droppedTrack.descent;
@@ -252,7 +252,7 @@ export default (
   } else {
     if (!freeControls) {
       let targetRotX, targetRotY;
-      const n = Math.max(2, Math.min(3, TRACK_SIZE - 1));
+      const n = Math.max(2, Math.min(3, TRACK_SIZE(g.quality) - 1));
       const targetP = vec3.create();
       const relativeFirst = vec3.create();
       const relativeLast = vec3.create();
@@ -348,6 +348,7 @@ export default (
     Debug.log("speed", g.speed);
     Debug.log("stepIndex", g.stepIndex);
     Debug.log("altTrackMode", g.altTrackMode);
+    */
     Debug.log(
       "trackBiome",
       g.track[0].biomeMix === 0
@@ -360,7 +361,6 @@ export default (
             " % " +
             g.track[0].biomeMix.toFixed(2)
     );
-    */
   }
 
   return g;

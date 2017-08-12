@@ -17,9 +17,9 @@
 }
 
 .game footer {
-  font-family: sans-serif;
-  font-size: 12px;
-  margin-top: 20px;
+  font-family: Monoid, monospace;
+  font-size: 10px;
+  padding: 20px;
   font-style: italic;
 }
 
