@@ -230,14 +230,16 @@ export default (
   const trackCoords = trackToCoordinates(g.track);
   const altTrackCoords = trackToCoordinates(g.altTrack);
 
-  const descent = g.track[0].descent + 0.001;
-  const frictionFactor = 0.0035;
-  const speedFriction = Math.pow(1 - frictionFactor, 60 * dt);
-  const accFriction = Math.pow(1 - 0.3 * frictionFactor, 60 * dt);
+  const descent = g.track[0].descent;
 
-  g.acc = Math.max(0, Math.min((g.acc + 0.2 * descent * dt) * accFriction, 4));
-  g.acc -= g.braking * 0.4 * dt;
-  g.speed = Math.max(0, Math.min((g.speed + dt * g.acc) * speedFriction, 20));
+  g.acc += 2 * (0.1 + descent) * (0.1 + descent) * dt;
+  g.acc *= Math.pow(0.99, 60 * dt); // friction
+  g.acc = Math.max(0, Math.min(g.acc, 4));
+  g.acc -= 3 * g.braking * dt;
+
+  g.speed += dt * g.acc;
+  g.speed *= Math.pow(0.997, 60 * dt); // friction
+  g.speed = Math.max(0.01, Math.min(g.speed, 20));
 
   if (g.status === STATUS_GAMEOVER) {
     g.acc = 0;
@@ -329,7 +331,7 @@ export default (
     g.statusChangedTime = g.time;
   }
   if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 5) {
-    g = restart(g);
+    //g = restart(g);
   } else if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
     g = levelUp(g);
   }
@@ -340,12 +342,14 @@ export default (
     }
 
     //Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
-
-    Debug.log("turn", g.track[0].turn);
-    Debug.log("descent", descent);
     /*
+    Debug.log("turn", g.track[0].turn);
+    */
+
+    Debug.log("descent", descent);
     Debug.log("acc", g.acc);
     Debug.log("speed", g.speed);
+    /*
     Debug.log("stepIndex", g.stepIndex);
     Debug.log("altTrackMode", g.altTrackMode);
     */

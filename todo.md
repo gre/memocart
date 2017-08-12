@@ -5,14 +5,11 @@
 - more biomes, more objects that are uniquely positioned.
   - B_WATER
   - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
-- wood structure: randomness in the width of them.
-- more insects specifically in dark. (to remember "oh, this is the insect place" XD) <- maybe it's a dedicated biome
 - quick audio bootstrap
 - gamepad support YES PLEASE
 - double check persistence config
 - some glitch in persistence
 - various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
-- GAME OVER rendering is bugged now. maybe reconsider the rocks thing. maybe consider the wood structure.
 
 # medium
 

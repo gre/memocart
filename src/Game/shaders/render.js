@@ -204,7 +204,7 @@ vec2 sdRail (vec3 p, vec4 biomes) {
     sdBox(p - vec3(-railw, 0.0, 0.5), railS)
   ), 6.0);
   // pylon
-  s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -1.03, 0.0), vec2(0.06, 1.0)), 4.));
+  s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -10.03, 0.0), vec2(0.06, 10.0)), 4.));
   // first board
   s = opU(s, vec2(sdBox(p, boardS), 4.+mod(seed, 0.2)));
   // second
@@ -262,6 +262,7 @@ float sdRock (vec3 p) {
 #define WALL_WIDTH 100.0
 vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
+  haveWalls = step(0.01, haveWalls);
   vec3 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec3 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
   float zMix = interpStepP(p);
@@ -276,19 +277,20 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float biomeSeed = biomes[3];
   float dx = 0.3 * biomeSeed;
   float woodStructureDist = MIX_BIOMES(biomes, biomeWoodStructureDist);
-  float woodT = 1.0 + woodStructureDist;
+  float woodW = 0.04 + mod(biomeSeed, 0.05);
+  float woodT = 0.6 + woodStructureDist;
   float woodL = size.x * (0.4 + 0.1 * biomeSeed) + dx + woodStructureDist;
   float woodR = size.x * (0.5 - 0.1 * fract(9. * biomeSeed)) - dx + woodStructureDist;
   woodP = p;
   rot2(woodP.xy, 0.1 - mod(5.0*biomeSeed, 0.8));
-  s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(0.05, 2.0, 0.05)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.5));
   woodP = p;
   rot2(woodP.xy, mod(7.*biomeSeed, 0.8) - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(0.05, 2.0, 0.05)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.5));
   woodP = p;
   rot2(woodP.yz, 0.4 * fract(65.*biomeSeed) - 0.2);
   rot2(woodP.xy, 0.2 * fract(65.*biomeSeed) - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -0.05), vec3(2.0, 0.05, 0.05)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.5));
 
   // FIXME vary these based on biome factor...
   vec3 disp = vec3(0.);
