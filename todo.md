@@ -1,6 +1,6 @@
 ## high pri
 
-- AUDIO
+- AUDIO (THIS AFTERNOON!!!)
 - make that turn are more unique and that you could potentially memorize them..
 - same for descent, also descent needs to be nicely balanced with speed so there are crazy descents too but not too much...
 - play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)

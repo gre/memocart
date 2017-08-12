@@ -231,7 +231,7 @@ export default (
   const altTrackCoords = trackToCoordinates(g.altTrack);
 
   const descent = g.track[0].descent + 0.001;
-  const frictionFactor = 0.004;
+  const frictionFactor = 0.0035;
   const speedFriction = Math.pow(1 - frictionFactor, 60 * dt);
   const accFriction = Math.pow(1 - 0.3 * frictionFactor, 60 * dt);
 
@@ -339,9 +339,11 @@ export default (
       g.speed = 0;
     }
 
-    Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
+    //Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
 
+    Debug.log("turn", g.track[0].turn);
     Debug.log("descent", descent);
+    /*
     Debug.log("acc", g.acc);
     Debug.log("speed", g.speed);
     Debug.log("stepIndex", g.stepIndex);
@@ -358,6 +360,7 @@ export default (
             " % " +
             g.track[0].biomeMix.toFixed(2)
     );
+    */
   }
 
   return g;

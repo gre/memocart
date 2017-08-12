@@ -298,7 +298,7 @@ class Game extends Component {
       });
       persistence({
         framebuffer: frontFBO,
-        amount: 0.1 + 0.6 * smoothstep(4.0, 20.0, state.speed),
+        amount: 0.4 + 0.5 * smoothstep(4.0, 20.0, state.speed),
         back,
         front: renderFBOTexture
       });

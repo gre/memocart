@@ -26,9 +26,9 @@ const biomeFrequency = {
   B_SAPPHIRE: 1,
   B_FIRE: 1,
   B_GOLD: 3,
+  B_DARK: 5,
   B_WIRED: 5,
   B_DANG: 8,
-  B_DARK: 8,
   B_EMPTY: 10
 };
 const biomeFrequencyKeys = Object.keys(biomeFrequency);
@@ -135,21 +135,87 @@ function genTrack(trackIndex: number, seed: number): Track {
 
   const mixBiomes = makeBiomesMixer(biome1, biome2, biomeMix, uniqueBiome);
 
-  const turnGlobalAmp = mixBiomes(b => {
-    return 0.5 + b.biomeSeed * 66 % 0.5;
+  const slowTurnFactor = mixBiomes(b => {
+    return b.biomeSeed < 0.2 ? 0.1 : 1;
+  });
+  const slowSlopeFactor = mixBiomes(b => {
+    return 0.01 + Math.pow(b.biomeSeed * 9 % 1.5, 3);
   });
 
-  let turn = // ] -0.5, 0.5 [
-    (0.3 *
-      (Math.cos(8 * globalRandom() + trackIndex * 0.2) +
-        Math.sin(20 * globalRandom() + trackIndex * 0.33)) +
-      +0.2 * Math.cos(7 * globalRandom() + 0.09 * trackIndex)) *
-    turnGlobalAmp;
+  const normalTurnFactor = mixBiomes(b => {
+    return Math.pow(b.biomeSeed * 80 % 1, 2);
+  });
+  const normalSlopeFactor = mixBiomes(b => {
+    return Math.pow(b.biomeSeed * 4 % 1, 2);
+  });
 
+  const crazyTurnFactor = mixBiomes(b => {
+    return (b === B_DANG ? 0.5 : 0.1) * (b.biomeSeed * 66 % 1);
+  });
+  const crazySlopeFactor = mixBiomes(b => {
+    return (b === B_DANG ? 1 : 0.01) * (b.biomeSeed * 3 % 1);
+  });
+
+  const slowTurn = Math.cos(7 * globalRandom() + 0.12 * trackIndex);
+  const slowSlope = Math.cos(999 * globalRandom() + 0.2 * trackIndex);
+  const normalTurn = Math.cos(9 * globalRandom() + 0.3 * trackIndex);
+  const normalSlope = Math.sin(99 * globalRandom() + 0.35 * (trackIndex - 444));
+  const crazyTurn = mix(
+    Math.sin(10 * globalRandom() + 0.7 * trackIndex),
+    Math.cos(20 * globalRandom() + 2 * trackIndex),
+    0.3 - 0.4 * trackRandom()
+  );
+  const crazySlope = mix(
+    mix(
+      5 * (trackRandom() - 0.5),
+      Math.cos(20 * globalRandom() + 3 * trackIndex),
+      trackRandom()
+    ),
+    Math.sin(30 * globalRandom() + 0.8 * trackIndex),
+    0.3
+  );
+
+  let turnFactorsSum = crazyTurnFactor + normalTurnFactor + slowTurnFactor;
+  if (turnFactorsSum === 0)
+    console.warn("flaw in map gen.. turnFactorsSum=0", trackIndex, seed);
+
+  const slopeFactorSum = slowSlopeFactor + crazySlopeFactor + normalSlopeFactor;
+  if (slopeFactorSum === 0) {
+    console.warn("flaw in map gen.. slopeFactorSum=0", trackIndex, seed);
+  }
+
+  let turn = // ] -0.5, 0.5 [
+    (crazyTurnFactor * crazyTurn +
+      normalTurnFactor * normalTurn +
+      slowTurnFactor * slowTurn) /
+    (turnFactorsSum * 2);
+
+  const averageSlope = mixBiomes(b => {
+    let a: number;
+    if (b.type === B_FINISH) {
+      a = 0.1;
+    } else if (b.type === B_FIRE) {
+      a = 0.8;
+    } else if (b.type === B_DANG) {
+      a = 0.2;
+    } else {
+      a = 0.5;
+    }
+    a += b.biomeSeed * 9 % 0.05;
+    return a;
+  });
+
+  const slopeAmp = 0.3;
   let descent =
-    0.09 +
-    0.4 * (1 - Math.exp(Math.min(0, -trackIndex / 500))) +
-    +0.5 * (0.5 + 0.5 * Math.cos(8 * globalRandom() + trackIndex * 0.5));
+    averageSlope +
+    slopeAmp *
+      (slowSlopeFactor * slowSlope +
+        normalSlopeFactor * normalSlope +
+        crazySlopeFactor * crazySlope) /
+      slopeFactorSum;
+
+  turn = Math.max(-0.4999, Math.min(turn, 0.4999));
+  descent = Math.max(0.05, Math.min(descent, 0.9999));
 
   turn = mixBiomes((b, unique) => {
     if (b.type === B_FINISH) {
@@ -177,19 +243,6 @@ function genTrack(trackIndex: number, seed: number): Track {
       );
     }
     return turn; // keep old value
-  });
-
-  descent = mixBiomes(b => {
-    if (b.type === B_FINISH) {
-      return 0.1;
-    }
-    if (b.type === B_FIRE) {
-      return mix(descent, 0.999, 0.8);
-    }
-    if (b.type === B_DANG) {
-      return mix(descent, 0.1, 0.8);
-    }
-    return descent; // keep old value
   });
 
   return {

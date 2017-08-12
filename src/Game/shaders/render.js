@@ -416,8 +416,7 @@ s = opU(s, vec2(wheels, 0.1));
 }
 
 float biomeFirefly (float biome, float seed) {
-  return step(B_DARK, biome) * step(biome, B_DARK) * (0.6 + seed) +
-  step(B_INTERS, biome) * step(biome, B_INTERS) * 1.2 * fract(2.0 * seed) +
+  return step(B_DARK, biome) * step(biome, B_DARK) * (0.8 + seed) +
   step(seed, 0.01);
 }
 
@@ -425,16 +424,17 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
   vec2 o = vec2(INF, 0.0);
   float firefly = MIX_BIOMES(biomes, biomeFirefly);
+  float seed = biomes[3];
   vec3 offset = vec3(
-    1.0 * cos(0.8 * time + absZ),
-    1.1 + 0.8 * sin(0.02 * (mod(absZ, 10.0)) * time + 99.0 * biomes[3]),
+    cos(0.8 * time + absZ),
+    1.2 + sin(seed + time * mod(absZ * seed, 0.3)),
     0.2 * cos(5.0 * time + absZ)
   );
   o = opU(o, vec2(mix(
     INF,
-    sdSphere(p - offset, 0.04),
+    sdSphere(p - offset, 0.03),
     step(1.0, firefly)
-  ), 5.0 + 0.99 * pow(biomes[3], 2.0)));
+  ), 5.0 + 0.99 * seed * seed));
   return o;
 }
 
@@ -579,8 +579,8 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   // 5.+ : firefly
   m--;
   c += step(0.0, m) * step(m, 0.999) * mix(
-    vec3(0.8, 2.0, 0.8),
-    vec3(0.8, 1.8, 2.0),
+    vec3(.8, 3., 1.),
+    vec3(.8, 2., 5.),
     m
   );
 
@@ -596,7 +596,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 }
 
 vec3 biomeAmbientColor (float b, float seed) {
-  return vec3(0.1)
+  return vec3(0.2)
   + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.4)
   + step(B_SAPPHIRE,b) * step(b,B_SAPPHIRE) * vec3(0.0, 0.3, 0.8)
   + step(B_FIRE,b) * step(b,B_FIRE) * vec3(0.3, 0.2, 0.0);
