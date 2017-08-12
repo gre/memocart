@@ -1,18 +1,16 @@
 ## high pri
 
+- optimize...
 - AUDIO (THIS AFTERNOON!!!)
 - play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
-- more biomes, more objects that are uniquely positioned.
-  - B_WATER
-  - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
 - quick audio bootstrap
-- gamepad support YES PLEASE
-- double check persistence config
-- some glitch in persistence
-- various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
 
 # medium
 
+- various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
+- more biomes, more objects that are uniquely positioned.
+  - B_WATER
+  - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
 - ROTATING BALL/ANIMAL IN A BIOME like simple cos/sin on x/y . XD i just think it would be neat. also it should have a unique color as help to remember. WE NEED BIOME RANDOM, maybe as bit-part of track random idk. remember it's a game about a weird mine too.
 - is Bat possible? could hack something quick and they would render black. if we have them in high position, we can not branch on biome and just always have them. just need variety tho. maybe it's part of the rotating thing, and maybe it's just enabled with another uniform (if it can avoid crazy more glsl)
 - more variety in the texturing pattern per biome
@@ -22,6 +20,8 @@
 
 # low
 
+- gamepad support
+- polish gameover that should focus on the correct entrance with the cart in sight.
 - stalac(t/m)ite biome IF it's not too crazy code.
 - plants biome. if it's not too crazy too. i mean, it's just some green thing, maybe just painted on wall. MUSHROOM shape could be cool.
 - light object on the front left section of the cart

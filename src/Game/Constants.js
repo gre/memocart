@@ -5,8 +5,8 @@ export const DEV = process.env.NODE_ENV === "development";
 export const N_MARCH = qualityResolver({
   // number of raymarch step
   high: 44,
-  medium: 36,
-  low: 32
+  medium: 40,
+  low: 36
 });
 export const TRACK_SIZE = qualityResolver({
   // number of tracks.

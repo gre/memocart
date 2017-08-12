@@ -127,7 +127,7 @@ function genTrack(trackIndex: number, seed: number): Track {
     return a;
   });
 
-  const slopeAmp = 0.3;
+  const slopeAmp = withBiome(b => (b.type === B_DANG ? 0.8 : 0.3));
   let descent =
     averageSlope +
     slopeAmp *
@@ -136,8 +136,14 @@ function genTrack(trackIndex: number, seed: number): Track {
         crazySlopeFactor * crazySlope) /
       slopeFactorSum;
 
+  descent = withBiome(b => {
+    if (b.biomeSeed * 3 % 1 < 0.2) return descent * 0.2; // no slope in some cases
+    if (b.biomeSeed * 11 % 1 < 0.2) return descent + 0.6; // high slope in some cases
+    return descent;
+  });
+
   turn = Math.max(-0.4999, Math.min(turn, 0.4999));
-  descent = Math.max(0.05, Math.min(descent, 0.9999));
+  descent = Math.max(0.1, Math.min(descent, 0.9999));
 
   turn = withBiome((b, unique) => {
     // specific business logic
