@@ -153,7 +153,7 @@ function genTrack(trackIndex: number, seed: number): Track {
     return (b === B_DANG ? 0.5 : 0.1) * (b.biomeSeed * 66 % 1);
   });
   const crazySlopeFactor = mixBiomes(b => {
-    return (b === B_DANG ? 1 : 0.01) * (b.biomeSeed * 3 % 1);
+    return (b === B_DANG ? 1 : 0.01) * (crazyTurnFactor + b.biomeSeed * 3 % 1);
   });
 
   const slowTurn = Math.cos(7 * globalRandom() + 0.12 * trackIndex);
