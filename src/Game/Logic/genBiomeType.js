@@ -1,29 +1,35 @@
 //@flow
 import * as Constants from "../Constants";
+import smoothstep from "smoothstep";
 
-const biomeFrequency = {
-  B_UFO: 1,
-  B_FIRE: 2,
-  B_SAPPHIRE: 2,
-  B_PLANT: 4,
-  B_GOLD: 6,
-  B_COAL: 8,
-  B_DARK: 10,
-  B_DANG: 15,
-  B_EMPTY: 20,
-  B_WIRED: 30
+const biomeFrequencyPerIndex = {
+  B_UFO: (biomeIndex: number) => 5 * smoothstep(20, 200, biomeIndex),
+  B_FIRE: (biomeIndex: number) => 2 * smoothstep(10, 50, biomeIndex),
+  B_SAPPHIRE: (biomeIndex: number) => 2 * smoothstep(0, 40, biomeIndex),
+  B_PLANT: (biomeIndex: number) => 4 * smoothstep(0, 20, biomeIndex),
+  B_GOLD: (biomeIndex: number) =>
+    6 * smoothstep(0, 30, biomeIndex) + 10 * smoothstep(30, 100, biomeIndex),
+  B_COAL: (biomeIndex: number) => 8 * smoothstep(0, 20, biomeIndex),
+  B_DARK: (biomeIndex: number) => 10 * smoothstep(5, 30, biomeIndex),
+  B_DANG: (biomeIndex: number) => 15 * smoothstep(0, 10, biomeIndex),
+  B_EMPTY: (biomeIndex: number) => 10,
+  B_WIRED: (biomeIndex: number) => 30 - 20 * smoothstep(30, 100, biomeIndex)
 };
 
-const biomeFrequencyKeys = Object.keys(biomeFrequency);
-const biomeFrequencySum = biomeFrequencyKeys.reduce(
-  (sum, k) => sum + biomeFrequency[k],
-  0
-);
-const biomeFrequencyProbability = biomeFrequencyKeys.map(
-  k => biomeFrequency[k] / biomeFrequencySum
-);
-
-export default function(r: number): number {
+export default function(biomeIndex: number, r: number): number {
+  const biomeFrequencyKeys = Object.keys(biomeFrequencyPerIndex);
+  const biomeFrequency = {};
+  biomeFrequencyKeys.forEach(k => {
+    const f = biomeFrequencyPerIndex[k];
+    biomeFrequency[k] = f(biomeIndex);
+  });
+  const biomeFrequencySum = biomeFrequencyKeys.reduce(
+    (sum, k) => sum + biomeFrequency[k],
+    0
+  );
+  const biomeFrequencyProbability = biomeFrequencyKeys.map(
+    k => biomeFrequency[k] / biomeFrequencySum
+  );
   let i = 0;
   // eslint-disable-next-line no-cond-assign
   while (

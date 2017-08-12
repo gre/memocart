@@ -14,7 +14,8 @@ export default function genBiome(biomeIndex: number, seed: number): Biome {
   if (biomeIndex <= 0) {
     type = B_FINISH;
   } else {
-    type = genBiomeType(biomeRandom());
+    type = genBiomeType(biomeIndex, biomeRandom());
+    console.log(biomeIndex);
 
     // FIXME maybe can vary that based on levels (aka the index value)?
     const intersectionRoulette = 3;

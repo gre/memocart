@@ -14,7 +14,7 @@ export const TRACK_SIZE = qualityResolver({
   medium: 10,
   low: 8
 });
-export const DESCENT_DY = -1; // the maximum possible descent
+export const DESCENT_DY = -0.8; // the maximum possible descent
 export const TURN_DX = 0.7; // the range of turn (scaled on [-0.5, +0.5] interval)
 
 export const STATUS_RUNNING = 0;

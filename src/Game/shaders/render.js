@@ -239,7 +239,7 @@ vec3 biomeRoomSize (float biome, float trackSeed) {
   float b = mod(7.2 * trackSeed, 0.4);
   return vec3(
     2.0 + trackSeed - dang * (a * 0.5 + b),
-    2.0 - dang * a,
+    2.2 - dang * a,
     dang * (trackSeed + a - b)
   ) * (
    1.0 +
