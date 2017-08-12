@@ -331,7 +331,7 @@ export default (
     g.statusChangedTime = g.time;
   }
   if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 5) {
-    //g = restart(g);
+    g = restart(g);
   } else if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
     g = levelUp(g);
   }
