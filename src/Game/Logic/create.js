@@ -9,6 +9,7 @@ import {
 } from "../Constants";
 import genTrack from "./genTrack";
 import genLevelStepIndex from "./genLevelStepIndex";
+import { pressSpace } from "./messages";
 import type { GameState, Quality } from "./types";
 
 // level: -1 is demo, 0 is tutorial, rest is for normal game
@@ -25,7 +26,7 @@ export default (level: number, seed: number, quality: Quality): GameState => {
       logo: true,
       footerBlink: true,
       footerCentered: true,
-      footer: "Press SPACE"
+      footer: pressSpace()
     };
   } else if (level === 0) {
     // Tutorial

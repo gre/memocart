@@ -22,6 +22,7 @@ import levelUp from "./levelUp";
 import tutorial from "./tutorial";
 import * as Debug from "../../Debug";
 import { printBiome } from "./genDebug";
+import { pressSpace } from "./messages";
 import type { GameState, TrackBiome, UserEvents } from "./types";
 
 function setMatRot(rot: Array<number>, rotX: number, rotY: number) {
@@ -301,7 +302,7 @@ export default (
         title: "Oops!",
         body: "We all learn\nfrom our\nmistakes",
         area: formatTrackIndex(g.stepIndex),
-        footer: "PRESS SPACE",
+        footer: pressSpace(),
         footerBlink: true,
         footerCentered: true
       };
@@ -315,7 +316,7 @@ export default (
         title: "YOU DID IT!",
         body: "now falling from...\nLEVEL " + (g.level + 1),
         black: true,
-        footer: "PRESS SPACE",
+        footer: pressSpace(),
         footerBlink: true,
         footerCentered: true
       };

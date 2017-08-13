@@ -16,6 +16,10 @@
   font-size: 48px;
 }
 
+.game .auto {
+  font-size: 0.5em;
+}
+
 .game footer {
   font-family: Monoid, monospace;
   font-size: 10px;

@@ -1,6 +1,8 @@
 //@flow
 import qualityResolver from "./qualityResolver";
 
+// All constants here are both available on JS and GLSL (via a #define)
+
 export const DEV = process.env.NODE_ENV === "development";
 export const N_MARCH = qualityResolver({
   // number of raymarch step
@@ -22,20 +24,25 @@ export const STATUS_FINISHED = 1;
 export const STATUS_GAMEOVER = 2;
 
 // B_ constants are the biomes
-export const B_COAL = 1;
-export const B_DANG = 2; // dangerous section. put some wood stick, walls are smaller on top
-export const B_DARK = 3; // dark biome with firefly
-export const B_EMPTY = 4; // generic biome without anything special in it
-export const B_FINISH = 5; // the last tile biome
-export const B_FIRE = 6;
-export const B_GOLD = 7;
-export const B_ICY = 8;
-export const B_INTERS = 9; // biome used for when there is an intersection to take
-export const B_PLANT = 10;
-export const B_SAPPHIRE = 11;
-export const B_UFO = 12;
-export const B_VOID = 13; // complete void, kinda like an intersection but without intersection
-export const B_WIRED = 14; // some past human activity visible. wires, lamps,...
+let biome = 0;
+export const B_COAL = biome++;
+export const B_DANG = biome++; // dangerous section. put some wood stick, walls are smaller on top
+export const B_DARK = biome++; // dark biome with firefly
+export const B_EMPTY = biome++; // generic biome without anything special in it
+export const B_FINISH = biome++; // the last tile biome
+export const B_FIRE = biome++;
+export const B_GOLD = biome++;
+export const B_ICY = biome++;
+export const B_INTERS = biome++; // biome used for when there is an intersection to take
+export const B_PLANT = biome++;
+export const B_SAPPHIRE = biome++;
+export const B_UFO = biome++;
+export const B_VOID = biome++; // complete void, kinda like an intersection but without intersection
+export const B_WIRED = biome++; // some past human activity visible. wires, lamps,...
+
+if (biome >= 16) {
+  console.warn("BIOME OVERFLOW XD", biome);
+}
 
 // Alt Track logic
 export const ALTT_OFF = 0; // altTrack is disabled

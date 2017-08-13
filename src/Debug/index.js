@@ -74,7 +74,7 @@ export const tryFunction = (f: Function) => {
   }
 };
 
-if (process.env.NODE_ENV !== "production") {
+if (process.env.NODE_ENV !== "production" && !("ontouchstart" in document)) {
   class EditNumber extends React.Component {
     onChange = e => {
       if (isNaN(e.target.value)) return;

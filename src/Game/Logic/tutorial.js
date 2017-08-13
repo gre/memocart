@@ -2,6 +2,7 @@
 import type { GameState, UserEvents, UIState } from "./types";
 import { ALTT_CART_OFF, ALTT_CART_ON } from "../Constants";
 import levelUp from "./levelUp";
+import { spaceToSkip, pressRight, holdSpace } from "./messages";
 
 type Cond = (g: GameState, userEvents: UserEvents) => boolean;
 type Tick = (g: GameState, userEvents: UserEvents) => GameState;
@@ -64,7 +65,7 @@ const tutorialLogic: TutorialLogic = {
     {
       uiState: {
         title: "Tutorial",
-        footer: !tutorialFinishedOnce() ? "" : "SPACE to skip",
+        footer: !tutorialFinishedOnce() ? "" : spaceToSkip(),
         footerCentered: true,
         footerBlink: true
       },
@@ -96,7 +97,7 @@ const tutorialLogic: TutorialLogic = {
         body: "Let's go... RIGHT!",
         footerBlink: true,
         footerCentered: true,
-        footer: "Press RIGHT"
+        footer: pressRight()
       },
       conditionSkip: cartOnAltTrack,
       conditionEnter: afterStepIndex(48),
@@ -126,7 +127,7 @@ const tutorialLogic: TutorialLogic = {
     {
       uiState: {
         title: "Good Job!",
-        body: "ProTip:\nhold  SPACE\nto   brake"
+        body: "ProTip:\n" + holdSpace() + "\nto   brake"
       },
       conditionSkip: never,
       conditionEnter: afterStepIndex(34),

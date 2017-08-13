@@ -65,22 +65,39 @@ class Game extends Component {
   };
 
   canvas: ?HTMLCanvasElement;
+  tapped = false;
   mouseAt = null;
   mouseDown = null;
   keys = {};
 
   getUserEvents = () => {
-    const { keys, mouseDown, mouseAt } = this;
-    const keyRightDelta =
+    const { keys, mouseDown, mouseAt, touchTime } = this;
+    let spacePressed = keys[32];
+    let keyRightDelta =
       (keys[39] || keys[68]) - (keys[37] || keys[65] || keys[81]);
-    const keyUpDelta =
+    let keyUpDelta =
       (keys[38] || keys[87] || keys[90]) - (keys[40] || keys[83]);
+
+    if (mouseDown && mouseAt) {
+      const dx = mouseAt[0] - mouseDown[0];
+      const dy = mouseAt[1] - mouseDown[1];
+      if (Math.abs(dx) > Math.max(10, Math.abs(dy))) {
+        keyRightDelta = dx > 0 ? 1 : -1;
+      }
+    }
+
+    if (this.tapped) {
+      this.tapped = false;
+      spacePressed = true;
+    } else if (mouseDown && touchTime && Date.now() - touchTime > 300) {
+      spacePressed = true;
+    }
 
     return {
       keys,
       keyRightDelta,
       keyUpDelta,
-      spacePressed: keys[32],
+      spacePressed,
       mouseDown,
       mouseAt
     };
@@ -90,6 +107,57 @@ class Game extends Component {
     if (!this.canvas) return;
     const rect = this.canvas.getBoundingClientRect();
     return [e.clientX - rect.left, e.clientY - rect.top];
+  };
+
+  touchId = null;
+  touchTime = null;
+  findTouch = (list: Array<*>) => {
+    for (let i = 0; i < list.length; i++) {
+      if (list[i].identifier === this.touchId) {
+        return list[i];
+      }
+    }
+    return null;
+  };
+  onTouchStart = (e: *) => {
+    if (this.touchId !== null) return;
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    this.touchId = touch.identifier;
+    this.touchTime = Date.now();
+    this.mouseAt = this.mouseDown = this._pos(touch);
+  };
+  onTouchMove = (e: *) => {
+    const touch = this.findTouch(e.changedTouches);
+    if (touch) {
+      e.preventDefault();
+      this.mouseAt = this._pos(touch);
+    }
+  };
+  onTouchEnd = (e: *) => {
+    const touch = this.findTouch(e.changedTouches);
+    if (touch) {
+      e.preventDefault();
+      const { mouseDown } = this;
+      this.mouseDown = null;
+      this.touchId = null;
+      const pos = this._pos(touch);
+      if (pos && mouseDown) {
+        const dx = pos[0] - mouseDown[0];
+        const dy = pos[1] - mouseDown[1];
+        const d = dx * dx + dy * dy;
+        if (d < 20) {
+          this.tapped = true;
+        }
+      }
+    }
+  };
+  onTouchCancel = (e: *) => {
+    const touch = this.findTouch(e.changedTouches);
+    if (touch) {
+      this.mouseDown = null;
+      this.touchId = null;
+    }
   };
 
   onMouseDown = (e: *) => {
@@ -124,6 +192,9 @@ class Game extends Component {
     body.addEventListener("keyup", this.onKeyUp);
     body.addEventListener("keydown", this.onKeyDown);
 
+    const initialState = getGameState();
+    const enableAfterEffects = initialState.quality === "high";
+
     let resolution = 64;
 
     const uiCanvas = document.createElement("canvas");
@@ -144,18 +215,21 @@ class Game extends Component {
     const renderFBO = regl.framebuffer({
       color: renderFBOTexture
     });
-    const fbo1Texture = regl.texture(resolution);
-    const fbo1 = regl.framebuffer({
-      color: fbo1Texture
-    });
-    const fbo2Texture = regl.texture(resolution);
-    const fbo2 = regl.framebuffer({
-      color: fbo2Texture
-    });
+    let fbo1Texture, fbo1, fbo2Texture, fbo2;
+    if (enableAfterEffects) {
+      fbo1Texture = regl.texture(resolution);
+      fbo1 = regl.framebuffer({
+        color: fbo1Texture
+      });
+      fbo2Texture = regl.texture(resolution);
+      fbo2 = regl.framebuffer({
+        color: fbo2Texture
+      });
+    }
     let swapFbos = [fbo1, fbo2];
     let swapFboTextures = [fbo1Texture, fbo2Texture];
     let drawUI = makeDrawUI(ui);
-    let render = renderShader(regl, this.props.quality);
+    let render = renderShader(regl, initialState.quality);
     let persistence = persistenceShader(regl);
     let copy = copyShader(regl);
     let post = postShader(regl);
@@ -175,10 +249,12 @@ class Game extends Component {
         resolution = hi ? 4 * resolution : 64;
         renderFBOTexture(resolution);
         renderFBO({ color: renderFBOTexture });
-        fbo1Texture(resolution);
-        fbo1({ color: fbo1Texture });
-        fbo2Texture(resolution);
-        fbo2({ color: fbo2Texture });
+        if (enableAfterEffects) {
+          fbo1Texture(resolution);
+          fbo1({ color: fbo1Texture });
+          fbo2Texture(resolution);
+          fbo2({ color: fbo2Texture });
+        }
       });
     }
 
@@ -188,7 +264,7 @@ class Game extends Component {
         Debug.tryFunction(() => {
           render = require("./shaders/render").default(
             regl,
-            this.props.quality
+            initialState.quality
           );
         });
       });
@@ -214,7 +290,6 @@ class Game extends Component {
       });
     }
 
-    const initialState = getGameState();
     uiSync(initialState);
 
     const trackSize = TRACK_SIZE(initialState.quality);
@@ -267,8 +342,8 @@ class Game extends Component {
         uiSync(state);
       }
 
-      const [backFBO, frontFBO] = swapFbos;
-      const [back, front] = swapFboTextures;
+      let [backFBO, frontFBO] = swapFbos;
+      let [back, front] = swapFboTextures;
 
       regl.clear({
         framebuffer: renderFBO,
@@ -283,32 +358,36 @@ class Game extends Component {
         perlin
       });
 
-      regl.clear({
-        framebuffer: frontFBO,
-        color: [0, 0, 0, 0],
-        depth: 1
-      });
-      copy({
-        framebuffer: frontFBO,
-        t: renderFBOTexture
-      });
+      if (enableAfterEffects) {
+        regl.clear({
+          framebuffer: frontFBO,
+          color: [0, 0, 0, 0],
+          depth: 1
+        });
+        copy({
+          framebuffer: frontFBO,
+          t: renderFBOTexture
+        });
 
-      regl.clear({
-        framebuffer: frontFBO,
-        color: [0, 0, 0, 0],
-        depth: 1
-      });
-      persistence({
-        framebuffer: frontFBO,
-        amount: 0.3 + 0.5 * smoothstep(4.0, 20.0, state.speed),
-        back,
-        front: renderFBOTexture
-      });
+        regl.clear({
+          framebuffer: frontFBO,
+          color: [0, 0, 0, 0],
+          depth: 1
+        });
+        persistence({
+          framebuffer: frontFBO,
+          amount: 0.3 + 0.5 * smoothstep(4.0, 20.0, state.speed),
+          back,
+          front: renderFBOTexture
+        });
 
-      regl.clear({
-        color: [0, 0, 0, 0],
-        depth: 1
-      });
+        regl.clear({
+          color: [0, 0, 0, 0],
+          depth: 1
+        });
+      } else {
+        front = renderFBOTexture;
+      }
 
       post({
         ...state,
@@ -332,17 +411,28 @@ class Game extends Component {
 
   render() {
     const { width, height } = this.props;
-    const dpr = window.devicePixelRatio || 1;
+    const evts = {};
+    if (DEV) {
+      Object.assign(evts, {
+        onMouseDown: this.onMouseDown,
+        onMouseUp: this.onMouseUp,
+        onMouseMove: this.onMouseMove,
+        onMouseLeave: this.onMouseLeave
+      });
+    }
+    Object.assign(evts, {
+      onTouchStart: this.onTouchStart,
+      onTouchMove: this.onTouchMove,
+      onTouchEnd: this.onTouchEnd,
+      onTouchCancel: this.onTouchCancel
+    });
     return (
       <canvas
         ref={this.onRef}
-        width={dpr * width}
-        height={dpr * height}
+        width={width}
+        height={height}
         style={{ width, height }}
-        onMouseDown={this.onMouseDown}
-        onMouseUp={this.onMouseUp}
-        onMouseMove={this.onMouseMove}
-        onMouseLeave={this.onMouseLeave}
+        {...evts}
       />
     );
   }

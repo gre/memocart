@@ -69,24 +69,23 @@ class GameComponent extends Component {
   render() {
     const { wait } = this.state;
     const { quality } = this.props;
-    const width = 512;
-    const height = 512;
+    const screen = typeof window.screen === "object" ? window.screen : null;
+    const maxWidth = screen ? Math.min(screen.width, screen.height) : Infinity;
+    const width = Math.min(512, maxWidth);
+    const height = width;
     return (
       <div className="game" style={{ width, height }}>
         {wait
           ? wait > 0
-            ? <div>
+            ? <div title="(shader compilation holds on some computers. If so, try lower
+            quality)">
                 quality?
                 <div className="qualities">
                   <a href="?quality=high">HIGH</a>
                   <a href="?quality=medium">MEDIUM</a>
                   <a href="?quality=low">LOW</a>
                 </div>
-                <div>autostart in {wait}...</div>
-                <footer>
-                  (shader compilation holds on some computers. If so, try lower
-                  quality)
-                </footer>
+                <div className="auto">autostart in {wait}...</div>
               </div>
             : <div>
                 Loading...
@@ -99,7 +98,6 @@ class GameComponent extends Component {
               height={height}
               getGameState={this.getGameState}
               action={this.action}
-              quality={quality}
             />}
       </div>
     );

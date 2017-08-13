@@ -13,12 +13,12 @@ class App extends Component {
   render() {
     const { search } = window.location;
     const query = querystring.parse(search && search.slice(1));
-
+    const isMobile = "ontouchstart" in document;
     return (
       <div className="app">
-        <Logo />
+        {isMobile ? null : <Logo />}
         <Game quality={acceptQuality(query.quality)} />
-        <Footer />
+        {isMobile ? null : <Footer />}
       </div>
     );
   }

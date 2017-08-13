@@ -12,12 +12,7 @@
 - more biomes, more objects that are uniquely positioned.
   - B_WATER
   - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
-- ROTATING BALL/ANIMAL IN A BIOME like simple cos/sin on x/y . XD i just think it would be neat. also it should have a unique color as help to remember. WE NEED BIOME RANDOM, maybe as bit-part of track random idk. remember it's a game about a weird mine too.
-- is Bat possible? could hack something quick and they would render black. if we have them in high position, we can not branch on biome and just always have them. just need variety tho. maybe it's part of the rotating thing, and maybe it's just enabled with another uniform (if it can avoid crazy more glsl)
-- more variety in the texturing pattern per biome
 - end story? might be important, but not too crazy (there is no room for perf...). thinking maybe it becomes blueish and you enter in a nice landscape...
-- less continuity in the rail wood. maybe that just means adding rocks.
-- under the rail, there should be rocks & a bit everywhere on the ground. probably we could have diff type of rails. indep from biomes?
 
 # low
 
