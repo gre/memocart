@@ -50,6 +50,10 @@ export default (ui: CanvasRenderingContext2D) => {
     const bodyHeight = uiState.body ? calcTextHeight(uiState.body) : 0;
     const footerHeight = uiState.footer ? calcTextHeight(uiState.footer) : 0;
 
+    let mainTextColor = uiState.black ? "#000" : "#fff";
+    let secondTextColor = "#D83";
+    let borderOn = !uiState.black;
+
     uiClear();
     ui.textBaseline = "top";
     ui.strokeStyle = "#000";
@@ -60,7 +64,7 @@ export default (ui: CanvasRenderingContext2D) => {
     }
 
     if (uiState.area) {
-      ui.fillStyle = "#D83";
+      ui.fillStyle = secondTextColor;
       const w = measureText(uiState.area);
       uiText(uiState.area, 62 - w, 2);
     }
@@ -70,18 +74,18 @@ export default (ui: CanvasRenderingContext2D) => {
         ? Math.floor((64 - measureText(uiState.title)) / 2)
         : 2;
       const y = 1;
-      ui.fillStyle = "#D83";
-      uiText(uiState.title, x, y, true);
+      ui.fillStyle = secondTextColor;
+      uiText(uiState.title, x, y, borderOn);
     }
     if (uiState.body) {
       const x = 2;
       const y = Math.floor((64 + titleHeight - footerHeight - bodyHeight) / 2);
 
-      ui.fillStyle = "#fff";
-      uiText(uiState.body, x, y, true);
+      ui.fillStyle = mainTextColor;
+      uiText(uiState.body, x, y, borderOn);
     }
     if (uiState.footer && (!uiState.footerBlink || blink)) {
-      ui.fillStyle = "#D83";
+      ui.fillStyle = secondTextColor;
       uiText(
         uiState.footer,
         uiState.footerCentered

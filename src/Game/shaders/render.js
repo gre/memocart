@@ -229,34 +229,26 @@ float biomeWoodStructureDist (float biome, float trackSeed) {
 }
 
 float biomeHaveWalls (float biome, float trackSeed) {
-  return 1.0 - step(biome, B_INTERS) * step(B_INTERS, biome);
+  return 1.0
+    - step(biome, B_INTERS) * step(B_INTERS, biome)
+    - step(biome, B_VOID) * step(B_VOID, biome);
 }
 
 // TODO returns a vec3 because we want floor increment
 vec3 biomeRoomSize (float biome, float trackSeed) {
   float dang = step(B_DANG, biome) * step(biome, B_DANG);
+  float dark = step(B_DARK, biome) * step(biome, B_DARK);
   float a = mod(6.2 * trackSeed, 0.8);
   float b = mod(7.2 * trackSeed, 0.4);
   return vec3(
     2.0 + trackSeed - dang * (a * 0.5 + b),
     2.2 - dang * a,
     dang * (trackSeed + a - b)
-  ) * (
-   1.0 +
-   step(B_DARK, biome) * step(biome, B_DARK)
-  );
+  ) * ( 1.0 + dark );
 }
 
 float sdSphere (vec3 p, float s) {
   return length(p)-s;
-}
-
-float sdRock (vec3 p) {
-  float shape = sdSphere(p, 0.2);
-  shape = opUs(0.1, shape, sdSphere(p-vec3(0.2, -0.2, 0.1), 0.3));
-  shape = opUs(0.03, shape, sdSphere(p-vec3(0., -0.2, -0.1), 0.2));
-  shape = opUs(0.05, shape, sdSphere(p-vec3(-0.3, -0.1, 0.1), 0.25));
-  return shape;
 }
 
 #define WALL_WIDTH 100.0
@@ -333,15 +325,6 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   );
   return s;
 }
-
-/*
-vec2 sdRailAltTrackStep (vec3 p, vec4 biomes, float i) {
-  vec2 shape = sdRailTrackStep(p, biomes);
-  vec2 lastTrackShape = vec2(max(0.0, intersectionBiomeEnd - i) + sdRock(p - vec3(0.0, -0.8, 0.9)), 0.6);
-  shape = opU(shape, lastTrackShape);
-  return shape;
-}
-*/
 
 const vec3 cartS = vec3(0.3, 0.23, 0.4);
 const float SWITCH_H = 0.3;
@@ -492,6 +475,7 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
     vec2(INF),
     sdLamp(lampP),
     step(1.0, lamp)));
+
   return o;
 }
 

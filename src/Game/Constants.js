@@ -33,6 +33,7 @@ export const B_FIRE = 7;
 export const B_COAL = 8;
 export const B_PLANT = 9;
 export const B_UFO = 10;
+export const B_VOID = 11; // complete void, kinda like an intersection but without intersection
 export const B_FINISH = 15; // the last tile biome
 
 // Alt Track logic

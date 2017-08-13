@@ -136,7 +136,8 @@ const tutorialLogic: TutorialLogic = {
     {
       uiState: {
         title: "Mine Escaped!",
-        body: "Game will start",
+        black: true,
+        body: "Game will start.\nSame map but...\nfrom higher!",
         footer: "Get Prepared..."
       },
       conditionSkip: never,

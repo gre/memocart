@@ -43,7 +43,8 @@ export type UIState = {
   area?: string,
   titleCentered?: boolean,
   footerCentered?: boolean,
-  footerBlink?: boolean
+  footerBlink?: boolean,
+  black?: boolean
 };
 
 export type GameState = {

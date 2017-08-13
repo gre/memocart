@@ -298,8 +298,11 @@ export default (
     if (g.status === STATUS_GAMEOVER) {
       const uiState = {
         title: "Oops!",
-        body: "Remember for\nnext run",
-        area: formatTrackIndex(g.stepIndex)
+        body: "We all learn\nfrom our\nmistakes",
+        area: formatTrackIndex(g.stepIndex),
+        footer: "PRESS SPACE",
+        footerBlink: true,
+        footerCentered: true
       };
       if (!g.uiState || g.uiState.title !== uiState.title) {
         g.uiState = uiState;
@@ -308,9 +311,12 @@ export default (
       // FIXME we never gets there –/o\–
       const uiState = {
         titleCentered: true,
-        title: "YES!",
-        body: "You did it!",
-        footer: "Try  longer  run..."
+        title: "YOU DID IT!",
+        body: "now falling from...\nLEVEL " + (g.level + 1),
+        black: true,
+        footer: "PRESS SPACE",
+        footerBlink: true,
+        footerCentered: true
       };
       if (!g.uiState || g.uiState.title !== uiState.title) {
         g.uiState = uiState;
@@ -330,9 +336,19 @@ export default (
   if (previousState.status !== g.status) {
     g.statusChangedTime = g.time;
   }
-  if (g.status === STATUS_GAMEOVER && g.time - g.statusChangedTime > 5) {
+  if (
+    g.status === STATUS_GAMEOVER &&
+    (g.level <= 0
+      ? g.time - g.statusChangedTime > 5
+      : g.time - g.statusChangedTime > 0.3 && userEvents.spacePressed)
+  ) {
     g = restart(g);
-  } else if (g.status === STATUS_FINISHED && g.time - g.statusChangedTime > 4) {
+  } else if (
+    g.status === STATUS_FINISHED &&
+    (g.level <= 0
+      ? g.time - g.statusChangedTime > 4
+      : g.time - g.statusChangedTime > 0.3 && userEvents.spacePressed)
+  ) {
     g = levelUp(g);
   }
 
