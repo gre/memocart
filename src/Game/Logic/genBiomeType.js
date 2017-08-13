@@ -10,10 +10,10 @@ const biomeFrequencyPerIndex = {
   B_GOLD: (biomeIndex: number) =>
     6 * smoothstep(0, 30, biomeIndex) + 10 * smoothstep(30, 100, biomeIndex),
   B_COAL: (biomeIndex: number) => 8 * smoothstep(0, 20, biomeIndex),
-  B_VOID: (biomeIndex: number) => 10 * smoothstep(10, 80, biomeIndex),
   B_DARK: (biomeIndex: number) => 10 * smoothstep(5, 30, biomeIndex),
-  B_DANG: (biomeIndex: number) => 15 * smoothstep(0, 10, biomeIndex),
   B_EMPTY: (biomeIndex: number) => 10,
+  B_VOID: (biomeIndex: number) => 12 * smoothstep(10, 30, biomeIndex),
+  B_DANG: (biomeIndex: number) => 20 * smoothstep(0, 10, biomeIndex),
   B_WIRED: (biomeIndex: number) => 30 - 20 * smoothstep(30, 100, biomeIndex)
 };
 

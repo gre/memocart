@@ -7,6 +7,7 @@
 
 # medium
 
+- bug: the flame map is not properly mapped, see in low Q.
 - various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
 - more biomes, more objects that are uniquely positioned.
   - B_WATER

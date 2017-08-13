@@ -15,7 +15,8 @@ export type UserEvents = {
 
 export type Biome = {
   biomeSeed: number,
-  type: number
+  type: number,
+  isSafe: boolean
 };
 
 export type TrackBiome = Biome & {

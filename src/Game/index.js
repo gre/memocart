@@ -17,7 +17,8 @@ if (module.hot) {
 }
 
 const globalSeed = Math.random();
-console.log("seed", globalSeed);
+window.globalSeed = globalSeed;
+console.log("MEMO CART seed:", globalSeed);
 
 new FontFaceObserver("MinimalPixels").load().catch(() => {
   console.error("Font Loading Problem");

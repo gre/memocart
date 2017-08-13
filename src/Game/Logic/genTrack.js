@@ -72,10 +72,16 @@ function genTrack(trackIndex: number, seed: number): Track {
   });
 
   const crazyTurnFactor = withBiome(b => {
-    return (b === B_DANG ? 0.5 : 0.1) * (b.biomeSeed * 66 % 1);
+    return (b.type === B_DANG ? 0.5 : 0.1) * (b.biomeSeed * 11 % 1);
   });
   const crazySlopeFactor = withBiome(b => {
-    return (b === B_DANG ? 1 : 0.01) * (crazyTurnFactor + b.biomeSeed * 3 % 1);
+    const r = crazyTurnFactor + b.biomeSeed * 3 % 1;
+    if (b.type === B_DANG) {
+      if (r < 0.1) return 10;
+      if (r < 0.2) return 1;
+      return 0.2 * r;
+    }
+    return 0.1 * r;
   });
 
   const slowTurn = Math.cos(7 * globalRandom() + 0.12 * trackIndex);
@@ -137,8 +143,9 @@ function genTrack(trackIndex: number, seed: number): Track {
       slopeFactorSum;
 
   descent = withBiome(b => {
-    if (b.biomeSeed * 3 % 1 < 0.2) return descent * 0.2; // no slope in some cases
-    if (b.biomeSeed * 11 % 1 < 0.2) return descent + 0.6; // high slope in some cases
+    let rand = b.biomeSeed * 11 % 1;
+    if (rand < 0.2 && !b.isSafe) return descent * 0.2; // no slope in some cases
+    if (rand > 0.8) return descent + 0.6; // high slope in some cases
     return descent;
   });
 
@@ -188,12 +195,16 @@ function genTrack(trackIndex: number, seed: number): Track {
 }
 
 export function formatTrackIndex(trackIndex: number): string {
-  const level = Math.max(0, Math.floor((trackIndex + 10) / LEVEL_SAFE_MULT));
+  trackIndex--;
+  const level = Math.max(0, Math.floor(trackIndex / LEVEL_SAFE_MULT));
   const biome = Math.max(
     0,
     Math.floor((trackIndex - LEVEL_SAFE_MULT * level) / BIOME_FREQ)
   );
-  return "AREA  " + level + "-" + biome;
+  return "AREA  " + (level + 1) + "-" + (biome + 1);
 }
 
-export default memoize(genTrack);
+export default memoize(
+  genTrack,
+  (trackIndex: number, seed: number) => trackIndex + "_" + seed
+);

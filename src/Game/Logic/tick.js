@@ -21,6 +21,7 @@ import restart from "./restart";
 import levelUp from "./levelUp";
 import tutorial from "./tutorial";
 import * as Debug from "../../Debug";
+import { printBiome } from "./genDebug";
 import type { GameState, TrackBiome, UserEvents } from "./types";
 
 function setMatRot(rot: Array<number>, rotX: number, rotY: number) {
@@ -233,12 +234,12 @@ export default (
   const descent = g.track[0].descent;
 
   g.acc += 2 * (0.1 + descent) * (0.1 + descent) * dt;
-  g.acc *= Math.pow(0.99, 60 * dt); // friction
+  g.acc *= Math.pow(0.98, 60 * dt); // friction
   g.acc = Math.max(0, Math.min(g.acc, 4));
   g.acc -= 4 * g.braking * dt;
 
   g.speed += dt * g.acc;
-  g.speed *= Math.pow(0.997, 60 * dt); // friction
+  g.speed *= Math.pow(0.998, 60 * dt); // friction
   g.speed = Math.max(0.01, Math.min(g.speed, 20));
 
   if (g.status === STATUS_GAMEOVER) {
@@ -358,26 +359,21 @@ export default (
     }
 
     //Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
-    /*
-    Debug.log("turn", g.track[0].turn);
-    */
-
+    //Debug.log("turn", g.track[0].turn);
     Debug.log("descent", descent);
     Debug.log("acc", g.acc);
     Debug.log("speed", g.speed);
-    /*
-    Debug.log("stepIndex", g.stepIndex);
-    Debug.log("altTrackMode", g.altTrackMode);
-    */
+    //Debug.log("stepIndex", g.stepIndex);
+    //Debug.log("altTrackMode", g.altTrackMode);
     Debug.log(
-      "trackBiome",
+      "biome",
       g.track[0].biomeMix === 0
-        ? g.track[0].biome1.type
+        ? printBiome(g.track[0].biome1)
         : g.track[0].biomeMix === 1
-          ? g.track[0].biome2.type
-          : g.track[0].biome1.type +
+          ? printBiome(g.track[0].biome2)
+          : printBiome(g.track[0].biome1) +
             "–>" +
-            g.track[0].biome2.type +
+            printBiome(g.track[0].biome2) +
             " % " +
             g.track[0].biomeMix.toFixed(2)
     );
