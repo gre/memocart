@@ -2,10 +2,11 @@
 import memoize from "lodash/memoize";
 import seedrandom from "seedrandom";
 import * as Constants from "../Constants";
+import { DEV } from "../Constants";
 import genBiomeType from "./genBiomeType";
 import type { Biome } from "./types";
 
-export const BIOME_SAFE_EACH = 6;
+export const BIOME_SAFE_EACH = 4;
 const { B_INTERS, B_FINISH } = Constants;
 
 function genBiome(biomeIndex: number, seed: number): Biome {
@@ -42,7 +43,26 @@ function genBiome(biomeIndex: number, seed: number): Biome {
   return { biomeSeed, type, isSafe };
 }
 
-export default memoize(
-  genBiome,
-  (biomeIndex: number, seed: number) => biomeIndex + "_" + seed
-);
+function genBiomeNeighborPass(biomeIndex: number, seed: number): Biome {
+  let biome = genBiome(biomeIndex, seed);
+  if (biomeIndex <= 1) return biome;
+  const prev = genBiome(biomeIndex + 1, seed);
+  const next = genBiome(biomeIndex - 1, seed);
+  if (
+    prev.type === Constants.B_INTERS &&
+    biome.type !== Constants.B_INTERS &&
+    next.type === Constants.B_INTERS
+  ) {
+    biome = { ...biome, type: Constants.B_VOID }; // we make a void junctions between 2 intersections
+  }
+  return biome;
+}
+
+let f = DEV
+  ? genBiomeNeighborPass
+  : memoize(
+      genBiomeNeighborPass,
+      (biomeIndex: number, seed: number) => biomeIndex + "_" + seed
+    );
+
+export default f;

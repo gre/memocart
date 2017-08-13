@@ -4,15 +4,17 @@ import smoothstep from "smoothstep";
 import memoize from "lodash/memoize";
 import mix from "./mix";
 import * as Constants from "../Constants";
+import { DEV } from "../Constants";
 import genBiome, { BIOME_SAFE_EACH } from "./genBiome";
 import mixBiomes from "./mixBiomes";
 import type { Biome, TrackBiome, Track } from "./types";
 
-const BIOME_FREQ = 20;
-const BIOME_WINDOW_TRANSITION = 8;
-const BIOME_PAD = Math.floor((BIOME_FREQ - BIOME_WINDOW_TRANSITION) / 2);
+// FIXME ideally these should vary.. it's just simplicity tradeoff. i think some biome like icy would deserve a longer transition
+export const BIOME_SIZE = 22;
+const BIOME_WINDOW_TRANSITION = 10;
+const BIOME_PAD = Math.floor((BIOME_SIZE - BIOME_WINDOW_TRANSITION) / 2);
 const BIOME_DUR = 2 * BIOME_PAD + 1;
-export const LEVEL_SAFE_MULT = BIOME_SAFE_EACH * BIOME_FREQ;
+export const LEVEL_SAFE_MULT = BIOME_SAFE_EACH * BIOME_SIZE;
 const { B_INTERS, B_FINISH, B_FIRE, B_DANG } = Constants;
 
 const makeTrackBiome = (
@@ -29,9 +31,9 @@ function genTrack(trackIndex: number, seed: number): Track {
   const globalRandom = seedrandom("track_" + seed);
   const trackRandom = seedrandom("track_" + trackIndex + "_" + seed);
   const trackSeed = trackRandom();
-  const biomeIndex = Math.ceil(trackIndex / BIOME_FREQ);
-  const biomePrevTrackIndex = biomeIndex * BIOME_FREQ;
-  //const biomeNextTrackIndex = (biomeIndex - 1) * BIOME_FREQ;
+  const biomeIndex = Math.ceil(trackIndex / BIOME_SIZE);
+  const biomePrevTrackIndex = biomeIndex * BIOME_SIZE;
+  //const biomeNextTrackIndex = (biomeIndex - 1) * BIOME_SIZE;
   const biomeTrackIndexDelta = biomePrevTrackIndex - trackIndex;
   const biome1 = makeTrackBiome(
     genBiome(biomeIndex, seed),
@@ -40,12 +42,12 @@ function genTrack(trackIndex: number, seed: number): Track {
   );
   const biome2 = makeTrackBiome(
     genBiome(biomeIndex - 1, seed),
-    biomeTrackIndexDelta - (BIOME_FREQ - BIOME_PAD),
+    biomeTrackIndexDelta - (BIOME_SIZE - BIOME_PAD),
     BIOME_DUR
   );
   const biomeMix = smoothstep(
     BIOME_PAD,
-    BIOME_FREQ - BIOME_PAD,
+    BIOME_SIZE - BIOME_PAD,
     biomeTrackIndexDelta
   );
   let intersectionBiome: ?TrackBiome =
@@ -199,12 +201,16 @@ export function formatTrackIndex(trackIndex: number): string {
   const level = Math.max(0, Math.floor(trackIndex / LEVEL_SAFE_MULT));
   const biome = Math.max(
     0,
-    Math.floor((trackIndex - LEVEL_SAFE_MULT * level) / BIOME_FREQ)
+    Math.floor((trackIndex - LEVEL_SAFE_MULT * level) / BIOME_SIZE)
   );
   return "AREA  " + (level + 1) + "-" + (biome + 1);
 }
 
-export default memoize(
-  genTrack,
-  (trackIndex: number, seed: number) => trackIndex + "_" + seed
-);
+let f = DEV
+  ? genTrack
+  : memoize(
+      genTrack,
+      (trackIndex: number, seed: number) => trackIndex + "_" + seed
+    );
+
+export default f;

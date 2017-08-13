@@ -1,24 +1,33 @@
 //@flow
 import * as Constants from "../Constants";
+import { DEV } from "../Constants";
 import smoothstep from "smoothstep";
+import * as Debug from "../../Debug";
 
-const biomeFrequencyPerIndex = {
-  B_UFO: (biomeIndex: number) => 5 * smoothstep(20, 200, biomeIndex),
-  B_FIRE: (biomeIndex: number) => 2 * smoothstep(10, 50, biomeIndex),
-  B_SAPPHIRE: (biomeIndex: number) => 2 * smoothstep(0, 40, biomeIndex),
-  B_PLANT: (biomeIndex: number) => 4 * smoothstep(0, 20, biomeIndex),
-  B_GOLD: (biomeIndex: number) =>
-    6 * smoothstep(0, 30, biomeIndex) + 10 * smoothstep(30, 100, biomeIndex),
-  B_COAL: (biomeIndex: number) => 8 * smoothstep(0, 20, biomeIndex),
-  B_DARK: (biomeIndex: number) => 10 * smoothstep(5, 30, biomeIndex),
-  B_EMPTY: (biomeIndex: number) => 10,
-  B_VOID: (biomeIndex: number) => 12 * smoothstep(10, 30, biomeIndex),
-  B_DANG: (biomeIndex: number) => 20 * smoothstep(0, 10, biomeIndex),
-  B_WIRED: (biomeIndex: number) => 30 - 20 * smoothstep(30, 100, biomeIndex)
+const biomeFrequencyPerIndex: { [_: string]: (i: number) => number } = {
+  B_COAL: i => 8 * smoothstep(0, 20, i),
+  B_DANG: i => 20 * smoothstep(0, 10, i),
+  B_DARK: i => 10 * smoothstep(5, 30, i),
+  B_EMPTY: i => 20,
+  B_FIRE: i => 2 * smoothstep(10, 50, i),
+  B_GOLD: i => 6 * smoothstep(0, 30, i) + 9 * smoothstep(30, 100, i),
+  B_ICY: i => 4 * smoothstep(0, 20, i),
+  B_PLANT: i => 4 * smoothstep(0, 20, i),
+  B_SAPPHIRE: i => 2 * smoothstep(0, 40, i),
+  B_UFO: i => 5 * smoothstep(20, 200, i),
+  B_WIRED: i => 30 - 20 * smoothstep(30, 100, i)
 };
 
-export default function(biomeIndex: number, r: number): number {
+if (DEV) Debug.defineEditable("loopBiomes", false);
+
+function genBiomeType(biomeIndex: number, r: number): number {
   const biomeFrequencyKeys = Object.keys(biomeFrequencyPerIndex);
+  if (DEV && Debug.getEditable("loopBiomes")) {
+    return Constants[
+      biomeFrequencyKeys[biomeIndex % biomeFrequencyKeys.length]
+    ]; // for DEBUG
+  }
+
   const biomeFrequency = {};
   biomeFrequencyKeys.forEach(k => {
     const f = biomeFrequencyPerIndex[k];
@@ -39,3 +48,5 @@ export default function(biomeIndex: number, r: number): number {
   );
   return Constants[biomeFrequencyKeys[i]];
 }
+
+export default genBiomeType;

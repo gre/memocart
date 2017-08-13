@@ -275,14 +275,14 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float woodR = size.x * (0.5 - 0.1 * fract(9. * biomeSeed)) - dx + woodStructureDist;
   woodP = p;
   rot2(woodP.xy, 0.1 - mod(5.0*biomeSeed, 0.8));
-  s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
   woodP = p;
   rot2(woodP.xy, mod(7.*biomeSeed, 0.8) - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
   woodP = p;
   rot2(woodP.yz, 0.4 * fract(65.*biomeSeed) - 0.2);
   rot2(woodP.xy, 0.2 * fract(65.*biomeSeed) - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.5));
+  s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.7));
 
   // FIXME vary these based on biome factor...
   vec3 disp = vec3(0.);
@@ -444,6 +444,7 @@ vec2 sdLamp (vec3 p) {
 vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
   vec2 o = sdRail(p, biomes);
+
   // FIXME optim, we might trace the objects in a diff way, with mod() on Z....
 
   float fly = MIX_BIOMES(biomes, biomeFly);
@@ -586,16 +587,18 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   float coalBiome = step(B_COAL,biome) * step(biome,B_COAL);
   float sapphireBiome = step(B_SAPPHIRE,biome) * step(biome,B_SAPPHIRE);
   float goldBiome = step(B_GOLD,biome) * step(biome,B_GOLD);
+  float icyBiome = step(B_ICY,biome) * step(biome,B_ICY);
   float plantBiome = step(B_PLANT,biome) * step(biome,B_PLANT);
+  float a = dot(worldNoiseM[0], normal);
+  float b = dot(worldNoiseL[1], normal);
+  float s = dot(worldNoiseS[0], normal);
+  float plant = plantBiome * smoothstep(-0.2, 0., s);
 
   // 0.0 to 1.0 are generic metal where m value is the color
   c += step(m, 0.99) * m;
 
   // 1.+ : terrain
   m--;
-  float a = dot(worldNoiseM[0], normal);
-  float b = dot(worldNoiseL[1], normal);
-  float s = dot(worldNoiseS[0], normal);
   float goldRarity = trackSeed;
   c += step(0.0, m) * step(m, 0.999) * (
     vec3(0.22, 0.2, 0.18) +
@@ -603,15 +606,17 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
       fireBiome * vec3(0.9 + 0.3 * b + 0.2 * s, 0.2 - 0.2 * a, 0.3 * a) +
       sapphireBiome * vec3(0.0, 0.6, 1.2) +
       goldBiome * vec3(1.1, 0.7, 0.2) +
-      plantBiome * vec3(0., 0.4, 0.) +
+      plantBiome * vec3(-0.2, 0.1 * s - 0.1, -.3) +
+      icyBiome * vec3(0.5, 0.8, 1.2) +
       0.05
       - 0.5 * coalBiome
     ) * (
       (
+        icyBiome +
         max(0.5, -a * 10.0) * fireBiome * (1.0 + 0.5 * cos(4.0*time + 2.0 * M_PI * s))
       ) +
       mix(
-        0.0,
+        plantBiome,
         smoothstep(0.2-coalBiome, 0.3, a),
         smoothstep(-0.25, 0.6 * trackSeed, b)
       )
@@ -632,7 +637,15 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 
   // 4.+ : wood
   m--;
-  c += step(0.0, m) * step(m, 0.99) * vec3(0.5, 0.3, 0.1) * (1.0 - m - 0.9 * (fireBiome + coalBiome));
+  c += step(0.0, m) * step(m, 0.99) * mix(
+    mix(
+      vec3(0.5, 0.3, 0.1),
+      vec3(0.0, 0.1, 0.0),
+      plant
+    ),
+    vec3(0.6, 0.8, 1.0),
+    icyBiome
+  ) * (1.0 - m - 0.9 * (fireBiome + coalBiome));
 
   // 5.+ : fly (firefly/insect, depends on places)
   m--;
@@ -648,10 +661,17 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 
   // 6.+ : rail metal
   m--;
-  c += step(0.0, m) * step(m, 0.99) * mix(
-    vec3(0.7),
-    vec3(8.0, 2.0, 1.0),
-    fireBiome
+  c += step(0.0, m) * step(m, 0.99) * (
+    icyBiome +
+    mix(
+      mix(
+        vec3(0.7),
+        vec3(8.0, 2.0, 1.0),
+        fireBiome
+      ),
+      vec3(0.0, 0.1, 0.0),
+      plant
+    )
   );
 
   // 7.+ : lamp
@@ -675,6 +695,7 @@ vec3 biomeAmbientColor (float b, float seed) {
   return vec3(0.2)
   + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.4)
   + step(B_SAPPHIRE,b) * step(b,B_SAPPHIRE) * vec3(0.0, 0.3, 0.8)
+  + step(B_WIRED,b) * step(b,B_WIRED) * vec3(.4,.3,.1)
   + step(B_FIRE,b) * step(b,B_FIRE) * vec3(0.3, 0.2, 0.0);
 }
 
@@ -682,9 +703,9 @@ vec2 biomeFogRange (float b, float seed) {
   return vec2(
     0.5
       - 0.4 * step(B_FIRE, b) * step(b, B_FIRE)
+      - 0.4 * step(B_ICY, b) * step(b, B_ICY)
       - 0.2 * step(B_INTERS, b) * step(b,B_INTERS)
-      - 0.51 * step(B_FINISH, b) * step(b, B_FINISH)
-      - 0.4 * step(B_PLANT, b) * step(b, B_PLANT),
+      - 0.51 * step(B_FINISH, b) * step(b, B_FINISH),
     1.0 - step(B_FINISH, b) * step(b, B_FINISH)
   ) * TRACK_SIZE;
 }
@@ -692,10 +713,11 @@ vec2 biomeFogRange (float b, float seed) {
 vec3 biomeFogColor (float b, float seed) {
   // nice way to "announce" some biome coming in far forward
   return vec3(
-    step(B_FINISH, b) * step(b, B_FINISH) * 0.9 +
-    step(B_INTERS, b) * step(b, B_INTERS) * 0.1 +
-    step(B_FIRE, b) * step(b, B_FIRE) * 0.2
-  ) + step(B_PLANT, b) * step(b, B_PLANT) * vec3(0.0, 0.1, 0.0);
+    step(B_FINISH, b) * step(b, B_FINISH) * 0.9
+    + step(B_INTERS, b) * step(b, B_INTERS) * 0.1
+    + step(B_FIRE, b) * step(b, B_FIRE) * 0.2
+  )
+  + step(B_ICY, b) * step(b, B_ICY) * vec3(0.6, 0.7, 0.8);
 }
 
 vec2 raymarch(vec3 position, vec3 direction) {
