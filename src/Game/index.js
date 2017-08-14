@@ -68,7 +68,6 @@ class GameComponent extends Component {
   }
   render() {
     const { wait } = this.state;
-    const { quality } = this.props;
     const screen = typeof window.screen === "object" ? window.screen : null;
     const maxWidth = screen ? Math.min(screen.width, screen.height) : Infinity;
     const width = Math.min(512, maxWidth);

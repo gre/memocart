@@ -195,7 +195,7 @@ vec2 sdRail (vec3 p, vec4 biomes) {
   float a = 2.*(seed - 0.5);
   float decay = 0.1 + 0.7*step(biome,B_DANG)*step(B_DANG,biome);
   a = a * a * a * mix(0.0, 0.3, decay);
-  seed = mod(seed * 11., 1.);
+  seed = fract(seed * 11.);
   float b = mod(seed, 0.3);
   p -= vec3(0.0, -0.9, 0.0);
   // rails
@@ -214,7 +214,7 @@ vec2 sdRail (vec3 p, vec4 biomes) {
   s = opU(s, vec2(sdBox(p, boardS), 4.+mod(a, 0.25)));
   // third
   p.z -= 0.33;
-  p.y += 99.*step(mod(seed*2.,1.) - decay, 0.); // sometimes missing
+  p.y += 99.*step(fract(seed*2.) - decay, 0.); // sometimes missing
   rot2(p.xz, -a+b);
   s = opU(s, vec2(sdBox(p, boardS), 4.+mod(b, 0.3)));
   return s;
@@ -328,9 +328,6 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   return s;
 }
 
-${quality !== "high"
-      ? ""
-      : GLSL`
 float sdCartWheel(vec3 p) {
   return opU(
     sdSphere(p - vec3(0.03, 0.0, 0.0), 0.04),
@@ -343,7 +340,6 @@ float sdCartWheel(vec3 p) {
     )
   );
 }
-`}
 
 vec2 sdCart(vec3 p, float d) {
   vec3 boxSize = vec3(
@@ -351,14 +347,16 @@ vec2 sdCart(vec3 p, float d) {
     0.25,
     0.4
   );
+  // body
   float metal = opS(
     sdBox(p - vec3(0.0, 0.03, 0.0), boxSize - vec3(0.03, 0.0, 0.03)),
     sdBox(p, boxSize)
   );
+  // wheel
   metal = opU(metal, sdCartWheel(vec3(
-    abs(p.x)-0.3,
-    p.y+0.26,
-    abs(p.z)-0.28
+    abs(p.x) - 0.3,
+    p.y + 0.26,
+    abs(p.z) - 0.28
   )));
 
   p.y -= boxSize.y;
@@ -374,7 +372,7 @@ vec2 sdCart(vec3 p, float d) {
   // head
   metal = opU(metal, sdSphere(switchP, 0.03));
 
-  float body = step(-0.04, p.y);
+  float bodyPart = step(-0.04, p.y);
   float cartMaterial = 2.199;
 ${quality !== "high"
       ? ""
@@ -390,15 +388,14 @@ vec4 s2 = texture2D(perlin, vec2(
   .5 * fract(p.y) + .5 * fract(p.z)
 ));
 float oxydation = smoothstep(0.45, 0.7, s1.x);
-oxydation *= smoothstep(0.5, 0.57, s2.z);
+oxydation * smoothstep(0.5, 0.57, s2.z);
 float o2 = smoothstep(0.3, 0.28, s2.y);
 oxydation = mix(oxydation, o2, o2);
 cartMaterial += 0.8 * oxydation;
 `}
 
-  cartMaterial = mix(cartMaterial, 2.7, body);
-  vec2 s = vec2(metal, cartMaterial);
-  return s;
+  cartMaterial = mix(cartMaterial, 2.7, bodyPart);
+  return vec2(metal, cartMaterial);
 }
 
 float biomeFly (float biome, float seed) {
@@ -424,8 +421,8 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
 
   float fly = MIX_BIOMES(biomes, biomeFly);
   float seed = biomes[3];
-  float a = mod(49. * seed, 1.0);
-  float b = mod(13. * seed, 1.0);
+  float a = fract(49. * seed);
+  float b = fract(13. * seed);
   vec3 offset = vec3(
     cos(0.8 * time + absZ),
     1.2 + sin(a + time * mod(absZ * b, 0.3)),
@@ -473,7 +470,7 @@ vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
   float seed = biomes[3];
   float cartNotVisible = step(altTrackFailures, TRACK_SIZE-z);
   vec3 cartP = stepP - vec3(0.,-0.3-cartNotVisible*INF,-0.5);
-  rot2(cartP.yz, mod(seed*3.,1.)-0.5);
+  rot2(cartP.yz, fract(seed*3.)-0.5);
   rot2(cartP.xz, seed-0.5);
   s = opU(s, sdCart(cartP, 2.*(seed-.5)));
   return s;

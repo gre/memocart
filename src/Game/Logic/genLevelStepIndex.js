@@ -1,5 +1,5 @@
 //@flow
-import { LEVEL_SAFE_MULT, BIOME_SIZE } from "./genTrack";
+import { LEVEL_SAFE_MULT } from "./genTrack";
 export default (level: number): number =>
   level === -1
     ? 20 * LEVEL_SAFE_MULT
