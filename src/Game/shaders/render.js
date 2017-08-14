@@ -209,10 +209,7 @@ vec2 sdRail (vec3 p, vec4 biomes) {
   float b = fract(seed * 7.);
   p -= vec3(0.0, -0.9, 0.0);
   // rails
-  vec2 s = vec2(opU(
-    sdBox(p - vec3(railw, 0.0, 0.5), railS),
-    sdBox(p - vec3(-railw, 0.0, 0.5), railS)
-  ), 6.0);
+  vec2 s = vec2(sdBox(vec3(abs(p.x) - railw, p.y, p.z - 0.5), railS), 6.0);
   // pylon
   s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -5.03, 0.0), vec2(0.06, 5.0)), 4.));
   // first board
