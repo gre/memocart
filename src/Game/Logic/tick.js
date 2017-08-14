@@ -300,7 +300,7 @@ export default (
         0,
         0,
         1.2 +
-          Math.min(0.0, 0.2 * g.braking - 0.1 * smoothstep(0.0, 6.0, g.speed))
+          Math.min(0.0, 0.2 * g.braking - 0.06 * smoothstep(0.0, 6.0, g.speed))
       ];
     }
 

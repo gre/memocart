@@ -328,21 +328,6 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   return s;
 }
 
-const vec3 cartS = vec3(0.3, 0.23, 0.4);
-const float SWITCH_H = 0.3;
-const float SWITCH_SH = 0.03;
-vec2 sdCartSwitch (vec3 p, float d) {
-  p.y += SWITCH_H;
-  rot2(p.xy, -0.4 * d);
-  p.y -= SWITCH_H;
-  float stick = sdBox(p, vec3(0.01, SWITCH_H, 0.01));
-  p -= vec3(0., SWITCH_H - SWITCH_SH / 2., 0.);
-  float head = sdSphere(p, SWITCH_SH);
-  return opU(
-    vec2(head, 3.),
-    vec2(stick, 0.6)
-  );
-}
 ${quality !== "high"
       ? ""
       : GLSL`
@@ -360,33 +345,32 @@ float sdCartWheel(vec3 p) {
 }
 `}
 
+const vec3 cartS = vec3(0.3, 0.23, 0.4);
 vec2 sdCart(vec3 p, float d) {
-  float w = 0.03;
   vec3 conv = vec3(mix(1.0, smoothstep(0.0, 2.*cartS.y, p.y), 0.3), 1.0, 1.0);
   p.y -= 0.18;
-  float inside = opS(
-    sdBox(p-vec3(0.0, w, 0.0), cartS*conv-vec3(w, 0.0, w)),
+  float metal = opS(
+    sdBox(p-vec3(0.0, 0.03, 0.0), cartS * conv - vec3(0.03, 0.0, 0.03)),
     sdBox(p, cartS * conv)
   );
-  ${quality !== "high"
-    ? ""
-    : GLSL`
-  vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
-  float wheels=opU(
-    opU(
-      sdCartWheel(p - wheelOff),
-      sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, 1.0))
-    ),
-    opU(
-      sdCartWheel(p - wheelOff * vec3(1.0, 1.0, -1.0)),
-      sdCartWheel(p - wheelOff * vec3(-1.0, 1.0, -1.0))
-    )
-  );
-  `}
+  vec3 wheelOff = vec3(0.3, -0.26, 0.28);
+  wheelOff.x *= 1. - 2. * step(p.x, 0.0);
+  wheelOff.z *= 1. - 2. * step(p.z, 0.0);
+  metal = opU(metal, sdCartWheel(p - wheelOff));
 
   p.y -= cartS.y;
   p.z -= cartS.z;
-  vec2 s = sdCartSwitch(p, d);
+
+  vec3 switchP = p;
+  switchP.y += 0.3;
+  rot2(switchP.xy, -0.4 * d);
+  switchP.y -= 0.3;
+  // stick
+  metal = opU(metal, sdBox(switchP, vec3(0.01, 0.3, 0.01)));
+  switchP.y -= 0.285;
+  // head
+  metal = opU(metal, sdSphere(switchP, 0.03));
+
   float body = step(-0.04, p.y);
   float cartMaterial = 2.199;
 ${quality !== "high"
@@ -407,10 +391,10 @@ oxydation *= smoothstep(0.5, 0.57, s2.z);
 float o2 = smoothstep(0.3, 0.28, s2.y);
 oxydation = mix(oxydation, o2, o2);
 cartMaterial += 0.8 * oxydation;
-s = opU(s, vec2(wheels, 0.1));
 `}
-  cartMaterial = mix(cartMaterial, 2.9, body);
-  s = opU(s, vec2(inside, cartMaterial));
+
+  cartMaterial = mix(cartMaterial, 2.7, body);
+  vec2 s = vec2(metal, cartMaterial);
   return s;
 }
 
