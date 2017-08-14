@@ -8,5 +8,6 @@ export default (state: GameState): GameState => {
   g.stepTick = Math.floor(1000 + 1000 * Math.random());
   g.tutorial = state.tutorial;
   g.switchDirectionTarget = state.switchDirectionTarget;
+  g.gameOversCountPerBiomeIndex = state.gameOversCountPerBiomeIndex;
   return g;
 };

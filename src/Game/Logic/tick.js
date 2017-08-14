@@ -76,6 +76,8 @@ export default (
 ): GameState => {
   let g = { ...previousState };
 
+  const trackSize = TRACK_SIZE(g.quality);
+
   // sync time / step / ...
 
   if (g.time === 0) {
@@ -176,20 +178,30 @@ export default (
     g.stepIndex--;
     const droppedTrack = g.track[0];
     g.track = g.track.slice(1);
-    g.track.push(genTrack(g.stepIndex - TRACK_SIZE(g.quality) + 1, g.seed));
+    g.track.push(genTrack(g.stepIndex - trackSize + 1, g.seed));
 
     g.worldDelta[0] += TURN_DX * droppedTrack.turn;
     g.worldDelta[1] += DESCENT_DY * droppedTrack.descent;
     g.worldDelta[2] += 1;
-
     const { intersectionBiome } = g.track[0];
+
+    g.altTrackFailures = 0;
     if (intersectionBiome) {
       g.intersectionBiomeEnd =
         intersectionBiome.duration - intersectionBiome.index;
+      const count =
+        g.gameOversCountPerBiomeIndex[intersectionBiome.biomeIndex] || 0;
+      g.altTrackFailures = g.altTrack.filter(
+        ({ intersectionBiome }) =>
+          intersectionBiome &&
+          intersectionBiome.index > 4 &&
+          intersectionBiome.duration - intersectionBiome.index <= count
+      ).length;
     }
+
     if (
       intersectionBiome &&
-      intersectionBiome.index >= intersectionBiome.duration - 1 &&
+      g.altTrackFailures >= trackSize - 1 &&
       g.altTrackMode === ALTT_CART_ON
     ) {
       g.status = STATUS_GAMEOVER;
@@ -244,25 +256,31 @@ export default (
   g.speed = Math.max(0.01, Math.min(g.speed, 20));
 
   if (g.status === STATUS_GAMEOVER) {
+    const { intersectionBiome } = g.track[0];
+    const dir = intersectionBiome && intersectionBiome.biomeSeed > 0.5 ? -1 : 1;
     g.acc = 0;
     g.speed = Math.max(0, (0 - g.speed) * 0.01);
-    g.trackStepProgress += (0.5 - g.trackStepProgress) * 0.002;
-    g.rotX += (-0.6 - g.rotX) * 0.007;
-    g.rotY += (Math.atan(trackCoords[0][0]) + 0.7 - g.rotY) * 0.008;
-    g.zoomOut += (1 - g.zoomOut) * 0.007;
+    g.trackStepProgress += (0 - g.trackStepProgress) * 0.002;
+    g.zoomOut +=
+      (1 - g.zoomOut) * 0.02 * smoothstep(0, 1, g.time - g.statusChangedTime);
+    g.rotX += (-0.6 - g.rotX) * 0.005 * g.zoomOut;
+    g.rotY += (1.2 * dir - g.rotY) * 0.1 * g.zoomOut;
+    if (!freeControls) {
+      g.origin = [0.0 - 3 * dir * g.zoomOut, g.zoomOut, 1.1 + 0.4 * g.zoomOut];
+    }
   } else if (g.status === STATUS_FINISHED) {
     g.acc = 0;
     g.speed = 0;
   } else {
     if (!freeControls) {
       let targetRotX, targetRotY;
-      const n = Math.max(2, Math.min(3, TRACK_SIZE(g.quality) - 1));
+      const n = Math.max(2, Math.min(3, trackSize - 1));
       const targetP = vec3.create();
       const relativeFirst = vec3.create();
       const relativeLast = vec3.create();
       const { intersectionBiome } = g.track[0];
       const focusOnAltTrack =
-        intersectionBiome && g.altTrackMode === ALTT_CART_ON; // FIXME something not correct after diverge
+        intersectionBiome && g.altTrackMode === ALTT_CART_ON;
 
       const coords = focusOnAltTrack ? altTrackCoords : trackCoords;
 
@@ -277,22 +295,19 @@ export default (
       g.rotX += (targetRotX - g.rotX) * 0.03;
       g.rotY += (targetRotY - g.rotY) * 0.03;
       // FIXME is the rotation correct? why is the camera weird like on a boat XD
+
+      g.origin = [
+        0,
+        0,
+        1.3 +
+          Math.min(0.0, 0.2 * g.braking - 0.1 * smoothstep(0.0, 6.0, g.speed))
+      ];
     }
 
     g.switchDirection += (g.switchDirectionTarget - g.switchDirection) * 0.1;
   }
 
   setMatRot(g.rot, g.rotX, g.rotY);
-
-  if (!freeControls) {
-    g.origin = [
-      0.0 - 1 * g.zoomOut,
-      0 + 0.2 * g.zoomOut,
-      1.3 +
-        Math.min(0.0, 0.2 * g.braking - 0.1 * smoothstep(0.0, 6.0, g.speed)) -
-        0.6 * g.zoomOut
-    ];
-  }
 
   // Sync UI
   g.uiStateBlinkTick = g.tick % 120 < 60;
@@ -344,6 +359,12 @@ export default (
       ? g.time - g.statusChangedTime > 5
       : g.time - g.statusChangedTime > 0.3 && userEvents.spacePressed)
   ) {
+    const { intersectionBiome } = g.track[0];
+    if (g.level >= 0 && intersectionBiome) {
+      g.gameOversCountPerBiomeIndex = { ...g.gameOversCountPerBiomeIndex };
+      g.gameOversCountPerBiomeIndex[intersectionBiome.biomeIndex] =
+        (g.gameOversCountPerBiomeIndex[intersectionBiome.biomeIndex] || 0) + 1;
+    }
     g = restart(g);
   } else if (
     g.status === STATUS_FINISHED &&
@@ -359,12 +380,14 @@ export default (
       g.speed = 0;
     }
 
+    //Debug.log("g.altTrackFailures", g.altTrackFailures);
+
     //Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
     //Debug.log("turn", g.track[0].turn);
-    Debug.log("descent", descent);
-    Debug.log("acc", g.acc);
-    Debug.log("speed", g.speed);
-    //Debug.log("stepIndex", g.stepIndex);
+    //Debug.log("descent", descent);
+    //Debug.log("acc", g.acc);
+    //Debug.log("speed", g.speed);
+    // Debug.log("stepIndex", g.stepIndex);
     //Debug.log("altTrackMode", g.altTrackMode);
     Debug.log(
       "biome",

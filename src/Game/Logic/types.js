@@ -14,6 +14,7 @@ export type UserEvents = {
 };
 
 export type Biome = {
+  biomeIndex: number,
   biomeSeed: number,
   type: number,
   isSafe: boolean
@@ -74,9 +75,21 @@ export type GameState = {
   braking: number, // braking factor
   switchDirectionTarget: number,
   switchDirection: number,
+  gameOversCountPerBiomeIndex: { [_: number]: number },
+
+  /*
+  algorithm:
+
+  When intersection is in Z step future, altTrackOffset is (0., Z), altTrack is init with a full track already that don't swap. altTrackMode=1.0.
+
+  Then when reached it will be (DX,0) where DX gets accumulated with track & alt track data. It swaps same way data does. altTrackMode=2.0 if play took wrong turn otherwise 1.0 until the altTrack fade away.
+
+  If followAltTrack, camera and cart is offset by altTrackOffset.
+  */
   altTrack: Array<Track>, // wrong turn track data
   altTrackMode: number,
   altTrackOffset: vec3, // how many x,y does track starts
+  altTrackFailures: number, // number of cart to render for current alt track at the end of altTrack array
   stateAtMouseDown: ?GameState,
   origin: vec3,
   intersectionBiomeEnd: number,

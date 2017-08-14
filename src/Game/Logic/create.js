@@ -55,6 +55,7 @@ export default (level: number, seed: number, quality: Quality): GameState => {
   }
 
   return {
+    gameOversCountPerBiomeIndex: {},
     quality,
     uiState,
     uiStateBlinkTick: false,
@@ -76,26 +77,16 @@ export default (level: number, seed: number, quality: Quality): GameState => {
     track,
     seed,
     level,
-    speed, // z-unit per second
+    speed,
     acc,
-    braking: 0, // braking factor
+    braking: 0,
     switchDirectionTarget: -1,
     switchDirection: -1,
     zoomOut: 0,
-
-    /*
-algorithm:
-
-When intersection is in Z step future, altTrackOffset is (0., Z), altTrack is init with a full track already that don't swap. altTrackMode=1.0.
-
-Then when reached it will be (DX,0) where DX gets accumulated with track & alt track data. It swaps same way data does. altTrackMode=2.0 if play took wrong turn otherwise 1.0 until the altTrack fade away.
-
-If followAltTrack, camera and cart is offset by altTrackOffset.
-*/
-    altTrack: [], // wrong turn track data
+    altTrack: [],
     altTrackMode: ALTT_OFF,
-    altTrackOffset: [0, 0, 0], // how many x,y does track starts
-
+    altTrackOffset: [0, 0, 0],
+    altTrackFailures: 0,
     stateAtMouseDown: null,
     origin: [0, 0.05, 1.4],
     worldDelta

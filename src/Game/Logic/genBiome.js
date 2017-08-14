@@ -40,7 +40,7 @@ function genBiome(biomeIndex: number, seed: number): Biome {
     }
   }
 
-  return { biomeSeed, type, isSafe };
+  return { biomeIndex, biomeSeed, type, isSafe };
 }
 
 function genBiomeNeighborPass(biomeIndex: number, seed: number): Biome {

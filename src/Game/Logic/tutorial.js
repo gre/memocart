@@ -110,7 +110,7 @@ const tutorialLogic: TutorialLogic = {
         body: "Let's remember\nfor next run!"
       },
       conditionSkip: or(beforeStepIndex(50), successfulTurn),
-      conditionEnter: afterStepIndex(35),
+      conditionEnter: afterStepIndex(38),
       tick: tickNoop,
       conditionLeave: beforeStepIndex(38)
     },

@@ -1,5 +1,9 @@
 ## high pri
 
+- develop the end story. something should happen with the animated ball. probably should just use another shader :D
+- room for 2 biomes. but what?
+  - playing with room size amplitude?
+  - i wished for more shaped, like stalactite, but i don't think can afford the gpu cost
 - optimize...
 - AUDIO (THIS AFTERNOON!!!)
 - play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
@@ -18,10 +22,7 @@
 
 - gamepad support
 - polish gameover that should focus on the correct entrance with the cart in sight.
-- stalac(t/m)ite biome IF it's not too crazy code.
-- plants biome. if it's not too crazy too. i mean, it's just some green thing, maybe just painted on wall. MUSHROOM shape could be cool.
 - light object on the front left section of the cart
--? mobile support (damn i can't even make it compile-optimized. maybe in post-version.)
 - (polish wall shape) it's damn too late to think that but the walls should have be just based on a circle XD
 
 

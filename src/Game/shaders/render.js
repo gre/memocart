@@ -70,6 +70,7 @@ uniform float altTrackMode; // see Constants.js
 uniform float switchDirection; // position of the switch from -1.0 to 1.0
 uniform float intersectionBiomeEnd; // how many step before the end of an intersection. used to place the "Rock" object.
 uniform float stepIndex;
+uniform float altTrackFailures;
 
 ${injectDefines(quality)}
 #define INF 999.0
@@ -329,9 +330,9 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
 const vec3 cartS = vec3(0.3, 0.23, 0.4);
 const float SWITCH_H = 0.3;
 const float SWITCH_SH = 0.03;
-vec2 sdCartSwitch (vec3 p) {
+vec2 sdCartSwitch (vec3 p, float d) {
   p.y += SWITCH_H;
-  rot2(p.xy, -0.4 * switchDirection);
+  rot2(p.xy, -0.4 * d);
   p.y -= SWITCH_H;
   float stick = sdBox(p, vec3(0.01, SWITCH_H, 0.01));
   p -= vec3(0., SWITCH_H - SWITCH_SH / 2., 0.);
@@ -358,10 +359,8 @@ float sdCartWheel(vec3 p) {
 }
 `}
 
-const vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
-vec2 sdCart(vec3 p) {
-  float w = 0.02;
-  float b = 0.03;
+vec2 sdCart(vec3 p, float d) {
+  float w = 0.03;
   vec3 conv = vec3(mix(1.0, smoothstep(0.0, 2.*cartS.y, p.y), 0.3), 1.0, 1.0);
   p.y -= 0.18;
   float inside = opS(
@@ -371,6 +370,7 @@ vec2 sdCart(vec3 p) {
   ${quality !== "high"
     ? ""
     : GLSL`
+  vec3 wheelOff = cartS * vec3(1.0, -1.0, 0.7) - vec3(0.0, 0.03, 0.0);
   float wheels=opU(
     opU(
       sdCartWheel(p - wheelOff),
@@ -382,28 +382,16 @@ vec2 sdCart(vec3 p) {
     )
   );
   `}
-  p.y -= cartS.y - b;
-  vec3 hs = vec3(b, b, cartS.z);
-  vec3 ws = vec3(b + cartS.x, b, b);
-  float dx = cartS.x;
-  float dz = cartS.z;
-  float left = sdBox(p-vec3(-dx, b, 0.), hs);
-  float right = sdBox(p-vec3(dx, b, 0.), hs);
-  float front = sdBox(p-vec3(0., b, dz), ws);
-  float back = sdBox(p-vec3(0., b, -dz), ws);
-  float border = opU(
-    opU(left, right),
-    opU(front, back)
-  );
-  border = opS(sdBox(p-vec3(0., b, dz), vec3(0.6 * cartS.x, 2.0 * b, 0.5 * b)), border);
-  p.z -= cartS.z;
-  vec2 s = sdCartSwitch(p);
 
-  float cartMaterial = 2.099;
+  p.y -= cartS.y;
+  p.z -= cartS.z;
+  vec2 s = sdCartSwitch(p, d);
+  float body = step(-0.04, p.y);
+  float cartMaterial = 2.199;
 ${quality !== "high"
       ? ""
       : GLSL`
-p += 0.5;
+p -= 0.5;
 vec4 s1 = texture2D(perlin, vec2(
   .5 * fract(p.x) + .5 * fract(p.z),
   .5 * fract(p.y) + .5 * fract(p.z)
@@ -417,10 +405,11 @@ float oxydation = smoothstep(0.45, 0.7, s1.x);
 oxydation *= smoothstep(0.5, 0.57, s2.z);
 float o2 = smoothstep(0.3, 0.28, s2.y);
 oxydation = mix(oxydation, o2, o2);
-cartMaterial += 0.9 * oxydation;
+cartMaterial += 0.8 * oxydation;
 s = opU(s, vec2(wheels, 0.1));
 `}
-  s = opU(s, vec2(opU(inside, border), cartMaterial));
+  cartMaterial = mix(cartMaterial, 2., body);
+  s = opU(s, vec2(inside, cartMaterial));
   return s;
 }
 
@@ -443,10 +432,9 @@ vec2 sdLamp (vec3 p) {
 
 vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
-  vec2 o = sdRail(p, biomes);
+  vec2 o = vec2(INF);
 
   // FIXME optim, we might trace the objects in a diff way, with mod() on Z....
-
   float fly = MIX_BIOMES(biomes, biomeFly);
   float seed = biomes[3];
   float a = mod(49. * seed, 1.0);
@@ -484,16 +472,23 @@ vec2 sdStep (vec3 p, vec4 current, vec4 prev, float z) {
   vec4 biomes = parseTrackBiomes(current);
   vec4 biomesPrev = parseTrackBiomes(prev);
   vec3 stepP = interpStep(p, prev, current);
-  return opU(
-    sdTunnelWallStep(stepP, biomes, biomesPrev),
-    sdObjectsStep(stepP, biomes, z)
-  );
+  vec2 s = sdRail(stepP, biomes);
+  s = opU(s, sdTunnelWallStep(stepP, biomes, biomesPrev));
+  s = opU(s, sdObjectsStep(stepP, biomes, z));
+  return s;
 }
 
 vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
   vec4 biomes = parseTrackBiomes(current);
   vec3 stepP = interpStep(p, prev, current);
-  return sdRail(stepP, biomes);
+  vec2 s = sdRail(stepP, biomes);
+  float seed = biomes[3];
+  float cartNotVisible = step(altTrackFailures, TRACK_SIZE-z);
+  vec3 cartP = stepP - vec3(0.,-0.5-cartNotVisible*INF,-0.5);
+  rot2(cartP.yz, mod(seed*3.,1.)-0.5);
+  rot2(cartP.xz, seed-0.5);
+  s = opU(s, sdCart(cartP, 2.*(seed-.5)));
+  return s;
 }
 
 vec2 scene(vec3 p) {
@@ -524,7 +519,7 @@ vec2 scene(vec3 p) {
   ), 0.0);
 
   // Cart
-  d = opU(d, sdCart(cartP));
+  d = opU(d, sdCart(cartP, switchDirection));
 
   // Terrain
   p = terrainP;
@@ -826,7 +821,8 @@ void main() {
       altTrackMode: regl.prop("altTrackMode"),
       switchDirection: regl.prop("switchDirection"),
       intersectionBiomeEnd: regl.prop("intersectionBiomeEnd"),
-      stepIndex: regl.prop("stepIndex")
+      stepIndex: regl.prop("stepIndex"),
+      altTrackFailures: regl.prop("altTrackFailures")
     },
 
     count: 3
