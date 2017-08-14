@@ -280,8 +280,10 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
     )
   );
 `}
-  size.y += size.z;
+
   p.y -= size.y - 1.0;
+  size.y += size.z;
+  p.y += size.z;
   vec2 s = vec2(sdBoxWindow(p, vec3(size.xy, 0.5)), 1.0);
 
   float biomeSeed = biomes[3];
