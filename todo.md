@@ -40,3 +40,5 @@
 - https://www.ruxtons.com/images/IG1202-3.jpg
 - https://www.youtube.com/watch?v=4ds9mfUB7Dg
 - https://itch.io/jam/lowrezjam2016/topic/19302/minimal-pixel-font
+- http://mercury.sexy/hg_sdf/
+- http://iquilezles.org/www/articles/distfunctions/distfunctions.htm

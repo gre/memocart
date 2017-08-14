@@ -111,9 +111,19 @@ float sdCappedCylinder(vec3 p, vec2 h) {
   vec2 d = abs(vec2(length(p.xz),p.y)) - h;
   return min(max(d.x,d.y),0.0) + length(max(d,0.0));
 }
+
+float vmin(vec2 v) {
+	return min(v.x, v.y);
+}
+float vmax(vec3 v) {
+	return max(max(v.x, v.y), v.z);
+}
+
+float sdBoxWindow(vec3 p, vec3 b) {
+  return max(abs(p.z) - b.z, vmin(b.xy - abs(p.xy)));
+}
 float sdBox(vec3 p, vec3 b) {
-  vec3 d = abs(p) - b;
-  return min(max(d.x,max(d.y,d.z)),0.0) + length(max(d,0.0));
+  return vmax(abs(p) - b); // cheap version
 }
 float sdTorus(vec3 p, vec2 t) {
   vec2 q = vec2(length(p.xz)-t.x,p.y);
@@ -144,10 +154,9 @@ float interpStepP (vec3 p) {
 vec3 interpStep (vec3 p, vec4 prev, vec4 current) {
   float z = interpStepP(p);
   vec2 m = mix(parseTrackOffset(prev), parseTrackOffset(current), z);
-  vec2 d = z * m; // produced curved interp, but not perfect yet.
-  //rot2(p.xy, 0.5 * M_PI * m.x * z);
+  vec2 d = z * m; // produced curved interp, approximation
   p.xy -= d;
-  rot2(p.xy, -0.8 * m.x); // also do a nice rotation effect opposite to the turn
+  rot2(p.xy, -0.8 * m.x); // rotation effect opposite to the turn
   return p;
 }
 
@@ -193,10 +202,10 @@ vec2 sdRail (vec3 p, vec4 biomes) {
   float seed = biomes[3];
   float biome = biomes[0];
   float a = 2.*(seed - 0.5);
-  float decay = 0.1 + 0.7*step(biome,B_DANG)*step(B_DANG,biome);
+  float decay = 0.1 + 0.7*step(biome,B_DANG) * step(B_DANG,biome);
   a = a * a * a * mix(0.0, 0.3, decay);
   seed = fract(seed * 11.);
-  float b = mod(seed, 0.3);
+  float b = fract(seed * 7.);
   p -= vec3(0.0, -0.9, 0.0);
   // rails
   vec2 s = vec2(opU(
@@ -204,19 +213,19 @@ vec2 sdRail (vec3 p, vec4 biomes) {
     sdBox(p - vec3(-railw, 0.0, 0.5), railS)
   ), 6.0);
   // pylon
-  s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -10.03, 0.0), vec2(0.06, 10.0)), 4.));
+  s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -5.03, 0.0), vec2(0.06, 5.0)), 4.));
   // first board
-  s = opU(s, vec2(sdBox(p, boardS), 4.+mod(seed, 0.2)));
+  s = opU(s, vec2(sdBox(p, boardS), 4. + .2 * seed));
   // second
   p.z -= 0.33;
-  p.y += 99.*step(seed - decay, 0.); // rarely missing
+  p.y += INF * step(seed - decay, 0.); // rarely missing
   rot2(p.xz, a);
-  s = opU(s, vec2(sdBox(p, boardS), 4.+mod(a, 0.25)));
+  s = opU(s, vec2(sdBox(p, boardS), 4.2 + .2 * a));
   // third
   p.z -= 0.33;
-  p.y += 99.*step(fract(seed*2.) - decay, 0.); // sometimes missing
-  rot2(p.xz, -a+b);
-  s = opU(s, vec2(sdBox(p, boardS), 4.+mod(b, 0.3)));
+  p.y += INF * step(seed - decay, 0.); // sometimes missing
+  rot2(p.xz, -a+0.3*b);
+  s = opU(s, vec2(sdBox(p, boardS), 4. + .3 * b));
   return s;
 }
 
@@ -251,7 +260,6 @@ float sdSphere (vec3 p, float s) {
   return length(p)-s;
 }
 
-#define WALL_WIDTH 100.0
 vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
   haveWalls = step(0.01, haveWalls);
@@ -260,8 +268,6 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   float zMix = interpStepP(p);
   vec3 size = mix(sizeFrom, sizeTo, zMix);
   size.y = sizeTo.y;
-  vec3 hs = vec3(WALL_WIDTH, size.y/2. + 2. * WALL_WIDTH, 0.5);
-  vec3 ws = vec3(size.x/2. + 2. * WALL_WIDTH, WALL_WIDTH, 0.5);
 
   vec2 s = vec2(INF, 0.0);
 
@@ -306,23 +312,16 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
     )
   );
 `}
+
   p.y -= (size.y - 2.0) / 2.0;
-  disp.z += 0.5;
-  vec3 wallX = disp, wallY = disp;
-  wallX.x += size.x/2. + WALL_WIDTH;
-  wallY.y += size.y/2. + WALL_WIDTH;
-  float left = sdBox(p-vec3(-1.0,1.0,1.0) * wallX, hs);
-  float right = sdBox(p-wallX, hs);
-  float up = sdBox(p-wallY, ws);
+  size *= 0.5;
+  size.y += size.z;
   p.y += size.z;
-  float down = sdBox(p-vec3(0.0,-1.0,1.0) * wallY, ws);
-  vec2 walls = vec2(opU(
-    opU(up, down),
-    opU(left, right)
-  ), 1.0);
+  s = opU(s, vec2(sdBoxWindow(p - disp, vec3(size.xy, 0.5)), 1.0));
+
   s = mix(
     vec2(INF, 0.0),
-    opU(s, walls),
+    s,
     haveWalls
   );
   return s;
