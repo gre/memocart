@@ -345,21 +345,24 @@ float sdCartWheel(vec3 p) {
 }
 `}
 
-const vec3 cartS = vec3(0.3, 0.23, 0.4);
 vec2 sdCart(vec3 p, float d) {
-  vec3 conv = vec3(mix(1.0, smoothstep(0.0, 2.*cartS.y, p.y), 0.3), 1.0, 1.0);
-  p.y -= 0.18;
-  float metal = opS(
-    sdBox(p-vec3(0.0, 0.03, 0.0), cartS * conv - vec3(0.03, 0.0, 0.03)),
-    sdBox(p, cartS * conv)
+  vec3 boxSize = vec3(
+    0.2 + 0.1 * smoothstep(-0.1, 0.25, p.y),
+    0.25,
+    0.4
   );
-  vec3 wheelOff = vec3(0.3, -0.26, 0.28);
-  wheelOff.x *= 1. - 2. * step(p.x, 0.0);
-  wheelOff.z *= 1. - 2. * step(p.z, 0.0);
-  metal = opU(metal, sdCartWheel(p - wheelOff));
+  float metal = opS(
+    sdBox(p - vec3(0.0, 0.03, 0.0), boxSize - vec3(0.03, 0.0, 0.03)),
+    sdBox(p, boxSize)
+  );
+  metal = opU(metal, sdCartWheel(vec3(
+    abs(p.x)-0.3,
+    p.y+0.26,
+    abs(p.z)-0.28
+  )));
 
-  p.y -= cartS.y;
-  p.z -= cartS.z;
+  p.y -= boxSize.y;
+  p.z -= boxSize.z;
 
   vec3 switchP = p;
   switchP.y += 0.3;
@@ -469,7 +472,7 @@ vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
   vec2 s = sdRail(stepP, biomes);
   float seed = biomes[3];
   float cartNotVisible = step(altTrackFailures, TRACK_SIZE-z);
-  vec3 cartP = stepP - vec3(0.,-0.5-cartNotVisible*INF,-0.5);
+  vec3 cartP = stepP - vec3(0.,-0.3-cartNotVisible*INF,-0.5);
   rot2(cartP.yz, mod(seed*3.,1.)-0.5);
   rot2(cartP.xz, seed-0.5);
   s = opU(s, sdCart(cartP, 2.*(seed-.5)));
@@ -492,7 +495,7 @@ vec2 scene(vec3 p) {
   vec3 terrainDelta = terrainOffset + trackStepProgress * vec3(parseTrackOffset(cartTrackPrev), 1.0);
   vec3 terrainP = p + terrainDelta;
   vec3 altTerrainP = p + terrainDelta - altTrackOffset;
-  vec3 cartP = p - vec3(0.0, -0.8, 0.3);
+  vec3 cartP = p - vec3(0.0, -0.6, 0.3);
   rot2(cartP.xz, atan(-m.x));
   rot2(cartP.yz, atan(-m.y));
 
