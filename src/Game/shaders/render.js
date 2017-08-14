@@ -735,17 +735,17 @@ void main() {
   for (int i=0; i<TRACK_SIZE_INT; i++) {
     trackData[i] = texture2D(track, vec2((0.5+float(i))/TRACK_SIZE, 0.5));
   }
+  if (altTrackMode != ALTT_OFF) {
+    for (int i=0; i<TRACK_SIZE_INT; i++) {
+      altTrackData[i] = texture2D(altTrack, vec2((0.5+float(i))/TRACK_SIZE, 0.5));
+    }
+  }
   if (altTrackMode == ALTT_CART_ON) {
     cartTrackPrev = altTrackData[0];
     cartTrackCurrent = altTrackData[1];
   } else {
     cartTrackPrev = trackData[0];
     cartTrackCurrent = trackData[1];
-  }
-  if (altTrackMode != ALTT_OFF) {
-    for (int i=0; i<TRACK_SIZE_INT; i++) {
-      altTrackData[i] = texture2D(altTrack, vec2((0.5+float(i))/TRACK_SIZE, 0.5));
-    }
   }
 
   // Start the scene rendering
