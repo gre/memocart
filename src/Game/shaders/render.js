@@ -104,14 +104,6 @@ void rot2 (inout vec2 p, float a) {
   float s = sin(a);
   p = mat2(c, -s, s, c) * p;
 }
-
-// generic shapes
-
-float sdCappedCylinder(vec3 p, vec2 h) {
-  vec2 d = abs(vec2(length(p.xz),p.y)) - h;
-  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
-}
-
 float vmin(vec2 v) {
 	return min(v.x, v.y);
 }
@@ -119,11 +111,20 @@ float vmax(vec3 v) {
 	return max(max(v.x, v.y), v.z);
 }
 
+// generic shapes
+
+float sdCappedCylinder(vec3 p, vec2 h) {
+  vec2 d = abs(vec2(length(p.xz),p.y)) - h;
+  return min(max(d.x,d.y),0.0) + length(max(d,0.0));
+}
 float sdBoxWindow(vec3 p, vec3 b) {
   return max(abs(p.z) - b.z, vmin(b.xy - abs(p.xy)));
 }
 float sdBox(vec3 p, vec3 b) {
   return vmax(abs(p) - b); // cheap version
+}
+float sdSphere (vec3 p, float s) {
+  return length(p)-s;
 }
 float sdTorus(vec3 p, vec2 t) {
   vec2 q = vec2(length(p.xz)-t.x,p.y);
@@ -250,55 +251,25 @@ vec3 biomeRoomSize (float biome, float trackSeed) {
   float a = fract(2. * trackSeed);
   float b = fract(3. * trackSeed);
   return vec3(
-    2.0 + trackSeed - 0.4 * dang * a,
-    2.2 - dang * b * 0.8,
-    dang * (trackSeed + a * 0.8 - b * 0.4)
+    0.9 + 0.6 * trackSeed - 0.2 * dang * a,
+    1.2 + 0.1 * b - dang * a * 0.3,
+    dang * (0.5 * trackSeed + a * a - b * 0.2)
   ) * ( 1.0 + dark );
 }
 
-float sdSphere (vec3 p, float s) {
-  return length(p)-s;
-}
-
-vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
+vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
   haveWalls = step(0.01, haveWalls);
   vec3 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec3 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
   float zMix = interpStepP(p);
   vec3 size = mix(sizeFrom, sizeTo, zMix);
-  size.y = sizeTo.y;
 
-  vec2 s = vec2(INF, 0.0);
-
-  vec3 woodP = p;
-  float biomeSeed = biomes[3];
-  float a = fract(biomeSeed * 3.);
-  float b = fract(biomeSeed * 7.);
-  float c = fract(biomeSeed * 11.);
-  float dx = 0.3 * biomeSeed;
-  float woodStructureDist = MIX_BIOMES(biomes, biomeWoodStructureDist);
-  float woodW = 0.04 + 0.05 * a;
-  float woodT = 0.6 + woodStructureDist;
-  float woodL = size.x * (0.4 + 0.1 * biomeSeed) + dx + woodStructureDist;
-  float woodR = size.x * (0.5 - 0.1 * a) - dx + woodStructureDist;
-  woodP = p;
-  rot2(woodP.xy, 0.1 - 0.8 * a);
-  s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
-  woodP = p;
-  rot2(woodP.xy, 0.8 * b - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
-  woodP = p;
-  rot2(woodP.yz, 0.4 * c - 0.2);
-  rot2(woodP.xy, 0.2 * c - 0.1);
-  s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.7));
-
-  vec3 disp = vec3(0.);
-
+  vec3 p = originP;
   ${quality === "low"
     ? ""
     : GLSL`
-  disp += vec3(
+  p -= vec3(
     0.14 * smoothstep(0.0, 0.2, worldNoiseL[1].x)
     - 0.08 * smoothstep(0.0, 0.4, worldNoiseM[1].x)
     - 0.02 * smoothstep(-0.2, 0.0, worldNoiseM[0].x)
@@ -312,12 +283,30 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
     )
   );
 `}
-
-  size /= 2.0;
-  p.y -= (size.y - 1.0);
   size.y += size.z;
-  p.y += size.z;
-  s = opU(s, vec2(sdBoxWindow(p - disp, vec3(size.xy, 0.5)), 1.0));
+  p.y -= size.y - 1.0;
+  vec2 s = vec2(sdBoxWindow(p, vec3(size.xy, 0.5)), 1.0);
+
+  float biomeSeed = biomes[3];
+  float a = fract(biomeSeed * 3.);
+  float b = fract(biomeSeed * 7.);
+  float c = fract(biomeSeed * 11.);
+  float dx = 0.3 * biomeSeed;
+  float woodStructureDist = MIX_BIOMES(biomes, biomeWoodStructureDist);
+  float woodW = 0.04 + 0.05 * a;
+  float woodT = 0.6 + woodStructureDist;
+  float woodL = size.x * (0.8 + 0.2 * biomeSeed) + dx + woodStructureDist;
+  float woodR = size.x * (1. - 0.2 * a) - dx + woodStructureDist;
+  p = originP;
+  rot2(p.xy, 0.1 - 0.8 * a);
+  s = opU(s, vec2(sdBox(p - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
+  p = originP;
+  rot2(p.xy, 0.8 * b - 0.1);
+  s = opU(s, vec2(sdBox(p - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
+  p = originP;
+  rot2(p.yz, 0.4 * c - 0.2);
+  rot2(p.xy, 0.2 * c - 0.1);
+  s = opU(s, vec2(sdBox(p - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.7));
 
   s = mix(
     vec2(INF, 0.0),
