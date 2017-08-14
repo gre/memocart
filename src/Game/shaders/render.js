@@ -247,12 +247,12 @@ float biomeHaveWalls (float biome, float trackSeed) {
 vec3 biomeRoomSize (float biome, float trackSeed) {
   float dang = step(B_DANG, biome) * step(biome, B_DANG);
   float dark = step(B_DARK, biome) * step(biome, B_DARK);
-  float a = mod(6.2 * trackSeed, 0.8);
-  float b = mod(7.2 * trackSeed, 0.4);
+  float a = fract(2. * trackSeed);
+  float b = fract(3. * trackSeed);
   return vec3(
-    2.0 + trackSeed - dang * (a * 0.5 + b),
-    2.2 - dang * a,
-    dang * (trackSeed + a - b)
+    2.0 + trackSeed - 0.4 * dang * a,
+    2.2 - dang * b * 0.8,
+    dang * (trackSeed + a * 0.8 - b * 0.4)
   ) * ( 1.0 + dark );
 }
 
@@ -313,8 +313,8 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   );
 `}
 
-  p.y -= (size.y - 2.0) / 2.0;
-  size *= 0.5;
+  size /= 2.0;
+  p.y -= (size.y - 1.0);
   size.y += size.z;
   p.y += size.z;
   s = opU(s, vec2(sdBoxWindow(p - disp, vec3(size.xy, 0.5)), 1.0));
