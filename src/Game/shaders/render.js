@@ -255,13 +255,13 @@ vec3 biomeRoomSize (float biome, float trackSeed) {
 }
 
 vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
-  float haveWalls = MIX_BIOMES(biomes, biomeHaveWalls);
-  haveWalls = step(0.01, haveWalls);
-  vec3 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
-  vec3 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
   float zMix = interpStepP(originP);
-  vec3 size = mix(sizeFrom, sizeTo, zMix);
+  vec3 size = mix(
+    MIX_BIOMES(biomesPrev, biomeRoomSize),
+    MIX_BIOMES(biomes, biomeRoomSize),
+    zMix);
 
+  // Walls
   vec3 p = originP;
   ${quality === "low"
     ? ""
@@ -280,12 +280,12 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
     )
   );
 `}
-
   p.y -= size.y - 1.0;
   size.y += size.z;
   p.y += size.z;
   vec2 s = vec2(sdBoxWindow(p, vec3(size.xy, 0.5)), 1.0);
 
+  // Wood Structures
   float biomeSeed = biomes[3];
   float a = fract(biomeSeed * 3.);
   float b = fract(biomeSeed * 7.);
@@ -306,13 +306,13 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   rot2(p.yz, 0.4 * c - 0.2);
   rot2(p.xy, 0.2 * c - 0.1);
   s = opU(s, vec2(sdBox(p - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.7));
+  // TODO all of these is too much code, got to be smarter.
 
-  s = mix(
-    vec2(INF, 0.0),
+  return mix(
+    vec2(INF),
     s,
-    haveWalls
+    step(0.01, MIX_BIOMES(biomes, biomeHaveWalls))
   );
-  return s;
 }
 
 float sdCartWheel(vec3 p) {
