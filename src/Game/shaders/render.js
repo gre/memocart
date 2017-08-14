@@ -409,7 +409,7 @@ oxydation = mix(oxydation, o2, o2);
 cartMaterial += 0.8 * oxydation;
 s = opU(s, vec2(wheels, 0.1));
 `}
-  cartMaterial = mix(cartMaterial, 2., body);
+  cartMaterial = mix(cartMaterial, 2.9, body);
   s = opU(s, vec2(inside, cartMaterial));
   return s;
 }
