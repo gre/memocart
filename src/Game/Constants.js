@@ -10,6 +10,7 @@ export const N_MARCH = qualityResolver({
   medium: 40,
   low: 36
 });
+export const NORMAL_EPSILON = 0.01;
 export const TRACK_SIZE = qualityResolver({
   // number of tracks.
   high: 12,

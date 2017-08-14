@@ -350,6 +350,7 @@ class Game extends Component {
         color: [0, 0, 0, 0],
         depth: 1
       });
+
       render({
         ...state,
         framebuffer: renderFBO,

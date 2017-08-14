@@ -33,18 +33,17 @@ const injectDefines = (quality: Quality) =>
 
 const normalFunction = qualityResolver({
   low: GLSL`\
-vec3 normal(vec3 ray_hit_position, float smoothness) {
+vec3 normal(vec3 ray_hit_position) {
   return vec3(0.0, 1.0, 0.0);
 }
 `,
   default: GLSL`\
-vec3 normal(vec3 ray_hit_position, float smoothness) {
-  vec3 n;
-  vec2 dn = vec2(smoothness, 0.0);
-  n.x  = scene(ray_hit_position + dn.xyy).x - scene(ray_hit_position - dn.xyy).x;
-  n.y  = scene(ray_hit_position + dn.yxy).x - scene(ray_hit_position - dn.yxy).x;
-  n.z  = scene(ray_hit_position + dn.yyx).x - scene(ray_hit_position - dn.yyx).x;
-  return normalize(n);
+vec3 normal(vec3 ray_hit_position) {
+  return normalize(vec3(
+    scene(ray_hit_position + vec3(NORMAL_EPSILON, 0., 0.)).x - scene(ray_hit_position - vec3(NORMAL_EPSILON, 0., 0.)).x,
+    scene(ray_hit_position + vec3(0., NORMAL_EPSILON, 0.)).x - scene(ray_hit_position - vec3(0., NORMAL_EPSILON, 0.)).x,
+    scene(ray_hit_position + vec3(0.,0.,NORMAL_EPSILON)).x - scene(ray_hit_position - vec3(0.,0.,NORMAL_EPSILON)).x
+  ));
 }`
 });
 
@@ -268,24 +267,26 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
 
   vec3 woodP = p;
   float biomeSeed = biomes[3];
+  float a = fract(biomeSeed * 3.);
+  float b = fract(biomeSeed * 7.);
+  float c = fract(biomeSeed * 11.);
   float dx = 0.3 * biomeSeed;
   float woodStructureDist = MIX_BIOMES(biomes, biomeWoodStructureDist);
-  float woodW = 0.04 + mod(biomeSeed, 0.05);
+  float woodW = 0.04 + 0.05 * a;
   float woodT = 0.6 + woodStructureDist;
   float woodL = size.x * (0.4 + 0.1 * biomeSeed) + dx + woodStructureDist;
-  float woodR = size.x * (0.5 - 0.1 * fract(9. * biomeSeed)) - dx + woodStructureDist;
+  float woodR = size.x * (0.5 - 0.1 * a) - dx + woodStructureDist;
   woodP = p;
-  rot2(woodP.xy, 0.1 - mod(5.0*biomeSeed, 0.8));
+  rot2(woodP.xy, 0.1 - 0.8 * a);
   s = opU(s, vec2(sdBox(woodP - vec3(-woodL, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
   woodP = p;
-  rot2(woodP.xy, mod(7.*biomeSeed, 0.8) - 0.1);
+  rot2(woodP.xy, 0.8 * b - 0.1);
   s = opU(s, vec2(sdBox(woodP - vec3(woodR, 0.0, 0.0), vec3(woodW, 2.0, woodW)), 4.7));
   woodP = p;
-  rot2(woodP.yz, 0.4 * fract(65.*biomeSeed) - 0.2);
-  rot2(woodP.xy, 0.2 * fract(65.*biomeSeed) - 0.1);
+  rot2(woodP.yz, 0.4 * c - 0.2);
+  rot2(woodP.xy, 0.2 * c - 0.1);
   s = opU(s, vec2(sdBox(woodP - vec3(0.0, woodT, -woodW), vec3(2.0, woodW, woodW)), 4.7));
 
-  // FIXME vary these based on biome factor...
   vec3 disp = vec3(0.);
 
   ${quality === "low"
@@ -310,7 +311,7 @@ vec2 sdTunnelWallStep (vec3 p, vec4 biomes, vec4 biomesPrev) {
   vec3 wallX = disp, wallY = disp;
   wallX.x += size.x/2. + WALL_WIDTH;
   wallY.y += size.y/2. + WALL_WIDTH;
-  float left = sdBox(p-vec3(-1.0,1.0,1.0)*wallX, hs);
+  float left = sdBox(p-vec3(-1.0,1.0,1.0) * wallX, hs);
   float right = sdBox(p-wallX, hs);
   float up = sdBox(p-wallY, ws);
   p.y += size.z;
@@ -434,7 +435,6 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
   vec2 o = vec2(INF);
 
-  // FIXME optim, we might trace the objects in a diff way, with mod() on Z....
   float fly = MIX_BIOMES(biomes, biomeFly);
   float seed = biomes[3];
   float a = mod(49. * seed, 1.0);
@@ -477,6 +477,7 @@ vec2 sdStep (vec3 p, vec4 current, vec4 prev, float z) {
   s = opU(s, sdObjectsStep(stepP, biomes, z));
   return s;
 }
+
 
 vec2 sdStepAlt (vec3 p, vec4 current, vec4 prev, float z) {
   vec4 biomes = parseTrackBiomes(current);
@@ -751,7 +752,7 @@ void main() {
   vec3 direction = normalize(rot * vec3(uv, 2.5));
   vec2 result = raymarch(origin, direction);
   vec3 intersection = origin + direction * result.x;
-  vec3 nrml = normal(intersection, 0.02);
+  vec3 nrml = normal(intersection);
 
   float z = max(0.0, min(intersection.z + trackStepProgress - 1.0, TRACK_SIZE-1.0));
   float zIndex = floor(z);
