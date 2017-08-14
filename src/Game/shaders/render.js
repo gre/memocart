@@ -262,7 +262,7 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   haveWalls = step(0.01, haveWalls);
   vec3 sizeFrom = MIX_BIOMES(biomesPrev, biomeRoomSize);
   vec3 sizeTo = MIX_BIOMES(biomes, biomeRoomSize);
-  float zMix = interpStepP(p);
+  float zMix = interpStepP(originP);
   vec3 size = mix(sizeFrom, sizeTo, zMix);
 
   vec3 p = originP;
