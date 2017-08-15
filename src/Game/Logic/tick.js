@@ -168,7 +168,7 @@ export default (
   // sync tracks / trackStep
 
   g.trackStepProgress += dt * g.speed;
-  if (g.trackStepProgress >= 1) {
+  if (g.trackStepProgress >= 1 && g.status !== STATUS_GAMEOVER) {
     // new step
     if (DEV) {
       Debug.log("fps", Math.round((tick - g.stepTick) / (time - g.stepTime)));
@@ -192,12 +192,14 @@ export default (
         intersectionBiome.duration - intersectionBiome.index;
       const count =
         g.gameOversCountPerBiomeIndex[intersectionBiome.biomeIndex] || 0;
-      g.altTrackFailures = g.altTrack.filter(
-        ({ intersectionBiome }) =>
-          intersectionBiome &&
-          intersectionBiome.index > 4 &&
-          intersectionBiome.duration - intersectionBiome.index <= count
-      ).length;
+      g.altTrackFailures =
+        1 +
+        g.altTrack.filter(
+          ({ intersectionBiome }) =>
+            intersectionBiome &&
+            intersectionBiome.index > 5 &&
+            intersectionBiome.duration - intersectionBiome.index <= count
+        ).length;
     }
 
     if (
