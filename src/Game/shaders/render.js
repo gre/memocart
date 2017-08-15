@@ -202,28 +202,27 @@ const vec3 boardS = vec3(railw + 0.1, 0.02, 0.05);
 vec2 sdRail (vec3 p, vec4 biomes) {
   float seed = biomes[3];
   float biome = biomes[0];
-  float a = 2.*(seed - 0.5);
-  float decay = 0.1 + 0.7*step(biome,B_DANG) * step(B_DANG,biome);
-  a = a * a * a * mix(0.0, 0.3, decay);
-  seed = fract(seed * 11.);
-  float b = fract(seed * 7.);
+  float decay = 0.1 + 0.7*step(biome,B_CLIFF) * step(B_CLIFF,biome);
   p -= vec3(0.0, -0.9, 0.0);
   // rails
   vec2 s = vec2(sdBox(vec3(abs(p.x) - railw, p.y, p.z - 0.5), railS), 6.0);
+  p.y += INF * step(seed - .5 * decay, 0.); // rarely missing
   // pylon
   s = opU(s, vec2(sdCappedCylinder(p - vec3(0.0, -5.03, 0.0), vec2(0.06, 5.0)), 4.));
   // first board
   s = opU(s, vec2(sdBox(p, boardS), 4. + .2 * seed));
   // second
   p.z -= 0.33;
-  p.y += INF * step(seed - decay, 0.); // rarely missing
-  rot2(p.xz, a);
-  s = opU(s, vec2(sdBox(p, boardS), 4.2 + .2 * a));
+  seed = fract(seed * 7.);
+  p.y += INF * step(seed - .8 * decay, 0.); // rarely missing
+  rot2(p.xz, seed - 0.5);
+  s = opU(s, vec2(sdBox(p, boardS), 4. + .2 * seed));
   // third
   p.z -= 0.33;
+  seed = fract(seed * 7.);
   p.y += INF * step(seed - decay, 0.); // sometimes missing
-  rot2(p.xz, -a+0.3*b);
-  s = opU(s, vec2(sdBox(p, boardS), 4. + .3 * b));
+  rot2(p.xz, seed - 0.5);
+  s = opU(s, vec2(sdBox(p, boardS), 4. + .3 * seed));
   return s;
 }
 

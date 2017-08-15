@@ -6,7 +6,7 @@ import * as Debug from "../../Debug";
 
 const biomeFrequencyPerIndex: { [_: string]: (i: number) => number } = {
   B_CLIFF: i =>
-    40 * smoothstep(0, 100, i) * Math.pow(Math.max(0, Math.cos(i / 5)), 2),
+    30 * smoothstep(0, 100, i) * Math.pow(Math.max(0, Math.cos(i / 5)), 2),
   B_COAL: i => 8 * smoothstep(0, 20, i),
   B_COPPER: i => 10 * smoothstep(10, 50, i),
   B_DANG: i => 20 * smoothstep(0, 10, i),
