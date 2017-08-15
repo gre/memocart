@@ -75,6 +75,13 @@ export default (
   userEvents: UserEvents
 ): GameState => {
   let g = { ...previousState };
+  const audioState = {
+    ...g.audioState,
+    triggerSwitchChange: false,
+    triggerCartAccident: false,
+    triggerLightCartAccident: false,
+    triggerIntersectionSwitch: false
+  };
 
   const trackSize = TRACK_SIZE(g.quality);
 
@@ -208,6 +215,11 @@ export default (
       g.altTrackMode === ALTT_CART_ON
     ) {
       g.status = STATUS_GAMEOVER;
+      if (g.gameOversCountPerBiomeIndex[intersectionBiome.biomeIndex]) {
+        audioState.triggerCartAccident = true;
+      } else {
+        audioState.triggerLightCartAccident = true;
+      }
     } else if (
       intersectionBiome &&
       intersectionBiome.index < intersectionBiome.duration
@@ -226,6 +238,10 @@ export default (
           TURN_DX * (droppedTrack.turn - droppedAltTrack.turn);
         g.altTrackOffset[1] -=
           DESCENT_DY * (droppedTrack.descent - droppedAltTrack.descent);
+      }
+
+      if (intersectionBiome.index === 0) {
+        audioState.triggerIntersectionSwitch = true;
       }
 
       const altTrackHasDiverged =
@@ -392,18 +408,54 @@ export default (
     g = levelUp(g);
   }
 
+  // Audio state sync
+
+  const previousTrack = previousState.track[0];
+  const track = g.track[0];
+  const deltaDescent = track.descent - previousTrack.descent;
+  const deltaTurn = track.turn - previousTrack.turn;
+
+  const currentBiomeType = track.uniqueBiome && track.uniqueBiome.type;
+  audioState.biomesProximity = audioState.biomesProximity.map((oldValue, i) => {
+    let targetValue =
+      (track.biome1.type === i ? 1 - track.biomeMix : 0) +
+      (track.biome2.type === i ? track.biomeMix : 0);
+    return oldValue + (targetValue - oldValue) * 0.05;
+  });
+
+  audioState.triggerSwitchChange =
+    previousState.switchDirectionTarget !== g.switchDirectionTarget;
+  audioState.volume += (1 - audioState.volume) * 0.01;
+  audioState.speed = smoothstep(0, 12, g.speed);
+  audioState.descentShake = Math.min(
+    1,
+    audioState.descentShake + 4 * Math.abs(deltaDescent)
+  );
+  audioState.descentShake *= 0.9;
+  audioState.turnShake = Math.min(
+    1,
+    audioState.turnShake + 10 * Math.abs(deltaTurn)
+  );
+  audioState.turnShake *= 0.9;
+
+  audioState.braking = g.braking * smoothstep(0.1, 0.5, g.speed);
+
+  g.audioState = audioState;
+
   if (DEV) {
     if (Debug.getEditable("noSpeed")) {
       g.speed = 0;
     }
 
+    //Debug.log("audioState.turnShake", audioState.turnShake);
+    Debug.log("audioState.descentShake", audioState.descentShake);
     //Debug.log("g.altTrackFailures", g.altTrackFailures);
 
     //Debug.log("worldDelta", g.worldDelta.map(p => p.toFixed(2)));
     //Debug.log("turn", g.track[0].turn);
     //Debug.log("descent", descent);
     //Debug.log("acc", g.acc);
-    //Debug.log("speed", g.speed);
+    Debug.log("speed", g.speed);
     // Debug.log("stepIndex", g.stepIndex);
     //Debug.log("altTrackMode", g.altTrackMode);
     Debug.log(

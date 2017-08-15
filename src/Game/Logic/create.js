@@ -57,6 +57,18 @@ export default (level: number, seed: number, quality: Quality): GameState => {
   return {
     gameOversCountPerBiomeIndex: {},
     quality,
+    audioState: {
+      volume: 0, // will increase shortly
+      speed: 0,
+      braking: 0,
+      descentShake: 0,
+      turnShake: 0,
+      biomesProximity: Array(16).fill(0),
+      triggerSwitchChange: false,
+      triggerCartAccident: false,
+      triggerLightCartAccident: false,
+      triggerIntersectionSwitch: false
+    },
     uiState,
     uiStateBlinkTick: false,
     status: STATUS_RUNNING,

@@ -1,6 +1,7 @@
 //@flow
 import FontFaceObserver from "fontfaceobserver";
 import React, { Component } from "react";
+import Audio from "./Audio";
 import "./index.css";
 let Logic = require("./Logic").default;
 let { default: Render } = require("./Render");
@@ -36,15 +37,19 @@ class GameComponent extends Component {
     const oldState = gameState;
     const newState = Logic[name](oldState, ...args);
     if (newState && newState !== oldState) {
-      this.gameState = newState;
+      this.setGameState(newState);
       return newState;
     } else {
       return oldState;
     }
   };
+  setGameState(g) {
+    this.gameState = g;
+    Audio(g.audioState);
+  }
   componentDidMount() {
     if (this.props.quality) {
-      this.gameState = Logic.create(-1, globalSeed, this.props.quality);
+      this.setGameState(Logic.create(-1, globalSeed, this.props.quality));
     }
     const loop = () => {
       let { wait } = this.state;
@@ -52,7 +57,7 @@ class GameComponent extends Component {
       setTimeout(loop, 1000);
       wait--;
       if (wait === 0) {
-        this.gameState = Logic.create(-1, globalSeed, "high");
+        this.setGameState(Logic.create(-1, globalSeed, "high"));
       }
       this.setState({ wait });
     };

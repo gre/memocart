@@ -31,18 +31,38 @@ const injectDefines = (quality: Quality) =>
     .filter(v => v)
     .join("\n");
 
+const materialSpecularIntensity = qualityResolver({
+  low: GLSL`float materialSpecularIntensity (float m) {
+    return 0.;
+  }`,
+  default: GLSL`
+float materialSpecularIntensity (float m) {
+  return step(6., m) * step(m, 6.999) + step(2., m) * step(m, 2.999);
+}
+`
+});
+
 const sceneNormal = qualityResolver({
   low: GLSL`\
-vec3 sceneNormal(vec3 ray_hit_position) {
+vec3 sceneNormal(vec3 p) {
   return vec3(0.0, 1.0, 0.0);
 }
 `,
-  default: GLSL`\
-vec3 sceneNormal(vec3 ray_hit_position) {
+  // medium normal is not a true normal calc but an estimation
+  medium: GLSL`\
+vec3 sceneNormal(vec3 p) {
   return normalize(vec3(
-    scene(ray_hit_position + vec3(NORMAL_EPSILON, 0., 0.)).x - scene(ray_hit_position - vec3(NORMAL_EPSILON, 0., 0.)).x,
-    scene(ray_hit_position + vec3(0., NORMAL_EPSILON, 0.)).x - scene(ray_hit_position - vec3(0., NORMAL_EPSILON, 0.)).x,
-    scene(ray_hit_position + vec3(0.,0.,NORMAL_EPSILON)).x - scene(ray_hit_position - vec3(0.,0.,NORMAL_EPSILON)).x
+    - scene(p - vec3(NORMAL_EPSILON, 0., 0.)).x,
+    - scene(p - vec3(0., NORMAL_EPSILON, 0.)).x,
+    - scene(p - vec3(0.,0.,NORMAL_EPSILON)).x
+  ));
+}`,
+  high: GLSL`\
+vec3 sceneNormal(vec3 p) {
+  return normalize(vec3(
+    scene(p + vec3(NORMAL_EPSILON, 0., 0.)).x - scene(p - vec3(NORMAL_EPSILON, 0., 0.)).x,
+    scene(p + vec3(0., NORMAL_EPSILON, 0.)).x - scene(p - vec3(0., NORMAL_EPSILON, 0.)).x,
+    scene(p + vec3(0.,0.,NORMAL_EPSILON)).x - scene(p - vec3(0.,0.,NORMAL_EPSILON)).x
   ));
 }`
 });
@@ -556,9 +576,7 @@ vec2 scene(vec3 p) {
   return d;
 }
 
-float materialSpecularIntensity (float m) {
-  return step(6., m) * step(m, 6.999) + step(2., m) * step(m, 2.999);
-}
+${materialSpecularIntensity(quality)}
 
 vec3 materialColor (float m, vec3 normal, float biome, float trackSeed) {
   vec3 c = vec3(0.0);

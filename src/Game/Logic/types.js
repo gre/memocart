@@ -49,8 +49,22 @@ export type UIState = {
   black?: boolean
 };
 
+export type AudioState = {
+  volume: number, // global volume
+  speed: number, // this is a digest value of speed factor, from 0 to 1
+  braking: number,
+  descentShake: number,
+  turnShake: number,
+  biomesProximity: Array<number>,
+  triggerSwitchChange: boolean,
+  triggerCartAccident: boolean,
+  triggerLightCartAccident: boolean,
+  triggerIntersectionSwitch: boolean
+};
+
 export type GameState = {
   quality: Quality,
+  audioState: AudioState,
   uiState: ?UIState,
   uiStateBlinkTick: boolean,
   status: number,
