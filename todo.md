@@ -21,7 +21,6 @@
 - idea: walls might be smoother with rounded corners, maybe if we remove a constant value to the distance?
 - light object on the front left section of the cart : diff of 2 sphere
 - bug: the flame map is not properly mapped, see in low Q.
-- the gameover animation needs to touch the cart and then slightly go back. can play with trackStepProgress i guess
 - various rocks. if we can figure out generative unique shapes, it's good for "remembering" position.
 - more biomes, more objects that are uniquely positioned.
   - B_WATER

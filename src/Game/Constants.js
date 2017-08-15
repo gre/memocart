@@ -6,9 +6,9 @@ import qualityResolver from "./qualityResolver";
 export const DEV = process.env.NODE_ENV === "development";
 export const N_MARCH = qualityResolver({
   // number of raymarch step
-  high: 48,
-  medium: 40,
-  low: 36
+  high: 60,
+  medium: 50,
+  low: 40
 });
 export const NORMAL_EPSILON = 0.01;
 export const TRACK_SIZE = qualityResolver({
