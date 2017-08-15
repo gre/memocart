@@ -84,8 +84,8 @@ export default (ui: CanvasRenderingContext2D) => {
       ui.fillStyle = mainTextColor;
       uiText(uiState.body, x, y, borderOn);
     }
-    if (uiState.footer && (!uiState.footerBlink || blink)) {
-      ui.fillStyle = secondTextColor;
+    if (uiState.footer) {
+      ui.fillStyle = uiState.footerBlink && !blink ? secondTextColor : "#000";
       uiText(
         uiState.footer,
         uiState.footerCentered

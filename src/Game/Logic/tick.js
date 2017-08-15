@@ -136,6 +136,7 @@ export default (
 
     if (spacePressed) {
       g = levelUp(g);
+      return g;
     }
 
     if (g.status !== STATUS_RUNNING) {
@@ -247,8 +248,8 @@ export default (
   const descent = g.track[0].descent;
 
   g.acc += 2 * (0.1 + descent) * (0.1 + descent) * dt;
-  g.acc *= Math.pow(0.98, 60 * dt); // friction
-  g.acc = Math.max(0, Math.min(g.acc, 4));
+  g.acc *= Math.pow(0.985, 60 * dt); // friction
+  g.acc = Math.max(0, Math.min(g.acc, 6));
   g.acc -= 4 * g.braking * dt;
 
   g.speed += dt * g.acc;
@@ -259,14 +260,28 @@ export default (
     const { intersectionBiome } = g.track[0];
     const dir = intersectionBiome && intersectionBiome.biomeSeed > 0.5 ? -1 : 1;
     g.acc = 0;
-    g.speed = Math.max(0, (0 - g.speed) * 0.01);
-    g.trackStepProgress += (0 - g.trackStepProgress) * 0.002;
+    g.speed = 0;
+    if (g.zoomOut === 0) {
+      g.trackStepProgress = 0.9;
+    }
+    const dt = g.time - g.statusChangedTime;
+    g.trackStepProgress +=
+      (0.2 + 0.1 * Math.sin(0.5 * dt) - g.trackStepProgress) *
+      0.008 *
+      g.zoomOut *
+      g.zoomOut;
     g.zoomOut +=
-      (1 - g.zoomOut) * 0.02 * smoothstep(0, 1, g.time - g.statusChangedTime);
+      (0.8 + 0.2 * Math.cos(0.3 * dt) - g.zoomOut) *
+      0.02 *
+      smoothstep(0, 1, g.time - g.statusChangedTime);
     g.rotX += (-0.6 - g.rotX) * 0.005 * g.zoomOut;
     g.rotY += (1.2 * dir - g.rotY) * 0.1 * g.zoomOut;
     if (!freeControls) {
-      g.origin = [0.0 - 3 * dir * g.zoomOut, g.zoomOut, 1.1 + 0.4 * g.zoomOut];
+      g.origin = [
+        0.0 - 3 * dir * g.zoomOut,
+        g.zoomOut,
+        1.0 - 0.3 * g.zoomOut + 0.2 * g.trackStepProgress
+      ];
     }
   } else if (g.status === STATUS_FINISHED) {
     g.acc = 0;
@@ -310,7 +325,7 @@ export default (
   setMatRot(g.rot, g.rotX, g.rotY);
 
   // Sync UI
-  g.uiStateBlinkTick = g.tick % 120 < 60;
+  g.uiStateBlinkTick = g.tick % 60 < 30;
   if (g.level > 0) {
     if (g.status === STATUS_GAMEOVER) {
       const uiState = {

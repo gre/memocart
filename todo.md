@@ -8,13 +8,13 @@
   - the ending. no more train pace, maybe a zen sound.
   - music or maybe ambient sound. i'm thinking one ambient per biome too, but an overall theme?
 
-- UFO is not a biome. should be a recurrent event at specific level. so we can develop the "story" per level.
-- room for 2 biomes. but what?
-  - a biome with walls but no roof/floor (what more to do in this biome? woods?)
-  - playing with room size amplitude?
-  - i wished for more shaped, like stalactite, but i don't think can afford the gpu cost
-- develop the end story. something should happen with the animated ball. probably should just use another shader :D
-- play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
+- STORYTELLING
+  - develop the end story. something should happen with the animated ball. probably should just use another shader :D
+  - UFO is not a biome. should be a recurrent event at specific level. so we can develop the "story" per level.
+
+- GAMEPLAY
+  - play the game FOR REAL to see if there are gameplay to improve in level gen (intersect / etc..)
+  - SHOULD THEY BE AN END?
 
 # medium
 
@@ -27,7 +27,6 @@
   - B_WATER
   - B_ROCKY: where there is no wall but you ride on a thin rock. I think the oversee vision can be cool (less fog. any room to INCREASE TRACK_SIZE?)
 - end story? might be important, but not too crazy (there is no room for perf...). thinking maybe it becomes blueish and you enter in a nice landscape...
-- lighting. maybe we can do something a tiny bit better if we add specular to some material (like the cart?) https://en.wikipedia.org/wiki/Phong_reflection_model
 
 # credits
 

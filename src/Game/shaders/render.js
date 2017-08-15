@@ -31,14 +31,14 @@ const injectDefines = (quality: Quality) =>
     .filter(v => v)
     .join("\n");
 
-const normalFunction = qualityResolver({
+const sceneNormal = qualityResolver({
   low: GLSL`\
-vec3 normal(vec3 ray_hit_position) {
+vec3 sceneNormal(vec3 ray_hit_position) {
   return vec3(0.0, 1.0, 0.0);
 }
 `,
   default: GLSL`\
-vec3 normal(vec3 ray_hit_position) {
+vec3 sceneNormal(vec3 ray_hit_position) {
   return normalize(vec3(
     scene(ray_hit_position + vec3(NORMAL_EPSILON, 0., 0.)).x - scene(ray_hit_position - vec3(NORMAL_EPSILON, 0., 0.)).x,
     scene(ray_hit_position + vec3(0., NORMAL_EPSILON, 0.)).x - scene(ray_hit_position - vec3(0., NORMAL_EPSILON, 0.)).x,
@@ -249,9 +249,10 @@ vec3 biomeRoomSize (float biome, float trackSeed) {
   float cliff = step(B_CLIFF, biome) * step(biome, B_CLIFF);
   float a = fract(2. * trackSeed);
   float b = fract(3. * trackSeed);
+  b = b * b;
   return vec3(
-    0.9 + 0.6 * trackSeed - 0.2 * dang * a,
-    1.2 + 0.1 * b - dang * a * 0.3 + INF * cliff,
+    1.0 + 0.4 * trackSeed - 0.2 * b - 0.2 * dang * a,
+    1.2 + 0.3 * b - dang * a * 0.3 + INF * cliff,
     dang * (0.5 * trackSeed + a * a - b * 0.2) + INF * cliff
   ) * ( 1.0 + dark );
 }
@@ -347,6 +348,16 @@ vec2 sdCart(vec3 p, float d) {
 
   p.y -= boxSize.y;
   p.z -= boxSize.z;
+
+  vec3 lampP = vec3(
+     abs(p.x) - 0.9 * boxSize.x,
+     p.y + 0.04,
+     p.z - 0.04
+  );
+  metal = opU(metal, opS(
+    sdSphere(lampP - vec3(0.0, 0.0, 0.09), 0.1),
+    sdSphere(lampP, 0.08)
+  ));
 
   vec3 switchP = p;
   switchP.y += 0.3;
@@ -546,7 +557,11 @@ vec2 scene(vec3 p) {
   return d;
 }
 
-vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
+float materialSpecularIntensity (float m) {
+  return step(6., m) * step(m, 6.999) + step(2., m) * step(m, 2.999);
+}
+
+vec3 materialColor (float m, vec3 normal, float biome, float trackSeed) {
   vec3 c = vec3(0.0);
   float darkBiome = step(B_DARK,biome) * step(biome,B_DARK);
   float fireBiome = step(B_FIRE,biome) * step(biome,B_FIRE);
@@ -662,7 +677,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
 vec3 biomeAmbientColor (float b, float seed) {
   return vec3(0.2)
   + step(B_DARK, b) * step(b, B_DARK) * vec3(-0.4)
-  + step(B_SAPPHIRE,b) * step(b,B_SAPPHIRE) * vec3(0.0, 0.3, 0.8)
+  + step(B_SAPPHIRE,b) * step(b,B_SAPPHIRE) * vec3(0.0, 0.4, 1.0)
   + step(B_WIRED,b) * step(b,B_WIRED) * vec3(.4,.3,.1)
   + step(B_FIRE,b) * step(b,B_FIRE) * vec3(0.3, 0.2, 0.0);
 }
@@ -702,7 +717,7 @@ vec2 raymarch(vec3 position, vec3 direction) {
   return vec2(total_distance, result.y);
 }
 
-${normalFunction(quality)}
+${sceneNormal(quality)}
 
 void main() {
   // Set some Global Vars..
@@ -725,8 +740,10 @@ void main() {
   // Start the scene rendering
   vec3 direction = normalize(rot * vec3(uv, 2.5));
   vec2 result = raymarch(origin, direction);
-  vec3 intersection = origin + direction * result.x;
-  vec3 nrml = normal(intersection);
+  float material = result.y;
+  float dist = result.x;
+  vec3 intersection = origin + direction * dist;
+  vec3 normal = sceneNormal(intersection);
 
   float z = max(0.0, min(intersection.z + trackStepProgress - 1.0, TRACK_SIZE-1.0));
   float zIndex = floor(z);
@@ -738,8 +755,8 @@ void main() {
   vec4 toBiomes = parseTrackBiomes(toData);
 
   vec3 materialColor = mix(
-    MIX_BIOMES_2args(fromBiomes, sceneColor, result.y, nrml),
-    MIX_BIOMES_2args(toBiomes, sceneColor, result.y, nrml),
+    MIX_BIOMES_2args(fromBiomes, materialColor, material, normal),
+    MIX_BIOMES_2args(toBiomes, materialColor, material, normal),
     zFract
   );
   vec3 ambientColor = mix(
@@ -758,13 +775,19 @@ void main() {
     zFract
   );
 
-  vec3 light_dir = normalize(vec3(0.4, 0.5, -1.0));
-  float diffuse = dot(light_dir, nrml);
+  vec3 lightDir = normalize(vec3(0.1, 0.2, -1.0));
+  float diffuse = dot(lightDir, normal);
   diffuse = mix(diffuse, 1.0, 0.5); // half diffuse
+
+  vec3 lightReflect = normalize(reflect(lightDir, normal));
+  float specular = dot(-direction, lightReflect);
+  specular = pow(specular, 4.0);
+  float matSpecularIntensity = materialSpecularIntensity(material);
+
   vec3 diffuseLit;
   vec3 lightColor = vec3(1.0, 0.9, 0.8);
-  float fog = smoothstep(fogRange[0], fogRange[1], result.x);
-  diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor), fogColor, fog);
+  float fog = smoothstep(fogRange[0], fogRange[1], dist);
+  diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor + specular * lightColor * matSpecularIntensity), fogColor, fog);
   gl_FragColor = vec4(diffuseLit, 1.0);
 }
 `,

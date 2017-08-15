@@ -33,7 +33,7 @@ const beforeStepIndex = (index: number): Cond => g => g.stepIndex > index;
 const afterStepIndex = (index: number): Cond => g => g.stepIndex < index;
 const cartOffAltTrack: Cond = g => g.altTrackMode === ALTT_CART_OFF;
 const cartOnAltTrack: Cond = g => g.altTrackMode === ALTT_CART_ON;
-const successfulTurn: Cond = and(afterStepIndex(38), cartOffAltTrack);
+const successfulTurn: Cond = and(afterStepIndex(39), cartOffAltTrack);
 
 // tick logics
 const tickStop: Tick = g => ({ ...g, speed: 0 });
@@ -100,7 +100,7 @@ const tutorialLogic: TutorialLogic = {
         footer: pressRight()
       },
       conditionSkip: cartOnAltTrack,
-      conditionEnter: afterStepIndex(48),
+      conditionEnter: afterStepIndex(50),
       tick: tickStop,
       conditionLeave: rightPressed
     },

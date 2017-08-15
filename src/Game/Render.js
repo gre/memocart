@@ -336,8 +336,7 @@ class Game extends Component {
 
       if (
         prevState.uiState !== state.uiState ||
-        state.uiStateBlinkTick !== prevState.uiStateBlinkTick ||
-        state.tick % 60 === 0
+        state.uiStateBlinkTick !== prevState.uiStateBlinkTick
       ) {
         uiSync(state);
       }
