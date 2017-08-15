@@ -391,15 +391,18 @@ export default (
     //Debug.log("altTrackMode", g.altTrackMode);
     Debug.log(
       "biome",
-      g.track[0].biomeMix === 0
-        ? printBiome(g.track[0].biome1)
-        : g.track[0].biomeMix === 1
-          ? printBiome(g.track[0].biome2)
-          : printBiome(g.track[0].biome1) +
-            "–>" +
-            printBiome(g.track[0].biome2) +
-            " % " +
-            g.track[0].biomeMix.toFixed(2)
+      "(" +
+        g.track[0].biome1.biomeIndex +
+        ") " +
+        (g.track[0].biomeMix === 0
+          ? printBiome(g.track[0].biome1)
+          : g.track[0].biomeMix === 1
+            ? printBiome(g.track[0].biome2)
+            : printBiome(g.track[0].biome1) +
+              "–>" +
+              printBiome(g.track[0].biome2) +
+              " % " +
+              g.track[0].biomeMix.toFixed(2))
     );
   }
 

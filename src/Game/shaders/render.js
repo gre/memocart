@@ -231,6 +231,7 @@ float biomeWoodStructureDist (float biome, float trackSeed) {
   return 10.0 * (
     1.0
     - 0.95 * step(biome, B_WIRED) * step(B_WIRED, biome)
+    - 0.9 * step(biome, B_CLIFF) * step(B_CLIFF, biome)
     - step(biome, B_DANG) * step(B_DANG, biome)
   );
 }
@@ -245,12 +246,13 @@ float biomeHaveWalls (float biome, float trackSeed) {
 vec3 biomeRoomSize (float biome, float trackSeed) {
   float dang = step(B_DANG, biome) * step(biome, B_DANG);
   float dark = step(B_DARK, biome) * step(biome, B_DARK);
+  float cliff = step(B_CLIFF, biome) * step(biome, B_CLIFF);
   float a = fract(2. * trackSeed);
   float b = fract(3. * trackSeed);
   return vec3(
     0.9 + 0.6 * trackSeed - 0.2 * dang * a,
-    1.2 + 0.1 * b - dang * a * 0.3,
-    dang * (0.5 * trackSeed + a * a - b * 0.2)
+    1.2 + 0.1 * b - dang * a * 0.3 + INF * cliff,
+    dang * (0.5 * trackSeed + a * a - b * 0.2) + INF * cliff
   ) * ( 1.0 + dark );
 }
 
@@ -263,9 +265,6 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
 
   // Walls
   vec3 p = originP;
-  ${quality === "low"
-    ? ""
-    : GLSL`
   p -= vec3(
     0.14 * smoothstep(0.0, 0.2, worldNoiseL[1].x)
     - 0.08 * smoothstep(0.0, 0.4, worldNoiseM[1].x)
@@ -279,7 +278,7 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
       0.8 * smoothstep(-0.4, 0.6, worldNoiseL[2].z)
     )
   );
-`}
+
   p.y -= size.y - 1.0;
   size.y += size.z;
   p.y += size.z;
@@ -552,6 +551,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   float darkBiome = step(B_DARK,biome) * step(biome,B_DARK);
   float fireBiome = step(B_FIRE,biome) * step(biome,B_FIRE);
   float coalBiome = step(B_COAL,biome) * step(biome,B_COAL);
+  float copperBiome = step(B_COPPER,biome) * step(biome,B_COPPER);
   float sapphireBiome = step(B_SAPPHIRE,biome) * step(biome,B_SAPPHIRE);
   float goldBiome = step(B_GOLD,biome) * step(biome,B_GOLD);
   float icyBiome = step(B_ICY,biome) * step(biome,B_ICY);
@@ -569,6 +569,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   float goldRarity = trackSeed;
   c += step(0.0, m) * step(m, 0.999) * (
     vec3(0.22, 0.2, 0.18) +
+    copperBiome * vec3(0.5 + 0.2 * a, 0.2 + 0.2 * min(0., a + b + s), 0.0) * (.8 + 4. * b * b) +
     (
       fireBiome * vec3(0.9 + 0.3 * b + 0.2 * s, 0.2 - 0.2 * a, 0.3 * a) +
       sapphireBiome * vec3(0.0, 0.6, 1.2) +
@@ -612,7 +613,7 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
     ),
     vec3(0.6, 0.8, 1.0),
     icyBiome
-  ) * (1.0 - m - 0.9 * (fireBiome + coalBiome));
+  ) * (1.0 - m - 0.9 * (fireBiome + coalBiome + copperBiome));
 
   // 5.+ : fly (firefly/insect, depends on places)
   m--;
@@ -629,8 +630,8 @@ vec3 sceneColor (float m, vec3 normal, float biome, float trackSeed) {
   // 6.+ : rail metal
   m--;
   c += step(0.0, m) * step(m, 0.99) * (
-    icyBiome +
-    mix(
+    icyBiome
+    + mix(
       mix(
         vec3(0.7),
         vec3(8.0, 2.0, 1.0),
@@ -671,6 +672,7 @@ vec2 biomeFogRange (float b, float seed) {
     0.5
       - 0.4 * step(B_FIRE, b) * step(b, B_FIRE)
       - 0.4 * step(B_ICY, b) * step(b, B_ICY)
+      - 0.9 * step(B_COPPER, b) * step(b, B_COPPER)
       - 0.2 * step(B_INTERS, b) * step(b,B_INTERS)
       - 0.51 * step(B_FINISH, b) * step(b, B_FINISH),
     1.0 - step(B_FINISH, b) * step(b, B_FINISH)
@@ -684,6 +686,7 @@ vec3 biomeFogColor (float b, float seed) {
     + step(B_INTERS, b) * step(b, B_INTERS) * 0.1
     + step(B_FIRE, b) * step(b, B_FIRE) * 0.2
   )
+  + step(B_COPPER,b) * step(b,B_COPPER) * vec3(0.7, 0.4, 0.2)
   + step(B_ICY, b) * step(b, B_ICY) * vec3(0.6, 0.7, 0.8);
 }
 

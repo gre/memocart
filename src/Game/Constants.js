@@ -6,7 +6,7 @@ import qualityResolver from "./qualityResolver";
 export const DEV = process.env.NODE_ENV === "development";
 export const N_MARCH = qualityResolver({
   // number of raymarch step
-  high: 44,
+  high: 48,
   medium: 40,
   low: 36
 });
@@ -26,7 +26,9 @@ export const STATUS_GAMEOVER = 2;
 
 // B_ constants are the biomes
 let biome = 0;
+export const B_CLIFF = biome++; // walls but not ceil or floor
 export const B_COAL = biome++;
+export const B_COPPER = biome++;
 export const B_DANG = biome++; // dangerous section. put some wood stick, walls are smaller on top
 export const B_DARK = biome++; // dark biome with firefly
 export const B_EMPTY = biome++; // generic biome without anything special in it
@@ -41,7 +43,7 @@ export const B_UFO = biome++;
 export const B_VOID = biome++; // complete void, kinda like an intersection but without intersection
 export const B_WIRED = biome++; // some past human activity visible. wires, lamps,...
 
-if (biome >= 16) {
+if (biome > 16) {
   console.warn("BIOME OVERFLOW XD", biome);
 }
 
