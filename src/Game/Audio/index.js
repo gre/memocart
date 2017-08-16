@@ -144,8 +144,59 @@ if (!context) {
   darkNode.playbackRate.value = 0.7;
   sounds.dark.output.gain.value = 0;
 
-  playLoop(sounds.cliff);
-  sounds.cliff.output.gain.value = 0;
+  playLoop(sounds.dang);
+  sounds.dang.output.gain.value = 0;
+
+  playLoop(sounds.dang2);
+  sounds.dang2.output.gain.value = 0;
+
+  playLoop(sounds.dang3);
+  sounds.dang3.output.gain.value = 0;
+
+  playLoop(sounds.dark2);
+  sounds.dark2.output.gain.value = 0;
+
+  playLoop(sounds.coal);
+  sounds.coal.output.gain.value = 0;
+
+  playLoop(sounds.cliff2);
+  sounds.cliff2.output.gain.value = 0;
+
+  playLoop(sounds.bvoid);
+  sounds.bvoid.output.gain.value = 0;
+
+  playLoop(sounds.gold);
+  sounds.gold.output.gain.value = 0;
+
+  sounds.dark.gainMult = 1.4;
+  sounds.cliff.gainMult = 2;
+  sounds.plant.gainMult = 3;
+  sounds.loopMachine.gainMult = 2;
+  sounds.copper.gainMult = 1.5;
+  sounds.fire.gainMult = 1.4;
+  sounds.gold.gainMult = 0.6;
+  sounds.coal.gainMult = 0.8;
+
+  [sounds.dang, sounds.dang2, sounds.dang3].forEach(d => {
+    d.gainMult = 0.2;
+  });
+
+  const biomes = {
+    [Constants.B_WIRED]: [sounds.loopMachine],
+    [Constants.B_UFO]: [sounds.ufo],
+    [Constants.B_COPPER]: [sounds.copper],
+    [Constants.B_SAPPHIRE]: [sounds.sapphire],
+    [Constants.B_PLANT]: [sounds.plant],
+    [Constants.B_INTERS]: [sounds.inters],
+    [Constants.B_ICY]: [sounds.icy],
+    [Constants.B_FIRE]: [sounds.fire],
+    [Constants.B_DARK]: [sounds.dark, sounds.dark2],
+    [Constants.B_DANG]: [sounds.dang, sounds.dang2, sounds.dang3],
+    [Constants.B_CLIFF]: [sounds.cliff, sounds.cliff2],
+    [Constants.B_COAL]: [sounds.coal],
+    [Constants.B_VOID]: [sounds.bvoid],
+    [Constants.B_GOLD]: [sounds.gold]
+  };
 
   sync = ({
     volume,
@@ -157,60 +208,86 @@ if (!context) {
     braking,
     triggerCartAccident,
     triggerLightCartAccident,
-    triggerIntersectionSwitch
+    triggerIntersectionSwitch,
+    triggerWin,
+    stepIndex,
+    home
   }: AudioState) => {
-    out.gain.value = volume * (1 - biomesProximity[Constants.B_FINISH]);
+    const applyBiomeProximity = (
+      arr: Array<{ output: GainNode, gainMult?: number }>,
+      value: number
+    ) => {
+      arr.forEach(s => {
+        s.output.gain.value = 0;
+      });
+      if (stepIndex <= 0) return;
+      if (arr.length === 1) {
+        arr[0].output.gain.value = (arr[0].gainMult || 1) * value;
+        return;
+      }
+      const d = stepIndex / 60;
+      const p = Math.min(1, (d - Math.floor(d)) * 5); // quickly fades but no strong cut
+      const inf = arr[Math.floor(d) % arr.length];
+      const sup = arr[Math.floor(d + 1) % arr.length];
+      inf.output.gain.value = (inf.gainMult || 1) * value * (1 - p);
+      sup.output.gain.value = (sup.gainMult || 1) * value * p;
+    };
 
-    const noSpeedCutoff = smoothstep(0.0, 0.001, speed);
+    out.gain.value = volume;
 
-    windGain.gain.value = 0.2 * smoothstep(0, 2, speed);
-    windFilter.frequency.value = mix(0, 2000, speed);
+    //sounds.intro.output.gain.value = home ? 0.5 : 0;
 
-    loopCartNormalNode.playbackRate.value = mix(0.4, 1.4, speed);
-    sounds.loopCartNormal.output.gain.value =
-      mix(
-        Math.min(1, descentShake + turnShake),
-        smoothstep(0, 0.2, speed),
-        0.2
-      ) * noSpeedCutoff;
+    if (!home || true) {
+      const noSpeedCutoff = smoothstep(0.0, 0.001, speed);
 
-    loopCartHighNode.playbackRate.value =
-      mix(0.8, 1.2, smoothstep(0.5, 1, speed)) * noSpeedCutoff;
-    sounds.loopCartHigh.output.gain.value =
-      descentShake * descentShake * noSpeedCutoff;
+      windGain.gain.value = 0.2 * smoothstep(0, 2, speed);
+      windFilter.frequency.value = mix(0, 2000, speed);
 
-    sounds.scratchMedium.output.gain.value =
-      turnShake * turnShake * noSpeedCutoff;
+      loopCartNormalNode.playbackRate.value = mix(0.4, 1.4, speed);
+      sounds.loopCartNormal.output.gain.value =
+        mix(
+          Math.min(1, descentShake + turnShake),
+          smoothstep(0, 0.2, speed),
+          0.2
+        ) * noSpeedCutoff;
 
-    brakingNode.playbackRate.value = mix(0.5, 1, speed);
-    sounds.braking.output.gain.value = 3 * braking * noSpeedCutoff;
+      loopCartHighNode.playbackRate.value =
+        mix(0.8, 1.2, smoothstep(0.5, 1, speed)) * noSpeedCutoff;
+      sounds.loopCartHigh.output.gain.value =
+        descentShake * descentShake * noSpeedCutoff;
 
-    sounds.loopMachine.output.gain.value =
-      2 * biomesProximity[Constants.B_WIRED];
-    sounds.ufo.output.gain.value = biomesProximity[Constants.B_UFO];
-    sounds.copper.output.gain.value = biomesProximity[Constants.B_COPPER];
-    sounds.sapphire.output.gain.value = biomesProximity[Constants.B_SAPPHIRE];
-    sounds.plant.output.gain.value = biomesProximity[Constants.B_PLANT];
-    sounds.inters.output.gain.value =
-      biomesProximity[Constants.B_INTERS] * noSpeedCutoff;
-    sounds.icy.output.gain.value = biomesProximity[Constants.B_ICY];
-    sounds.fire.output.gain.value = biomesProximity[Constants.B_FIRE];
-    sounds.dark.output.gain.value = 1.4 * biomesProximity[Constants.B_DARK];
-    sounds.cliff.output.gain.value = 2 * biomesProximity[Constants.B_CLIFF];
+      sounds.scratchMedium.output.gain.value =
+        turnShake * turnShake * noSpeedCutoff;
 
-    if (triggerSwitchChange) {
-      const switchSound =
-        switchSounds[Math.floor(Math.random() * switchSounds.length)];
-      playNow(switchSound);
-    }
-    if (triggerIntersectionSwitch) {
-      playNow(sounds.intersectionPass);
-    }
-    if (triggerCartAccident) {
-      playNow(sounds.cartAccident); // rename cartAccidentInCarts
-    }
-    if (triggerLightCartAccident) {
-      playNow(sounds.cartAccidentLight); // FIXME improve the sound and rename to cartAccidentInWall
+      brakingNode.playbackRate.value = mix(0.5, 1, speed);
+      sounds.braking.output.gain.value = 3 * braking * noSpeedCutoff;
+
+      biomesProximity.forEach((value, b) => {
+        const audios = biomes[b];
+        if (audios) {
+          applyBiomeProximity(audios, value);
+        }
+      });
+
+      sounds.inters.output.gain.value *= noSpeedCutoff;
+
+      if (triggerWin) {
+        playNow(sounds.win);
+      }
+      if (triggerSwitchChange) {
+        const switchSound =
+          switchSounds[Math.floor(Math.random() * switchSounds.length)];
+        playNow(switchSound);
+      }
+      if (triggerIntersectionSwitch) {
+        playNow(sounds.intersectionPass);
+      }
+      if (triggerCartAccident) {
+        playNow(sounds.cartAccident); // rename cartAccidentInCarts
+      }
+      if (triggerLightCartAccident) {
+        playNow(sounds.cartAccidentLight); // FIXME improve the sound and rename to cartAccidentInWall
+      }
     }
   };
 }

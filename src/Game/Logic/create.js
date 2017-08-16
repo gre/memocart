@@ -65,7 +65,7 @@ export default (
     gameOversCountPerBiomeIndex: {},
     quality,
     audioState: {
-      volume: 0, // will increase shortly
+      volume: 0.5, // will increase shortly
       speed: 0,
       braking: 0,
       descentShake: 0,
@@ -74,7 +74,10 @@ export default (
       triggerSwitchChange: false,
       triggerCartAccident: false,
       triggerLightCartAccident: false,
-      triggerIntersectionSwitch: false
+      triggerIntersectionSwitch: false,
+      triggerWin: false,
+      stepIndex,
+      home: level === -1
     },
     uiState,
     uiStateBlinkTick: false,

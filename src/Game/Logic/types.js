@@ -59,7 +59,10 @@ export type AudioState = {
   triggerSwitchChange: boolean,
   triggerCartAccident: boolean,
   triggerLightCartAccident: boolean,
-  triggerIntersectionSwitch: boolean
+  triggerIntersectionSwitch: boolean,
+  triggerWin: boolean,
+  stepIndex: number,
+  home: boolean
 };
 
 export type GameState = {

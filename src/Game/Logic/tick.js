@@ -418,6 +418,8 @@ export default (
   const deltaDescent = track.descent - previousTrack.descent;
   const deltaTurn = track.turn - previousTrack.turn;
 
+  audioState.stepIndex = g.stepIndex;
+
   audioState.biomesProximity = audioState.biomesProximity.map((oldValue, i) => {
     let targetValue =
       (track.biome1.type === i ? 1 - track.biomeMix : 0) +
@@ -425,9 +427,11 @@ export default (
     return oldValue + (targetValue - oldValue) * 0.05;
   });
 
+  audioState.triggerWin = g.stepIndex === 10;
   audioState.triggerSwitchChange =
     previousState.switchDirectionTarget !== g.switchDirectionTarget;
-  audioState.volume += ((g.level === -1 ? 0 : 1) - audioState.volume) * 0.01;
+  audioState.home = g.level === -1;
+  audioState.volume += (1 - audioState.volume) * 0.01;
   audioState.speed = smoothstep(0, 12, g.speed);
   audioState.descentShake = Math.min(
     1,
