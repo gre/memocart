@@ -79,7 +79,7 @@ const tutorialLogic: TutorialLogic = {
             }
             return g;
           },
-      conditionLeave: afterStepIndex(70)
+      conditionLeave: afterStepIndex(60)
     },
     {
       uiState: {
@@ -87,7 +87,7 @@ const tutorialLogic: TutorialLogic = {
         body: "Let's go... RIGHT!"
       },
       conditionSkip: never,
-      conditionEnter: afterStepIndex(70),
+      conditionEnter: afterStepIndex(60),
       tick: tickNoop,
       conditionLeave: afterStepIndex(52)
     },
