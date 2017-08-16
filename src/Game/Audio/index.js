@@ -144,6 +144,9 @@ if (!context) {
   darkNode.playbackRate.value = 0.7;
   sounds.dark.output.gain.value = 0;
 
+  playLoop(sounds.intro);
+  sounds.intro.output.gain.value = 0;
+
   playLoop(sounds.dang);
   sounds.dang.output.gain.value = 0;
 
