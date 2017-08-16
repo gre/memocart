@@ -254,7 +254,7 @@ class GameComponent extends Component {
               disabled={validation.errors.length !== 0}
               onClick={this.start}
             >
-              Start Game
+              START
             </Button>
           </div>
           <div className="errors">

@@ -1,3 +1,3 @@
 export default {
-  highscoresAPI: "http://localhost:9832"
+  highscoresAPI: "https://memocart.herokuapp.com"
 };
