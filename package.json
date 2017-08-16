@@ -28,6 +28,6 @@
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
-    "deploy": "react-scripts build && surge -p build -d gre-lowrezjam2017.surge.sh"
+    "deploy": "react-scripts build && surge -p build -d https://gre-lowrezjam2017.surge.sh"
   }
 }
