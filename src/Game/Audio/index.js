@@ -102,7 +102,7 @@ if (!context) {
   intersNode.playbackRate.value = 0.5;
   sounds.inters.output.gain.value = 0;
 
-  const scratchMediumNode = playLoop(sounds.scratchMedium);
+  playLoop(sounds.scratchMedium);
   sounds.scratchMedium.output.gain.value = 0;
 
   const brakingNode = playLoop(sounds.braking);
