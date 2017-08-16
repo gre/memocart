@@ -79,16 +79,6 @@ const tutorialLogic: TutorialLogic = {
             }
             return g;
           },
-      conditionLeave: afterStepIndex(60)
-    },
-    {
-      uiState: {
-        title: "incoming\nINTERSECTION!",
-        body: "Let's go... RIGHT!"
-      },
-      conditionSkip: never,
-      conditionEnter: afterStepIndex(60),
-      tick: tickNoop,
       conditionLeave: afterStepIndex(52)
     },
     {
@@ -109,7 +99,7 @@ const tutorialLogic: TutorialLogic = {
         title: "Wrong turn!",
         body: "Let's remember\nfor next run!"
       },
-      conditionSkip: or(beforeStepIndex(50), successfulTurn),
+      conditionSkip: or(beforeStepIndex(52), successfulTurn),
       conditionEnter: afterStepIndex(38),
       tick: tickNoop,
       conditionLeave: beforeStepIndex(38)
