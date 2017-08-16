@@ -88,12 +88,15 @@ app.post("/", (req, res) => {
       return { username, level: levelReached, seed, date: Date.now() };
     })
     .then(recordScore)
-    .then(result => {
+    .then(({ ok, n, nModified, modifiedCount, upsertedCount }) => {
       const { username, levelReached, seed } = req.body.gameState;
-      console.log(
-        result,
-        " @" + seed + " lvl " + levelReached + " by " + username
-      );
+      console.log("@" + seed + " lvl " + levelReached + " by " + username, {
+        ok,
+        n,
+        nModified,
+        modifiedCount,
+        upsertedCount
+      });
       return res.json({ inserted: true });
     })
     .catch(e => {
