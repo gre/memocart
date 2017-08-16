@@ -13,27 +13,40 @@ import loopDrift1 from "./fx/loop-drift1.m4a";
 import loopDrift2 from "./fx/loop-drift2.m4a";
 import loopMachine from "./fx/loop-machine.m4a";
 import scratchHard from "./fx/scratch-hard.m4a";
-import scratchLight from "./fx/scratch-light.m4a";
 import scratchMedium from "./fx/scratch-medium.m4a";
 import switch1 from "./fx/switch1.m4a";
 import switch2 from "./fx/switch2.m4a";
 import switch3 from "./fx/switch3.m4a";
 
+import inters from "./biomes/inters.m4a";
+import ufo from "./biomes/ufo.m4a";
+import copper from "./biomes/copper.m4a";
+import sapphire from "./biomes/sapphire.m4a";
+import plant from "./biomes/plant.m4a";
+import icy from "./biomes/icy.m4a";
+import fire from "./biomes/fire.m4a";
+
 const audioFiles = {
-  cartAccidentLight,
-  cartAccident,
-  intersectionPass,
-  loopCartHigh,
-  loopCartNormal,
-  loopDrift1,
-  loopDrift2,
-  loopMachine,
-  scratchHard,
-  scratchLight,
-  scratchMedium,
   switch1,
   switch2,
-  switch3
+  switch3,
+  loopCartNormal,
+  loopCartHigh,
+  loopDrift1,
+  loopDrift2,
+  inters,
+  scratchHard,
+  intersectionPass,
+  cartAccidentLight,
+  cartAccident,
+  scratchMedium,
+  loopMachine,
+  ufo,
+  copper,
+  sapphire,
+  plant,
+  icy,
+  fire
 };
 
 const context = new AudioContext();
@@ -107,9 +120,9 @@ if (!context) {
 
   const switchSounds = [sounds.switch1, sounds.switch2, sounds.switch3];
 
-  const scratchLightNode = playLoop(sounds.scratchLight);
-  scratchLightNode.playbackRate.value = 0.5;
-  sounds.scratchLight.output.gain.value = 0;
+  const intersNode = playLoop(sounds.inters);
+  intersNode.playbackRate.value = 0.5;
+  sounds.inters.output.gain.value = 0;
 
   const scratchMediumNode = playLoop(sounds.scratchMedium);
   sounds.scratchMedium.output.gain.value = 0;
@@ -134,6 +147,19 @@ if (!context) {
   windGain.gain.value = 0;
   windGain.connect(windFilter);
   loopCartHighNode.connect(windGain);
+
+  const ufoNode = playLoop(sounds.ufo);
+  sounds.ufo.output.gain.value = 0;
+  const copperNode = playLoop(sounds.copper);
+  sounds.copper.output.gain.value = 0;
+  const sapphireNode = playLoop(sounds.sapphire);
+  sounds.sapphire.output.gain.value = 0;
+  const plantNode = playLoop(sounds.plant);
+  sounds.plant.output.gain.value = 0;
+  const icyNode = playLoop(sounds.icy);
+  sounds.icy.output.gain.value = 0;
+  const fireNode = playLoop(sounds.fire);
+  sounds.fire.output.gain.value = 0;
 
   let previousTurn = 0,
     previousDescent = 0;
@@ -174,10 +200,16 @@ if (!context) {
     loopMachineNode.playbackRate.value = 0.5;
     sounds.loopMachine.output.gain.value = biomesProximity[Constants.B_WIRED];
 
-    sounds.scratchLight.output.gain.value = biomesProximity[Constants.B_INTERS];
-
     scratchHardNode.playbackRate.value = mix(0.5, 1, speed);
     sounds.scratchHard.output.gain.value = 3 * braking; // FIXME make a more dedicated "braking" sound
+
+    sounds.ufo.output.gain.value = biomesProximity[Constants.B_UFO];
+    sounds.copper.output.gain.value = biomesProximity[Constants.B_COPPER];
+    sounds.sapphire.output.gain.value = biomesProximity[Constants.B_SAPPHIRE];
+    sounds.plant.output.gain.value = biomesProximity[Constants.B_PLANT];
+    sounds.inters.output.gain.value = biomesProximity[Constants.B_INTERS];
+    sounds.icy.output.gain.value = biomesProximity[Constants.B_ICY];
+    sounds.fire.output.gain.value = biomesProximity[Constants.B_FIRE];
 
     if (triggerSwitchChange) {
       const switchSound =
