@@ -235,9 +235,9 @@ if (!context) {
 
     out.gain.value = volume;
 
-    //sounds.intro.output.gain.value = home ? 0.5 : 0;
+    sounds.intro.output.gain.value = home ? 0.5 : 0;
 
-    if (!home || true) {
+    if (!home) {
       const noSpeedCutoff = smoothstep(0.0, 0.001, speed);
 
       windGain.gain.value = 0.2 * smoothstep(0, 2, speed);
