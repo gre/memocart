@@ -125,7 +125,9 @@ class GameComponent extends Component {
         newState.levelReached !== oldState.levelReached
       ) {
         HighScores.send(newState).then(({ inserted }) => {
-          if (inserted) this.syncHighscores(newState.seed);
+          if (inserted) {
+            this.syncHighscores(newState.seed);
+          }
         });
       }
       this.setGameState(newState);
