@@ -51,7 +51,7 @@ if (!context) {
   compressor.connect(context.destination);
 
   const out = context.createGain();
-  out.gain.value = 0.5;
+  out.gain.value = 1;
   out.connect(compressor);
 
   const reverb = new SimpleReverb(context, {
@@ -110,6 +110,7 @@ if (!context) {
   sounds.braking.output.gain.value = 0;
 
   const loopMachineNode = playLoop(sounds.loopMachine);
+  loopMachineNode.playbackRate.value = 0.5;
   sounds.loopMachine.output.gain.value = 0;
 
   const loopCartNormalNode = playLoop(sounds.loopCartNormal);
@@ -181,12 +182,11 @@ if (!context) {
     sounds.scratchMedium.output.gain.value =
       turnShake * turnShake * noSpeedCutoff;
 
-    loopMachineNode.playbackRate.value = 0.5;
-    sounds.loopMachine.output.gain.value = biomesProximity[Constants.B_WIRED];
-
     brakingNode.playbackRate.value = mix(0.5, 1, speed);
     sounds.braking.output.gain.value = 3 * braking * noSpeedCutoff;
 
+    sounds.loopMachine.output.gain.value =
+      2 * biomesProximity[Constants.B_WIRED];
     sounds.ufo.output.gain.value = biomesProximity[Constants.B_UFO];
     sounds.copper.output.gain.value = biomesProximity[Constants.B_COPPER];
     sounds.sapphire.output.gain.value = biomesProximity[Constants.B_SAPPHIRE];

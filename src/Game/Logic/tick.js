@@ -271,7 +271,7 @@ export default (
   g.acc += 2 * (0.1 + descent) * (0.1 + descent) * dt;
   g.acc *= Math.pow(0.985, 60 * dt); // friction
   g.acc = Math.max(0, Math.min(g.acc, 6));
-  g.acc -= 4 * g.braking * dt;
+  g.acc -= 12 * g.braking * dt;
 
   g.speed += dt * g.acc;
   g.speed *= Math.pow(0.998, 60 * dt); // friction
