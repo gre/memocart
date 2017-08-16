@@ -79,7 +79,7 @@ const tutorialLogic: TutorialLogic = {
             }
             return g;
           },
-      conditionLeave: afterStepIndex(60)
+      conditionLeave: afterStepIndex(70)
     },
     {
       uiState: {
@@ -87,9 +87,9 @@ const tutorialLogic: TutorialLogic = {
         body: "Let's go... RIGHT!"
       },
       conditionSkip: never,
-      conditionEnter: afterStepIndex(60),
+      conditionEnter: afterStepIndex(70),
       tick: tickNoop,
-      conditionLeave: afterStepIndex(50)
+      conditionLeave: afterStepIndex(52)
     },
     {
       uiState: {
@@ -100,7 +100,7 @@ const tutorialLogic: TutorialLogic = {
         footer: pressRight()
       },
       conditionSkip: cartOnAltTrack,
-      conditionEnter: afterStepIndex(50),
+      conditionEnter: afterStepIndex(52),
       tick: tickStop,
       conditionLeave: rightPressed
     },

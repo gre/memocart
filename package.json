@@ -2,6 +2,7 @@
   "name": "gre-lowrezjam2017",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "dependencies": {
     "fontfaceobserver": "^2.0.13",
     "gl-mat3": "^1.0.0",

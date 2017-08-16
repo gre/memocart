@@ -87,7 +87,13 @@ app.post("/", (req, res) => {
       return { username, level: levelReached, seed, date: Date.now() };
     })
     .then(recordScore)
-    .then(({ n }) => res.json({ inserted: n > 0 }))
+    .then(({ n }) => {
+      if (n > 0) {
+        const { username, levelReached, seed } = req.body.gameState;
+        console.log("@" + seed + " lvl " + levelReached + " by " + username);
+      }
+      return res.json({ inserted: n > 0 });
+    })
     .catch(e => {
       console.error(e);
       res.status(500).send();

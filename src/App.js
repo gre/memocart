@@ -6,16 +6,24 @@ import Logo from "./Game/Logo";
 import Footer from "./Game/Footer";
 import "./App.css";
 
+function inIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
 class App extends Component {
   render() {
     const { search } = window.location;
     const query = querystring.parse(search && search.slice(1));
-    const isMobile = "ontouchstart" in document;
+    const hideExtra = "ontouchstart" in document || inIframe();
     return (
       <div className="app">
-        {isMobile ? null : <Logo />}
+        {hideExtra ? null : <Logo />}
         <Game query={query} />
-        {isMobile ? null : <Footer />}
+        {hideExtra ? null : <Footer />}
       </div>
     );
   }
