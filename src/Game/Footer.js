@@ -17,7 +17,7 @@ export default class Footer extends Component {
         <a
           rel="noopener noreferrer"
           target="_blank"
-          href="https://itch.io/jam/lowrezjam2017"
+          href="https://greweb.itch.io/memocart"
         >
           lowrezjam2017
         </a>{" "}
