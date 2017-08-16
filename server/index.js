@@ -89,10 +89,16 @@ app.post("/", (req, res) => {
     })
     .then(recordScore)
     .then(({ n }) => {
-      if (n > 0) {
-        const { username, levelReached, seed } = req.body.gameState;
-        console.log("@" + seed + " lvl " + levelReached + " by " + username);
-      }
+      const { username, levelReached, seed } = req.body.gameState;
+      console.log(
+        (n > 0 ? "INSERTED" : "not inserted") +
+          " @" +
+          seed +
+          " lvl " +
+          levelReached +
+          " by " +
+          username
+      );
       return res.json({ inserted: n > 0 });
     })
     .catch(e => {
