@@ -88,10 +88,10 @@ app.post("/", (req, res) => {
       return { username, level: levelReached, seed, date: Date.now() };
     })
     .then(recordScore)
-    .then(res => {
+    .then(result => {
       const { username, levelReached, seed } = req.body.gameState;
       console.log(
-        res,
+        result,
         " @" + seed + " lvl " + levelReached + " by " + username
       );
       return res.json({ inserted: true });
