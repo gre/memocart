@@ -10,7 +10,7 @@ const biomeFrequencyPerIndex: { [_: string]: (i: number) => number } = {
   B_COAL: i => 8 * smoothstep(0, 20, i),
   B_COPPER: i => 10 * smoothstep(10, 50, i),
   B_DANG: i => 20 * smoothstep(0, 10, i),
-  B_DARK: i => 10 * smoothstep(5, 30, i),
+  B_DARK: i => 14 * smoothstep(5, 30, i),
   B_EMPTY: i => 20,
   B_FIRE: i => 4 * smoothstep(10, 80, i),
   B_GOLD: i => 6 * smoothstep(0, 30, i) + 9 * smoothstep(30, 100, i),

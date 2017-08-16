@@ -4,6 +4,7 @@ import smoothstep from "smoothstep";
 import mix from "../Logic/mix";
 import * as Constants from "../Constants";
 import audioFiles from "./files";
+import SimpleReverb from "./SimpleReverb";
 
 const context = new AudioContext();
 
@@ -45,17 +46,39 @@ let sync;
 if (!context) {
   sync = (g: AudioState) => {};
 } else {
-  const out = context.createGain();
-  out.gain.value = 0.5;
   // $FlowFixMe
   const compressor = context.createDynamicsCompressor();
-  out.connect(compressor);
   compressor.connect(context.destination);
+
+  const out = context.createGain();
+  out.gain.value = 0.5;
+  out.connect(compressor);
+
+  const reverb = new SimpleReverb(context, {
+    seconds: 2,
+    decay: 1
+  });
+  out.connect(reverb.input);
+  const reverbGain = context.createGain();
+  reverbGain.gain.value = 0.5;
+  reverbGain.connect(compressor);
+  reverb.connect(reverbGain);
+
+  const reverseReverb = new SimpleReverb(context, {
+    seconds: 2,
+    decay: 1,
+    reverse: 1
+  });
+  reverseReverb.connect(out);
+
+  const soundsOutput = {
+    dark: reverseReverb.input
+  };
 
   const sounds = {};
   Object.keys(audioFiles).forEach(name => {
     const output = context.createGain();
-    output.connect(out);
+    output.connect(soundsOutput[name] || out);
     const bufferPromise = loadSound(audioFiles[name]);
     const sound: { output: *, bufferPromise: *, buffer: ?AudioBuffer } = {
       output,
@@ -116,6 +139,13 @@ if (!context) {
   playLoop(sounds.fire);
   sounds.fire.output.gain.value = 0;
 
+  const darkNode = playLoop(sounds.dark);
+  darkNode.playbackRate.value = 0.7;
+  sounds.dark.output.gain.value = 0;
+
+  playLoop(sounds.cliff);
+  sounds.cliff.output.gain.value = 0;
+
   sync = ({
     volume,
     speed,
@@ -128,40 +158,45 @@ if (!context) {
     triggerLightCartAccident,
     triggerIntersectionSwitch
   }: AudioState) => {
-    out.gain.value = volume;
+    out.gain.value = volume * (1 - biomesProximity[Constants.B_FINISH]);
+
+    const noSpeedCutoff = smoothstep(0.0, 0.001, speed);
 
     windGain.gain.value = 0.2 * smoothstep(0, 2, speed);
     windFilter.frequency.value = mix(0, 2000, speed);
 
     loopCartNormalNode.playbackRate.value = mix(0.4, 1.4, speed);
-    sounds.loopCartNormal.output.gain.value = mix(
-      Math.min(1, descentShake + turnShake),
-      smoothstep(0, 0.2, speed),
-      0.2
-    );
+    sounds.loopCartNormal.output.gain.value =
+      mix(
+        Math.min(1, descentShake + turnShake),
+        smoothstep(0, 0.2, speed),
+        0.2
+      ) * noSpeedCutoff;
 
-    loopCartHighNode.playbackRate.value = mix(
-      0.8,
-      1.2,
-      smoothstep(0.5, 1, speed)
-    );
-    sounds.loopCartHigh.output.gain.value = descentShake * descentShake;
+    loopCartHighNode.playbackRate.value =
+      mix(0.8, 1.2, smoothstep(0.5, 1, speed)) * noSpeedCutoff;
+    sounds.loopCartHigh.output.gain.value =
+      descentShake * descentShake * noSpeedCutoff;
 
-    sounds.scratchMedium.output.gain.value = turnShake * turnShake;
+    sounds.scratchMedium.output.gain.value =
+      turnShake * turnShake * noSpeedCutoff;
 
     loopMachineNode.playbackRate.value = 0.5;
     sounds.loopMachine.output.gain.value = biomesProximity[Constants.B_WIRED];
 
     brakingNode.playbackRate.value = mix(0.5, 1, speed);
-    sounds.braking.output.gain.value = 3 * braking; // FIXME make a more dedicated "braking" sound
+    sounds.braking.output.gain.value = 3 * braking * noSpeedCutoff;
 
     sounds.ufo.output.gain.value = biomesProximity[Constants.B_UFO];
     sounds.copper.output.gain.value = biomesProximity[Constants.B_COPPER];
     sounds.sapphire.output.gain.value = biomesProximity[Constants.B_SAPPHIRE];
     sounds.plant.output.gain.value = biomesProximity[Constants.B_PLANT];
-    sounds.inters.output.gain.value = biomesProximity[Constants.B_INTERS];
+    sounds.inters.output.gain.value =
+      biomesProximity[Constants.B_INTERS] * noSpeedCutoff;
     sounds.icy.output.gain.value = biomesProximity[Constants.B_ICY];
     sounds.fire.output.gain.value = biomesProximity[Constants.B_FIRE];
+    sounds.dark.output.gain.value = 1.4 * biomesProximity[Constants.B_DARK];
+    sounds.cliff.output.gain.value = 2 * biomesProximity[Constants.B_CLIFF];
 
     if (triggerSwitchChange) {
       const switchSound =

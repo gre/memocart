@@ -11,7 +11,7 @@ import scratchMedium from "./fx/scratch-medium.m4a";
 import switch1 from "./fx/switch1.m4a";
 import switch2 from "./fx/switch2.m4a";
 import switch3 from "./fx/switch3.m4a";
-
+import dark from "./biomes/dark.m4a";
 import inters from "./biomes/inters.m4a";
 import ufo from "./biomes/ufo.m4a";
 import copper from "./biomes/copper.m4a";
@@ -19,6 +19,7 @@ import sapphire from "./biomes/sapphire.m4a";
 import plant from "./biomes/plant.m4a";
 import icy from "./biomes/icy.m4a";
 import fire from "./biomes/fire.m4a";
+import cliff from "./biomes/cliff.m4a";
 
 export default {
   switch1,
@@ -40,5 +41,7 @@ export default {
   sapphire,
   plant,
   icy,
-  fire
+  fire,
+  dark,
+  cliff
 };
