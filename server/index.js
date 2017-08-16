@@ -88,18 +88,13 @@ app.post("/", (req, res) => {
       return { username, level: levelReached, seed, date: Date.now() };
     })
     .then(recordScore)
-    .then(({ n }) => {
+    .then(res => {
       const { username, levelReached, seed } = req.body.gameState;
       console.log(
-        (n > 0 ? "INSERTED" : "not inserted") +
-          " @" +
-          seed +
-          " lvl " +
-          levelReached +
-          " by " +
-          username
+        res,
+        " @" + seed + " lvl " + levelReached + " by " + username
       );
-      return res.json({ inserted: n > 0 });
+      return res.json({ inserted: true });
     })
     .catch(e => {
       console.error(e);
