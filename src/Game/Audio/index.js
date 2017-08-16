@@ -54,7 +54,6 @@ if (!context) {
 
   const sounds = {};
   Object.keys(audioFiles).forEach(name => {
-    const bufferSource = context.createBufferSource();
     const output = context.createGain();
     output.connect(out);
     const bufferPromise = loadSound(audioFiles[name]);
@@ -83,9 +82,9 @@ if (!context) {
   const scratchMediumNode = playLoop(sounds.scratchMedium);
   sounds.scratchMedium.output.gain.value = 0;
 
-  const scratchHardNode = playLoop(sounds.scratchHard);
-  scratchHardNode.playbackRate.value = 0.5;
-  sounds.scratchHard.output.gain.value = 0;
+  const brakingNode = playLoop(sounds.braking);
+  brakingNode.playbackRate.value = 0.5;
+  sounds.braking.output.gain.value = 0;
 
   const loopMachineNode = playLoop(sounds.loopMachine);
   sounds.loopMachine.output.gain.value = 0;
@@ -104,21 +103,18 @@ if (!context) {
   windGain.connect(windFilter);
   loopCartHighNode.connect(windGain);
 
-  const ufoNode = playLoop(sounds.ufo);
+  playLoop(sounds.ufo);
   sounds.ufo.output.gain.value = 0;
-  const copperNode = playLoop(sounds.copper);
+  playLoop(sounds.copper);
   sounds.copper.output.gain.value = 0;
-  const sapphireNode = playLoop(sounds.sapphire);
+  playLoop(sounds.sapphire);
   sounds.sapphire.output.gain.value = 0;
-  const plantNode = playLoop(sounds.plant);
+  playLoop(sounds.plant);
   sounds.plant.output.gain.value = 0;
-  const icyNode = playLoop(sounds.icy);
+  playLoop(sounds.icy);
   sounds.icy.output.gain.value = 0;
-  const fireNode = playLoop(sounds.fire);
+  playLoop(sounds.fire);
   sounds.fire.output.gain.value = 0;
-
-  let previousTurn = 0,
-    previousDescent = 0;
 
   sync = ({
     volume,
@@ -156,8 +152,8 @@ if (!context) {
     loopMachineNode.playbackRate.value = 0.5;
     sounds.loopMachine.output.gain.value = biomesProximity[Constants.B_WIRED];
 
-    scratchHardNode.playbackRate.value = mix(0.5, 1, speed);
-    sounds.scratchHard.output.gain.value = 3 * braking; // FIXME make a more dedicated "braking" sound
+    brakingNode.playbackRate.value = mix(0.5, 1, speed);
+    sounds.braking.output.gain.value = 3 * braking; // FIXME make a more dedicated "braking" sound
 
     sounds.ufo.output.gain.value = biomesProximity[Constants.B_UFO];
     sounds.copper.output.gain.value = biomesProximity[Constants.B_COPPER];

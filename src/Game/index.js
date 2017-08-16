@@ -26,7 +26,7 @@ new FontFaceObserver("MinimalPixels").load().catch(() => {
 
 class Field extends Component {
   render() {
-    const { name, label, validation, help, children } = this.props;
+    const { name, label, help, children } = this.props;
     return (
       <label className="field" title={help} name={name}>
         <span>
@@ -39,16 +39,27 @@ class Field extends Component {
 }
 
 class Button extends Component {
+  onClick = e => {
+    e.preventDefault();
+    this.props.onClick();
+  };
+  onKeyPress = e => {
+    if (e.which === 32) {
+      this.onClick(e);
+    }
+  };
   render() {
-    const { onClick, disabled, color, background, children } = this.props;
+    const { disabled, onClick, color, background, children } = this.props;
     return (
-      <span
-        onClick={disabled ? null : onClick}
+      <a
+        href="#"
+        onClick={!onClick || disabled ? null : this.onClick}
+        onKeyPress={this.onKeyPress}
         style={{ color, background, opacity: disabled ? 0.5 : 1 }}
         className="button"
       >
         {children}
-      </span>
+      </a>
     );
   }
 }
@@ -217,12 +228,7 @@ class GameComponent extends Component {
       const validation = Conf.validate(config);
       body = (
         <div className="menu">
-          <Field
-            validation={validation}
-            label="username"
-            name="username"
-            help="for saving highscores"
-          >
+          <Field label="username" name="username" help="for saving highscores">
             <input
               type="text"
               onChange={this.onUserNameChange}
@@ -232,7 +238,6 @@ class GameComponent extends Component {
             />
           </Field>
           <Field
-            validation={validation}
             label="quality"
             name="quality"
             help="(shader compilation holds on some computers. If so, try lower
@@ -244,7 +249,7 @@ class GameComponent extends Component {
               values={qualities}
             />
           </Field>
-          <Field validation={validation} label="Mine" name="quality">
+          <Field label="Mine" name="quality">
             <Select
               onChange={this.onModeChange}
               value={config.mode}

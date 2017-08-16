@@ -87,7 +87,7 @@ app.post("/", (req, res) => {
       return { username, level: levelReached, seed, date: Date.now() };
     })
     .then(recordScore)
-    .then(res => res.json({ inserted: res.n > 0 }))
+    .then(({ n }) => res.json({ inserted: n > 0 }))
     .catch(e => {
       console.error(e);
       res.status(500).send();

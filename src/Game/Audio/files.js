@@ -6,7 +6,7 @@ import loopCartNormal from "./fx/loop-cart-normal.m4a";
 import loopDrift1 from "./fx/loop-drift1.m4a";
 import loopDrift2 from "./fx/loop-drift2.m4a";
 import loopMachine from "./fx/loop-machine.m4a";
-import scratchHard from "./fx/scratch-hard.m4a";
+import braking from "./fx/braking.m4a";
 import scratchMedium from "./fx/scratch-medium.m4a";
 import switch1 from "./fx/switch1.m4a";
 import switch2 from "./fx/switch2.m4a";
@@ -29,7 +29,7 @@ export default {
   loopDrift1,
   loopDrift2,
   inters,
-  scratchHard,
+  braking,
   intersectionPass,
   cartAccidentLight,
   cartAccident,

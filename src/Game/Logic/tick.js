@@ -418,7 +418,6 @@ export default (
   const deltaDescent = track.descent - previousTrack.descent;
   const deltaTurn = track.turn - previousTrack.turn;
 
-  const currentBiomeType = track.uniqueBiome && track.uniqueBiome.type;
   audioState.biomesProximity = audioState.biomesProximity.map((oldValue, i) => {
     let targetValue =
       (track.biome1.type === i ? 1 - track.biomeMix : 0) +

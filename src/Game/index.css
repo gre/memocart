@@ -28,8 +28,9 @@
   font-family: inherit;
   width: 100%;
 }
-.menu input:focus {
-  outline: none;
+.menu *:focus {
+  outline: 2px solid #fff;
+  color: #fff;
 }
 .menu .field {
   padding: 1em;
@@ -59,6 +60,7 @@
   color: #000;
   cursor: pointer;
   white-space: nowrap;
+  user-select: none;
 }
 .menu .errors {
   font-size: 16px;

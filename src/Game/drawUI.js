@@ -113,20 +113,18 @@ export default (ui: CanvasRenderingContext2D) => {
         uiText("loading\nhighscores\n...", 2, 20, borderOn);
       } else if (highscores.length > 0) {
         uiText("BEST EXPLORERS:", 2, 12, borderOn);
-        const text = highscores
-          .slice(0, 4)
-          .forEach(({ username, level }, i) => {
-            const pad = 8;
-            const y = 20 + i * lineHeight;
-            ui.fillStyle = mainTextColor;
-            uiText(username, pad, y);
-            const levelText = level.toString();
-            ui.fillStyle = secondTextColor;
-            uiText(levelText, 64 - pad - measureText(levelText), y);
-            return (
-              username + Array(9 - username.length).fill("_").join("") + level
-            );
-          });
+        highscores.slice(0, 4).forEach(({ username, level }, i) => {
+          const pad = 8;
+          const y = 20 + i * lineHeight;
+          ui.fillStyle = mainTextColor;
+          uiText(username, pad, y);
+          const levelText = level.toString();
+          ui.fillStyle = secondTextColor;
+          uiText(levelText, 64 - pad - measureText(levelText), y);
+          return (
+            username + Array(9 - username.length).fill("_").join("") + level
+          );
+        });
       } else {
         uiText("You are the first\nto explore\nthis mine!", 2, 20, borderOn);
       }
