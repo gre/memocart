@@ -427,7 +427,7 @@ export default (
 
   audioState.triggerSwitchChange =
     previousState.switchDirectionTarget !== g.switchDirectionTarget;
-  audioState.volume += (1 - audioState.volume) * 0.01;
+  audioState.volume += ((g.level === -1 ? 0 : 1) - audioState.volume) * 0.01;
   audioState.speed = smoothstep(0, 12, g.speed);
   audioState.descentShake = Math.min(
     1,
