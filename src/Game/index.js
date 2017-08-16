@@ -196,10 +196,10 @@ class GameComponent extends Component {
       }
     });
   };
-  onGLFailure = () => {
+  onGLFailure = (errorMessage: string) => {
     this.gameState = null;
     this.forceUpdate();
-    alert("WebGL context failed to be created.");
+    if (process.env.NODE_ENV === "production") alert(errorMessage);
   };
   render() {
     const { config, highscores, gameContextTitle, loading } = this.state;

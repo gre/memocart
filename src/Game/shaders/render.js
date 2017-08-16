@@ -42,6 +42,13 @@ float materialSpecularIntensity (float m) {
 `
 });
 
+const mixBiomes = (biomes, fn, ...args) =>
+  `mix(${fn}(${[biomes + "[0]", biomes + "[3]", ...args].join(",")}),${fn}(${[
+    biomes + "[1]",
+    biomes + "[3]",
+    ...args
+  ].join(",")}),${biomes}[2])`;
+
 const sceneNormal = qualityResolver({
   low: GLSL`\
 vec3 sceneNormal(vec3 p) {
@@ -95,9 +102,6 @@ ${injectDefines(quality)}
 #define INF 999.0
 
 // utility functions
-
-#define MIX_BIOMES(biomes,fn) mix(fn(biomes[0],biomes[3]),fn(biomes[1],biomes[3]),biomes[2])
-#define MIX_BIOMES_2args(biomes,fn,arg1,arg2) mix(fn(arg1,arg2,biomes[0],biomes[3]),fn(arg1,arg2,biomes[1],biomes[3]),biomes[2])
 
 float opU(float d1, float d2) {
   return min(d1, d2);
@@ -279,8 +283,8 @@ vec3 biomeRoomSize (float biome, float trackSeed) {
 vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   float zMix = interpStepP(originP);
   vec3 size = mix(
-    MIX_BIOMES(biomesPrev, biomeRoomSize),
-    MIX_BIOMES(biomes, biomeRoomSize),
+    ${mixBiomes("biomesPrev", "biomeRoomSize")},
+    ${mixBiomes("biomes", "biomeRoomSize")},
     zMix);
 
   // Walls
@@ -310,7 +314,7 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   float b = fract(biomeSeed * 7.);
   float c = fract(biomeSeed * 11.);
   float dx = 0.3 * biomeSeed;
-  float woodStructureDist = MIX_BIOMES(biomes, biomeWoodStructureDist);
+  float woodStructureDist = ${mixBiomes("biomes", "biomeWoodStructureDist")};
   float woodW = 0.04 + 0.05 * a;
   float woodT = 0.6 + woodStructureDist;
   float woodL = size.x * (0.8 + 0.2 * biomeSeed) + dx + woodStructureDist;
@@ -330,7 +334,7 @@ vec2 sdTunnelWallStep (vec3 originP, vec4 biomes, vec4 biomesPrev) {
   return mix(
     vec2(INF),
     s,
-    step(0.01, MIX_BIOMES(biomes, biomeHaveWalls))
+    step(0.01, ${mixBiomes("biomes", "biomeHaveWalls")})
   );
 }
 
@@ -435,7 +439,7 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
   float absZ = stepIndex - z;
   vec2 o = vec2(INF);
 
-  float fly = MIX_BIOMES(biomes, biomeFly);
+  float fly = ${mixBiomes("biomes", "biomeFly")};
   float seed = biomes[3];
   float a = fract(49. * seed);
   float b = fract(13. * seed);
@@ -450,7 +454,7 @@ vec2 sdObjectsStep (vec3 p, vec4 biomes, float z) {
     step(1.0, fly)
   ), 5.0 + 0.99 * a * b));
 
-  float lamp = MIX_BIOMES(biomes, biomeLamp);
+  float lamp = ${mixBiomes("biomes", "biomeLamp")};
   vec3 lampP = p;
   float side = 2.0*(fract(absZ / 40.0) - 0.5);
   side = side * side * side;
@@ -541,7 +545,7 @@ vec2 scene(vec3 p) {
   }
 
   // UFO
-  float ufo = MIX_BIOMES(biomes, biomeUFO);
+  float ufo = ${mixBiomes("biomes", "biomeUFO")};
   float ufoClose = 0.5 + 0.4 * cos(time);
   ufoP = mix(ufoP, p, ufoClose);
   ufoP -= vec3(0.2 * cos(3. * time), 0.2 * sin(3. * time), 0.0);
@@ -578,7 +582,7 @@ vec2 scene(vec3 p) {
 
 ${materialSpecularIntensity(quality)}
 
-vec3 materialColor (float m, vec3 normal, float biome, float trackSeed) {
+vec3 materialColor (float biome, float trackSeed, float m, vec3 normal) {
   vec3 c = vec3(0.0);
   float darkBiome = step(B_DARK,biome) * step(biome,B_DARK);
   float fireBiome = step(B_FIRE,biome) * step(biome,B_FIRE);
@@ -771,24 +775,24 @@ void main() {
   vec4 fromBiomes = parseTrackBiomes(fromData);
   vec4 toBiomes = parseTrackBiomes(toData);
 
-  vec3 materialColor = mix(
-    MIX_BIOMES_2args(fromBiomes, materialColor, material, normal),
-    MIX_BIOMES_2args(toBiomes, materialColor, material, normal),
+  vec3 matColor = mix(
+    ${mixBiomes("fromBiomes", "materialColor", "material", "normal")},
+    ${mixBiomes("toBiomes", "materialColor", "material", "normal")},
     zFract
   );
   vec3 ambientColor = mix(
-    MIX_BIOMES(fromBiomes, biomeAmbientColor),
-    MIX_BIOMES(toBiomes, biomeAmbientColor),
+    ${mixBiomes("fromBiomes", "biomeAmbientColor")},
+    ${mixBiomes("toBiomes", "biomeAmbientColor")},
     zFract
   );
   vec3 fogColor = mix(
-    MIX_BIOMES(fromBiomes, biomeFogColor),
-    MIX_BIOMES(toBiomes, biomeFogColor),
+    ${mixBiomes("fromBiomes", "biomeFogColor")},
+    ${mixBiomes("toBiomes", "biomeFogColor")},
     zFract
   );
   vec2 fogRange = mix(
-    MIX_BIOMES(fromBiomes, biomeFogRange),
-    MIX_BIOMES(toBiomes, biomeFogRange),
+    ${mixBiomes("fromBiomes", "biomeFogRange")},
+    ${mixBiomes("toBiomes", "biomeFogRange")},
     zFract
   );
 
@@ -804,7 +808,7 @@ void main() {
   vec3 diffuseLit;
   vec3 lightColor = vec3(1.0, 0.9, 0.8);
   float fog = smoothstep(fogRange[0], fogRange[1], dist);
-  diffuseLit = mix(materialColor * (diffuse * lightColor + ambientColor + specular * lightColor * matSpecularIntensity), fogColor, fog);
+  diffuseLit = mix(matColor * (diffuse * lightColor + ambientColor + specular * lightColor * matSpecularIntensity), fogColor, fog);
   gl_FragColor = vec4(diffuseLit, 1.0);
 }
 `,

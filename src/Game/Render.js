@@ -184,6 +184,7 @@ class Game extends Component {
   componentDidMount() {
     const { body } = document;
     const { canvas } = this;
+    const { onGLFailure } = this.props;
     if (!body || !canvas) return;
     const { getGameState, action } = this.props;
     for (let k = 0; k < 500; k++) {
@@ -207,7 +208,7 @@ class Game extends Component {
       canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
 
     if (!gl) {
-      this.props.onGLFailure();
+      onGLFailure("failed to create WebGL context");
       return;
     }
 
@@ -235,7 +236,13 @@ class Game extends Component {
     let swapFbos = [fbo1, fbo2];
     let swapFboTextures = [fbo1Texture, fbo2Texture];
     let drawUI = makeDrawUI(ui);
-    let render = renderShader(regl, initialState.quality);
+    let render;
+    try {
+      render = renderShader(regl, initialState.quality);
+    } catch (e) {
+      onGLFailure("Failed to compile shader: " + e.toString());
+      return;
+    }
     let persistence = persistenceShader(regl);
     let copy = copyShader(regl);
     let post = postShader(regl);
