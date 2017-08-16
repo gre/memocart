@@ -63,6 +63,8 @@ export type AudioState = {
 };
 
 export type GameState = {
+  seed: string,
+  username: string,
   quality: Quality,
   audioState: AudioState,
   uiState: ?UIState,
@@ -82,8 +84,8 @@ export type GameState = {
   rotY: number,
   rot: Array<number>,
   track: Array<Track>,
-  seed: number,
   level: number,
+  levelReached: number, // in case of success it's level+1
   speed: number, // z-unit per second
   acc: number,
   braking: number, // braking factor

@@ -170,6 +170,9 @@ export default (
 
   if (g.stepIndex < 0) {
     g.status = STATUS_FINISHED;
+    g.levelReached = g.level + 1;
+  } else {
+    g.levelReached = g.level;
   }
 
   // sync tracks / trackStep
@@ -361,8 +364,8 @@ export default (
       // FIXME we never gets there –/o\–
       const uiState = {
         titleCentered: true,
-        title: "YOU DID IT!",
-        body: "now falling from...\nLEVEL " + (g.level + 1),
+        title: "LEVEL " + g.levelReached + "!",
+        showHighscores: true,
         black: true,
         footer: pressSpace(),
         footerBlink: true,

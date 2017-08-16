@@ -234,8 +234,8 @@ class Game extends Component {
     let copy = copyShader(regl);
     let post = postShader(regl);
 
-    function uiSync(g) {
-      drawUI(g.uiState, g.uiStateBlinkTick);
+    function uiSync(g, gameContext) {
+      drawUI(g.uiState, g.uiStateBlinkTick, gameContext);
       uiTexture({
         data: uiCanvas,
         min: "nearest",
@@ -273,7 +273,7 @@ class Game extends Component {
         Debug.tryFunction(() => {
           drawUI = require("./drawUI").default(ui);
           const state = getGameState();
-          drawUI(state.uiState, state.uiStateBlinkTick);
+          drawUI(state.uiState, state.uiStateBlinkTick, this.props.gameContext);
         });
       });
       //$FlowFixMe
@@ -290,7 +290,9 @@ class Game extends Component {
       });
     }
 
-    uiSync(initialState);
+    let lastGameContext = this.props.gameContext;
+
+    uiSync(initialState, lastGameContext);
 
     const trackSize = TRACK_SIZE(initialState.quality);
 
@@ -336,9 +338,11 @@ class Game extends Component {
 
       if (
         prevState.uiState !== state.uiState ||
-        state.uiStateBlinkTick !== prevState.uiStateBlinkTick
+        state.uiStateBlinkTick !== prevState.uiStateBlinkTick ||
+        this.props.gameContext !== lastGameContext
       ) {
-        uiSync(state);
+        lastGameContext = this.props.gameContext;
+        uiSync(state, lastGameContext);
       }
 
       let [backFBO, frontFBO] = swapFbos;

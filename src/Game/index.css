@@ -16,6 +16,55 @@
   font-size: 48px;
 }
 
+.menu {
+  font-size: 32px;
+}
+.menu input {
+  border: 2px solid #d83;
+  background: transparent;
+  color: #d83;
+  padding: 0 0.8em;
+  font-size: inherit;
+  font-family: inherit;
+  width: 100%;
+}
+.menu input:focus {
+  outline: none;
+}
+.menu .field {
+  padding: 1em;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+.menu .field > * {
+  flex: 1;
+}
+.menu .field > span {
+  text-align: right;
+  padding-right: 1em;
+  box-sizing: border-box;
+}
+.menu .buttons {
+  font-size: 24px;
+  padding: 1em 0;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+.menu .button {
+  padding: 0.2em 0.6em;
+  background: #d83;
+  color: #000;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.menu .errors {
+  font-size: 16px;
+  color: #f00;
+}
+
 .game .auto {
   font-size: 0.5em;
 }

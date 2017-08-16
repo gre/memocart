@@ -13,7 +13,12 @@ import { pressSpace } from "./messages";
 import type { GameState, Quality } from "./types";
 
 // level: -1 is demo, 0 is tutorial, rest is for normal game
-export default (level: number, seed: number, quality: Quality): GameState => {
+export default (
+  level: number,
+  seed: string,
+  quality: Quality,
+  username: string
+): GameState => {
   let speed = 0,
     acc = 0.1,
     uiState = null;
@@ -23,7 +28,8 @@ export default (level: number, seed: number, quality: Quality): GameState => {
     acc = 1;
     speed = 3;
     uiState = {
-      logo: true,
+      useContextTitle: true,
+      showHighscores: true,
       footerBlink: true,
       footerCentered: true,
       footer: pressSpace()
@@ -55,6 +61,7 @@ export default (level: number, seed: number, quality: Quality): GameState => {
   }
 
   return {
+    username,
     gameOversCountPerBiomeIndex: {},
     quality,
     audioState: {
@@ -89,6 +96,7 @@ export default (level: number, seed: number, quality: Quality): GameState => {
     track,
     seed,
     level,
+    levelReached: level,
     speed,
     acc,
     braking: 0,

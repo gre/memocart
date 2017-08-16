@@ -27,7 +27,7 @@ const makeTrackBiome = (
   duration
 });
 
-function genTrack(trackIndex: number, seed: number): Track {
+function genTrack(trackIndex: number, seed: string): Track {
   const globalRandom = seedrandom("track_" + seed);
   const trackRandom = seedrandom("track_" + trackIndex + "_" + seed);
   const trackSeed = trackRandom();
@@ -208,7 +208,7 @@ let f = DEV
   ? genTrack
   : memoize(
       genTrack,
-      (trackIndex: number, seed: number) => trackIndex + "_" + seed
+      (trackIndex: number, seed: string) => trackIndex + "_" + seed
     );
 
 export default f;

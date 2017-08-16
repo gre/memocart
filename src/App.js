@@ -6,9 +6,6 @@ import Logo from "./Game/Logo";
 import Footer from "./Game/Footer";
 import "./App.css";
 
-const acceptQuality = q =>
-  q === "high" || q === "medium" || q === "low" ? q : null;
-
 class App extends Component {
   render() {
     const { search } = window.location;
@@ -17,7 +14,7 @@ class App extends Component {
     return (
       <div className="app">
         {isMobile ? null : <Logo />}
-        <Game quality={acceptQuality(query.quality)} />
+        <Game query={query} />
         {isMobile ? null : <Footer />}
       </div>
     );

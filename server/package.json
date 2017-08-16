@@ -1,0 +1,16 @@
+{
+  "private": true,
+  "name": "memocart-server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "cors": "^2.8.4",
+    "express": "^4.15.4",
+    "mongodb": "^2.2.31"
+  }
+}

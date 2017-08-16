@@ -40,7 +40,14 @@ export default (ui: CanvasRenderingContext2D) => {
     ui.restore();
   }
 
-  function uiSync(uiState: ?UIState, blink: boolean) {
+  function uiSync(
+    uiState: ?UIState,
+    blink: boolean,
+    context: {
+      highscores: ?Array<{ username: string, level: number }>,
+      title: string
+    }
+  ) {
     if (!uiState || (DEV && Debug.getEditable("noUI"))) {
       uiClear();
       return;
@@ -69,14 +76,18 @@ export default (ui: CanvasRenderingContext2D) => {
       uiText(uiState.area, 62 - w, 2);
     }
 
-    if (uiState.title) {
+    const title =
+      uiState.title || (uiState.useContextTitle ? context.title : "");
+
+    if (title) {
       const x = uiState.titleCentered
-        ? Math.floor((64 - measureText(uiState.title)) / 2)
+        ? Math.floor((64 - measureText(title)) / 2)
         : 2;
       const y = 1;
       ui.fillStyle = secondTextColor;
-      uiText(uiState.title, x, y, borderOn);
+      uiText(title, x, y, borderOn);
     }
+
     if (uiState.body) {
       const x = 2;
       const y = Math.floor((64 + titleHeight - footerHeight - bodyHeight) / 2);
@@ -93,6 +104,32 @@ export default (ui: CanvasRenderingContext2D) => {
           : 2,
         64 - footerHeight
       );
+    }
+
+    if (uiState.showHighscores) {
+      ui.fillStyle = mainTextColor;
+      const { highscores } = context;
+      if (!highscores) {
+        uiText("loading\nhighscores\n...", 2, 20, borderOn);
+      } else if (highscores.length > 0) {
+        uiText("BEST EXPLORERS:", 2, 12, borderOn);
+        const text = highscores
+          .slice(0, 4)
+          .forEach(({ username, level }, i) => {
+            const pad = 8;
+            const y = 20 + i * lineHeight;
+            ui.fillStyle = mainTextColor;
+            uiText(username, pad, y);
+            const levelText = level.toString();
+            ui.fillStyle = secondTextColor;
+            uiText(levelText, 64 - pad - measureText(levelText), y);
+            return (
+              username + Array(9 - username.length).fill("_").join("") + level
+            );
+          });
+      } else {
+        uiText("You are the first\nto explore\nthis mine!", 2, 20, borderOn);
+      }
     }
   }
 

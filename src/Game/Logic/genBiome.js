@@ -14,7 +14,7 @@ const firstLevelSize = genLevelStepBiomeIndex(1);
 
 const { B_INTERS, B_FINISH } = Constants;
 
-function genBiome(biomeIndex: number, seed: number): Biome {
+function genBiome(biomeIndex: number, seed: string): Biome {
   const biomeRandom = seedrandom("biome_" + biomeIndex + "_" + seed);
   const isSafe = reverseBiomeIndex(biomeIndex).isLevelStart;
   let type;
@@ -47,7 +47,7 @@ function genBiome(biomeIndex: number, seed: number): Biome {
   return { biomeIndex, biomeSeed, type, isSafe };
 }
 
-function genBiomeNeighborPass(biomeIndex: number, seed: number): Biome {
+function genBiomeNeighborPass(biomeIndex: number, seed: string): Biome {
   let biome = genBiome(biomeIndex, seed);
   if (biomeIndex <= 1) return biome;
   const biomeRandom = seedrandom("biome_neighbor_" + biomeIndex + "_" + seed);
@@ -70,7 +70,7 @@ let f = DEV
   ? genBiomeNeighborPass
   : memoize(
       genBiomeNeighborPass,
-      (biomeIndex: number, seed: number) => biomeIndex + "_" + seed
+      (biomeIndex: number, seed: string) => biomeIndex + "_" + seed
     );
 
 export default f;
