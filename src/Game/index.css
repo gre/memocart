@@ -14,6 +14,8 @@
   position: relative;
   text-align: center;
   font-size: 48px;
+  max-height: 100vh;
+  overflow: auto;
 }
 
 .menu {
@@ -23,32 +25,37 @@
   border: 2px solid #d83;
   background: transparent;
   color: #d83;
-  padding: 0 0.8em;
+  box-sizing: border-box;
+  padding: 0 0.4em;
+  line-height: 1.4em;
   font-size: inherit;
   font-family: inherit;
   width: 100%;
+  min-width: 200px;
 }
 .menu *:focus {
   outline: 2px solid #fff;
   color: #fff;
 }
 .menu .field {
-  padding: 1em;
+  padding: 0.5em;
+  margin-bottom: 0.2em;
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  flex-wrap: wrap;
 }
 .menu .field > * {
   flex: 1;
 }
 .menu .field > span {
-  text-align: right;
-  padding-right: 1em;
+  text-align: left;
+  padding-right: 0.5em;
+  margin-bottom: 0.6em;
   box-sizing: border-box;
 }
 .menu .buttons {
   font-size: 48px;
-  padding: 1em 0;
+  padding: 0.5em;
   display: flex;
   flex-direction: row;
   justify-content: space-around;

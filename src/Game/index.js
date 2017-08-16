@@ -196,6 +196,11 @@ class GameComponent extends Component {
       }
     });
   };
+  onGLFailure = () => {
+    this.gameState = null;
+    this.forceUpdate();
+    alert("WebGL context failed to be created.");
+  };
   render() {
     const { config, highscores, gameContextTitle, loading } = this.state;
     const { gameState } = this;
@@ -222,23 +227,28 @@ class GameComponent extends Component {
           getGameState={this.getGameState}
           action={this.action}
           gameContext={{ highscores, title: gameContextTitle }}
+          onGLFailure={this.onGLFailure}
         />
       );
     } else {
       const validation = Conf.validate(config);
       body = (
         <div className="menu">
-          <Field label="username" name="username" help="for saving highscores">
+          <Field label="username:" name="username" help="for saving highscores">
             <input
               type="text"
               onChange={this.onUserNameChange}
               value={config.username}
               maxLength={8}
               autoFocus={!config.username}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck="off"
             />
           </Field>
           <Field
-            label="quality"
+            label="quality:"
             name="quality"
             help="(shader compilation holds on some computers. If so, try lower
       quality)"
@@ -249,7 +259,7 @@ class GameComponent extends Component {
               values={qualities}
             />
           </Field>
-          <Field label="Mine" name="quality">
+          <Field label="mine:" name="quality">
             <Select
               onChange={this.onModeChange}
               value={config.mode}
@@ -275,7 +285,7 @@ class GameComponent extends Component {
       );
     }
     return (
-      <div className="game" style={{ width, height }}>
+      <div className="game" style={{ width, minHeight: height }}>
         {body}
       </div>
     );

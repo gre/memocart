@@ -205,6 +205,12 @@ class Game extends Component {
 
     const gl =
       canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+
+    if (!gl) {
+      this.props.onGLFailure();
+      return;
+    }
+
     const regl = createREGL(gl);
 
     const uiTexture = regl.texture();
