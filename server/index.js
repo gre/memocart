@@ -74,6 +74,7 @@ app.post("/", (req, res) => {
   Promise.resolve(req.body)
     .then(body => {
       const { username, levelReached, seed } = body.gameState;
+      console.log("Receive", username, levelReached, seed);
       if (typeof levelReached !== "number" || levelReached <= 0)
         throw new Error("invalid levelReached=" + levelReached);
       if (typeof seed !== "string" || !seed)

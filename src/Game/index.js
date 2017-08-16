@@ -152,9 +152,13 @@ class GameComponent extends Component {
     Audio(g.audioState);
   }
   syncHighscores = (seed: string) => {
-    HighScores.retrieve(seed).then(highscores => {
-      this.setState({ highscores });
-    });
+    HighScores.retrieve(seed)
+      .then(highscores => {
+        this.setState({ highscores });
+      })
+      .catch(e => {
+        console.log("Failed to sync the highscores: ", e);
+      });
   };
   start = () => {
     const { ...config } = this.state.config;
