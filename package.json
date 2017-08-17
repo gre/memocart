@@ -26,7 +26,7 @@
   "scripts": {
     "server": "node server/index.js",
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && cd build && zip -r ../build.zip *",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "deploy": "react-scripts build && surge -p build -d https://gre-lowrezjam2017.surge.sh"
