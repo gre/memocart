@@ -69,6 +69,18 @@ app.get("/scores/:seed", (req, res) => {
     });
 });
 
+app.post("/test", (req, res) => {
+  try {
+    if (req.body.everything === 42) {
+      res.json({ success: true });
+    } else {
+      res.json({ success: false });
+    }
+  } catch (e) {
+    res.json({ success: false });
+  }
+});
+
 app.post("/", (req, res) => {
   // a GameState is sent to server
   Promise.resolve(req.body)

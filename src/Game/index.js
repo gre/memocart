@@ -106,12 +106,15 @@ const modes = [
   { value: "random", label: "Random", color: "#fff" }
 ];
 
+const highscoresTest = HighScores.test();
+
 class GameComponent extends Component {
   state: {
     config: Config,
     loading: boolean,
     gameContextTitle: string,
-    highscores: ?Array<{ level: number, username: string }>
+    highscores: ?Array<{ level: number, username: string }>,
+    highscoresServerAccessible: ?boolean
   } = {
     config: {
       quality: "high",
@@ -122,8 +125,22 @@ class GameComponent extends Component {
     },
     loading: false,
     gameContextTitle: "",
-    highscores: null
+    highscores: null,
+    highscoresServerAccessible: null
   };
+  componentWillMount() {
+    Promise.race([
+      highscoresTest,
+      new Promise(success => setTimeout(success, 3000, "timeout"))
+    ])
+      .then(r => {
+        this.setState({ highscoresServerAccessible: r.success === true });
+      })
+      .catch(e => {
+        this.setState({ highscoresServerAccessible: false });
+      });
+  }
+
   gameState = null;
   getGameState = () => this.gameState;
   action = (name: string, ...args: *) => {
@@ -206,7 +223,13 @@ class GameComponent extends Component {
     if (process.env.NODE_ENV === "production") alert(errorMessage);
   };
   render() {
-    const { config, highscores, gameContextTitle, loading } = this.state;
+    const {
+      config,
+      highscores,
+      gameContextTitle,
+      highscoresServerAccessible,
+      loading
+    } = this.state;
     const { gameState } = this;
     const screen = typeof window.screen === "object" ? window.screen : null;
     const maxWidth = screen ? Math.min(screen.width, screen.height) : Infinity;
@@ -218,9 +241,11 @@ class GameComponent extends Component {
       body = (
         <div>
           Loading...
-          <footer>
-            if it never loads, try <a href="?quality=low">quality=low</a>
-          </footer>
+          {config.quality !== "low"
+            ? <footer>
+                if it never loads, try <a href="?quality=low">quality=low</a>
+              </footer>
+            : null}
         </div>
       );
     } else if (gameState) {
@@ -284,6 +309,9 @@ class GameComponent extends Component {
                 {v.message}
               </p>
             )}
+            {highscoresServerAccessible === false
+              ? <p>WARNING the HighScores server is not currently reachable</p>
+              : null}
           </div>
         </div>
       );
