@@ -47,8 +47,8 @@ export default (
       move[2] -= 0.06 * threshold(axes[1], 0.2);
     }
     if (axes.length >= 4) {
-      g.rotY += 0.02 * threshold(axes[2], 0.2);
-      g.rotX += 0.02 * threshold(axes[3], 0.2);
+      g.rotY += 0.04 * threshold(axes[2], 0.2);
+      g.rotX += 0.03 * threshold(axes[3], 0.2);
     }
     if (buttons.length > 7) {
       move[1] += 0.05 * (buttons[7].value - buttons[6].value);

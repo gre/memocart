@@ -162,7 +162,7 @@ export default (
         ? g.switchDirectionTarget
         : -g.switchDirectionTarget;
     } else {
-      if (g.tick % 60 === 0) {
+      if (g.tick % 120 === 0) {
         g.switchDirectionTarget = Math.random() < 0.5 ? -1 : 1;
       }
     }
