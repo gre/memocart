@@ -13,6 +13,7 @@ const promisify = (f, ctx = null) => (...args) =>
 const connectMongo = promisify(MongoClient.connect);
 const scores = () =>
   connectMongo(env.MONGO).then(db => db.collection("scores"));
+const stats = () => connectMongo(env.MONGO).then(db => db.collection("stats"));
 
 scores().then(coll => promisify(coll.count, coll)()).then(count => {
   console.log(count + " scores");
@@ -44,6 +45,17 @@ const recordScore = doc =>
       doc,
       { upsert: true }
     );
+  });
+
+const fetchStats = () =>
+  stats().then(coll => {
+    const q = coll.find();
+    return promisify(q.toArray, q)();
+  });
+
+const recordStats = doc =>
+  stats().then(coll => {
+    return promisify(coll.insertOne, coll)(doc);
   });
 
 const app = require("express")();
@@ -79,6 +91,88 @@ app.post("/test", (req, res) => {
   } catch (e) {
     res.json({ success: false });
   }
+});
+
+function checkValidStat(body) {
+  if (!body || typeof body !== "object") {
+    throw new Error("invalid body");
+  }
+  if (typeof body.userAgent !== "string") {
+    throw new Error("invalid body.userAgent");
+  }
+  if (
+    typeof body.config !== "object" ||
+    typeof body.config.quality !== "string" ||
+    typeof body.config.seed !== "string"
+  ) {
+    throw new Error("invalid body.config");
+  }
+}
+function checkValidSuccessStat(body) {
+  if (!body.stats || typeof body.stats !== "object")
+    throw new Error("missing body.stats");
+  if (typeof body.stats.averageFPS !== "number")
+    throw new Error("invalid body.stats.averageFPS");
+  if (typeof body.stats.bootTime !== "number")
+    throw new Error("invalid body.stats.bootTime");
+}
+function checkValidFailureStat(body) {
+  if (typeof body.error !== "string") throw new Error("missing body.error");
+}
+
+app.get("/stats", (req, res) => {
+  fetchStats()
+    .then(stats => {
+      const successEntries = stats.filter(s => s.type === "success");
+      const failureEntries = stats.filter(s => s.type === "failure");
+      const out = {
+        successCount: successEntries.length,
+        failureCount: failureEntries.length,
+        statsPerQuality: {
+          low: successEntries
+            .filter(s => s.config.quality === "low")
+            .map(s => s.stats),
+          medium: successEntries
+            .filter(s => s.config.quality === "medium")
+            .map(s => s.stats),
+          high: successEntries
+            .filter(s => s.config.quality === "high")
+            .map(s => s.stats)
+        }
+      };
+      res.json(out);
+    })
+    .catch(e => {
+      console.error(e);
+      res.status(500).send();
+    });
+});
+
+app.post("/stats/failure", (req, res) => {
+  Promise.resolve(req.body)
+    .then(body => {
+      checkValidStat(body);
+      checkValidFailureStat(body);
+      return recordStats(Object.assign({ type: "failure" }, body));
+    })
+    .then(res.send())
+    .catch(e => {
+      console.log(e);
+      res.status(500).send();
+    });
+});
+app.post("/stats/success", (req, res) => {
+  Promise.resolve(req.body)
+    .then(body => {
+      checkValidStat(body);
+      checkValidSuccessStat(body);
+      return recordStats(Object.assign({ type: "success" }, body));
+    })
+    .then(res.send())
+    .catch(e => {
+      console.log(e);
+      res.status(500).send();
+    });
 });
 
 app.post("/", (req, res) => {

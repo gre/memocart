@@ -184,7 +184,7 @@ class Game extends Component {
   componentDidMount() {
     const { body } = document;
     const { canvas } = this;
-    const { onGLFailure } = this.props;
+    const { onGLFailure, onSuccessStart } = this.props;
     if (!body || !canvas) return;
     const { getGameState, action } = this.props;
     for (let k = 0; k < 500; k++) {
@@ -326,10 +326,28 @@ class Game extends Component {
     });
 
     let lastTime;
+    let bootTime;
+    let timeAtTick100;
+    let timeAtTick100After10sReached = false;
 
     regl.frame(e => {
       const prevState = getGameState();
       const state = action("tick", e, this.getUserEvents());
+
+      if (e.tick === 30) {
+        bootTime = Math.max(0, e.time - 0.5); // 30 ticks assumed to be 0.5s
+      } else if (e.tick === 100) {
+        timeAtTick100 = e.time;
+      } else if (
+        !timeAtTick100After10sReached &&
+        e.tick > 100 &&
+        e.time - timeAtTick100 >= 10
+      ) {
+        // 10 seconds after tick 100
+        timeAtTick100After10sReached = true;
+        const averageFPS = (e.tick - 100) / 10;
+        onSuccessStart({ bootTime, averageFPS });
+      }
 
       if (prevState.track !== state.track) {
         encodeTrack(state.track, trackData);

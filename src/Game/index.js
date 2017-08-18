@@ -6,6 +6,7 @@ import "./index.css";
 import * as Conf from "./Config";
 import type { Config } from "./Config";
 import * as HighScores from "./HighScores";
+import * as Stats from "./Stats";
 let Logic = require("./Logic").default;
 let { default: Render } = require("./Render");
 
@@ -218,9 +219,13 @@ class GameComponent extends Component {
     });
   };
   onGLFailure = (errorMessage: string) => {
+    Stats.sendFailure(this.state.config, errorMessage);
     this.gameState = null;
     this.forceUpdate();
     if (process.env.NODE_ENV === "production") alert(errorMessage);
+  };
+  onSuccessStart = (stats: *) => {
+    Stats.sendSuccess(this.state.config, stats);
   };
   render() {
     const {
@@ -257,6 +262,7 @@ class GameComponent extends Component {
           action={this.action}
           gameContext={{ highscores, title: gameContextTitle }}
           onGLFailure={this.onGLFailure}
+          onSuccessStart={this.onSuccessStart}
         />
       );
     } else {
