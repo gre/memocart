@@ -1,5 +1,7 @@
 # LOWREZJAM2017 idea – greweb
 
+This was written on August 3th. First pitch of the game.
+
 ## inspiration / tech
 
 - http://js1k.com/2013-spring/demo/1555
