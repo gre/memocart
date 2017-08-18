@@ -3,8 +3,13 @@ import type { AudioState } from "../logic/types";
 import smoothstep from "smoothstep";
 import mix from "../Logic/mix";
 import * as Constants from "../Constants";
+import * as Debug from "../../Debug";
 import audioFiles from "./files";
 import SimpleReverb from "./SimpleReverb";
+
+if (Constants.DEV) {
+  Debug.defineEditable("noAudioIntro", false);
+}
 
 const context = new AudioContext();
 
@@ -238,9 +243,12 @@ if (!context) {
 
     out.gain.value = volume;
 
-    sounds.intro.output.gain.value = home ? 0.5 : 0;
+    let useIntro =
+      home && (!Constants.DEV || !Debug.getEditable("noAudioIntro"));
 
-    if (!home) {
+    sounds.intro.output.gain.value = useIntro ? 0.5 : 0;
+
+    if (!useIntro) {
       const noSpeedCutoff = smoothstep(0.0, 0.001, speed);
 
       windGain.gain.value = 0.2 * smoothstep(0, 2, speed);
